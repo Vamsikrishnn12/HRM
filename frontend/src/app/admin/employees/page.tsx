@@ -11,6 +11,7 @@ import {
   Button,
   Text,
 } from "@chakra-ui/react";
+import Link from "next/link"; // ✅ ADD THIS LINE
 import { Search, Plus, Download } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
@@ -83,7 +84,14 @@ export default function EmployeesPage() {
             <SecondaryButton leftIcon={<Download size={16} />} size="sm">
               Export
             </SecondaryButton>
-            <PrimaryButton leftIcon={<Plus size={16} />} size="sm">
+
+            {/* ✅ ONLY CHANGE: make it navigate */}
+            <PrimaryButton
+              as={Link}
+              href="/admin/employees/add"
+              leftIcon={<Plus size={16} />}
+              size="sm"
+            >
               Add Employee
             </PrimaryButton>
           </>
