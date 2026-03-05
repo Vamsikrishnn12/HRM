@@ -165,6 +165,18 @@ export class EmployeeService {
     return { data, total: data.length };
   }
 
+  async dropdownEmployees() {
+    const profiles = await this.employeeRepo.findAll();
+    return profiles
+      .filter((p) => p.user?.isActive)
+      .map((p) => ({
+        userId: p.user.id,
+        empId: p.user.empId,
+        firstName: p.user.firstName,
+        lastName: p.user.lastName,
+      }));
+  }
+
   async getEmployee(id: string) {
     const profile = await this.employeeRepo.findById(id);
     if (!profile) {

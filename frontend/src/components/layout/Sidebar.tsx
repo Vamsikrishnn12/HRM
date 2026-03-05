@@ -4,9 +4,10 @@ import { Box, Flex, Text, VStack, IconButton, Collapse } from "@chakra-ui/react"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { adminRoutes, type RouteItem } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
+import { useSidebar } from "@/context/SidebarContext";
 
 function NavItem({
   route,
@@ -150,9 +151,7 @@ function NavGroup({
 export default function Sidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
-
-  const toggleCollapse = useCallback(() => setCollapsed((p) => !p), []);
+  const { collapsed, toggleCollapse } = useSidebar();
 
   return (
     <Box

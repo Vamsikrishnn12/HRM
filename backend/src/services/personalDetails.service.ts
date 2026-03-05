@@ -1,0 +1,180 @@
+import { PersonalDetailsRepository } from '../repositories/personalDetails.repository';
+import { EmployeeRepository } from '../repositories/employee.repository';
+import { ApiError } from '../utils/apiError';
+import { logger } from '../utils/logger';
+
+interface PersonalDetailsInput {
+  aadhaarNumber?: string;
+  mobileNumber?: string;
+  whatsappNumber?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  maritalStatus?: string;
+  nationality?: string;
+  currentAddressLine1?: string;
+  currentCity?: string;
+  currentState?: string;
+  currentPincode?: string;
+  currentCountry?: string;
+  permanentSameAsCurrent?: boolean;
+  permanentAddressLine1?: string;
+  permanentCity?: string;
+  permanentState?: string;
+  permanentPincode?: string;
+  permanentCountry?: string;
+  highestQualification?: string;
+  institutionName?: string;
+  graduationYear?: string;
+  totalExperienceYears?: string;
+  lastCompany?: string;
+  lastDesignation?: string;
+  reasonForLeaving?: string;
+}
+
+export class PersonalDetailsService {
+  private personalRepo: PersonalDetailsRepository;
+  private employeeRepo: EmployeeRepository;
+
+  constructor() {
+    this.personalRepo = new PersonalDetailsRepository();
+    this.employeeRepo = new EmployeeRepository();
+  }
+
+  async listAll() {
+    const records = await this.personalRepo.findAll();
+    return {
+      data: records.map((r) => this.formatRecord(r)),
+      total: records.length,
+    };
+  }
+
+  async getById(id: string) {
+    const record = await this.personalRepo.findById(id);
+    if (!record) {
+      throw ApiError.notFound('Personal details not found', 'PERSONAL_NOT_FOUND');
+    }
+    return this.formatRecord(record);
+  }
+
+  async getByUserId(userId: string) {
+    const record = await this.personalRepo.findByUserId(userId);
+    if (!record) {
+      throw ApiError.notFound('Personal details not found', 'PERSONAL_NOT_FOUND');
+    }
+    return this.formatRecord(record);
+  }
+
+  async savePersonal(userId: string, input: PersonalDetailsInput) {
+    // Verify employee exists
+    const profile = await this.employeeRepo.findByUserId(userId);
+    if (!profile) {
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+
+    const record = await this.personalRepo.upsertByUserId(userId, {
+      aadhaarNumber: input.aadhaarNumber || null,
+      mobileNumber: input.mobileNumber || null,
+      whatsappNumber: input.whatsappNumber || null,
+      dateOfBirth: input.dateOfBirth || null,
+      gender: input.gender || null,
+      maritalStatus: input.maritalStatus || null,
+      nationality: input.nationality || null,
+      currentAddressLine1: input.currentAddressLine1 || null,
+      currentCity: input.currentCity || null,
+      currentState: input.currentState || null,
+      currentPincode: input.currentPincode || null,
+      currentCountry: input.currentCountry || null,
+      permanentSameAsCurrent: input.permanentSameAsCurrent ?? true,
+      permanentAddressLine1: input.permanentAddressLine1 || null,
+      permanentCity: input.permanentCity || null,
+      permanentState: input.permanentState || null,
+      permanentPincode: input.permanentPincode || null,
+      permanentCountry: input.permanentCountry || null,
+      highestQualification: input.highestQualification || null,
+      institutionName: input.institutionName || null,
+      graduationYear: input.graduationYear || null,
+      totalExperienceYears: input.totalExperienceYears || null,
+      lastCompany: input.lastCompany || null,
+      lastDesignation: input.lastDesignation || null,
+      reasonForLeaving: input.reasonForLeaving || null,
+    });
+
+    logger.info('Personal details saved', { userId, recordId: record.id });
+    return this.formatRecord(record);
+  }
+
+  async updateById(id: string, input: PersonalDetailsInput) {
+    const existing = await this.personalRepo.findById(id);
+    if (!existing) {
+      throw ApiError.notFound('Personal details not found', 'PERSONAL_NOT_FOUND');
+    }
+
+    await this.personalRepo.update(id, {
+      aadhaarNumber: input.aadhaarNumber || null,
+      mobileNumber: input.mobileNumber || null,
+      whatsappNumber: input.whatsappNumber || null,
+      dateOfBirth: input.dateOfBirth || null,
+      gender: input.gender || null,
+      maritalStatus: input.maritalStatus || null,
+      nationality: input.nationality || null,
+      currentAddressLine1: input.currentAddressLine1 || null,
+      currentCity: input.currentCity || null,
+      currentState: input.currentState || null,
+      currentPincode: input.currentPincode || null,
+      currentCountry: input.currentCountry || null,
+      permanentSameAsCurrent: input.permanentSameAsCurrent ?? true,
+      permanentAddressLine1: input.permanentAddressLine1 || null,
+      permanentCity: input.permanentCity || null,
+      permanentState: input.permanentState || null,
+      permanentPincode: input.permanentPincode || null,
+      permanentCountry: input.permanentCountry || null,
+      highestQualification: input.highestQualification || null,
+      institutionName: input.institutionName || null,
+      graduationYear: input.graduationYear || null,
+      totalExperienceYears: input.totalExperienceYears || null,
+      lastCompany: input.lastCompany || null,
+      lastDesignation: input.lastDesignation || null,
+      reasonForLeaving: input.reasonForLeaving || null,
+    });
+
+    logger.info('Personal details updated', { id });
+    return this.getById(id);
+  }
+
+  private formatRecord(r: any) {
+    return {
+      id: r.id,
+      userId: r.userId,
+      aadhaarNumber: r.aadhaarNumber || '',
+      mobileNumber: r.mobileNumber || '',
+      whatsappNumber: r.whatsappNumber || '',
+      dateOfBirth: r.dateOfBirth || '',
+      gender: r.gender || '',
+      maritalStatus: r.maritalStatus || '',
+      nationality: r.nationality || '',
+      currentAddressLine1: r.currentAddressLine1 || '',
+      currentCity: r.currentCity || '',
+      currentState: r.currentState || '',
+      currentPincode: r.currentPincode || '',
+      currentCountry: r.currentCountry || '',
+      permanentSameAsCurrent: r.permanentSameAsCurrent ?? true,
+      permanentAddressLine1: r.permanentAddressLine1 || '',
+      permanentCity: r.permanentCity || '',
+      permanentState: r.permanentState || '',
+      permanentPincode: r.permanentPincode || '',
+      permanentCountry: r.permanentCountry || '',
+      highestQualification: r.highestQualification || '',
+      institutionName: r.institutionName || '',
+      graduationYear: r.graduationYear || '',
+      totalExperienceYears: r.totalExperienceYears || '',
+      lastCompany: r.lastCompany || '',
+      lastDesignation: r.lastDesignation || '',
+      reasonForLeaving: r.reasonForLeaving || '',
+      employeeName: r.user ? `${r.user.firstName} ${r.user.lastName}` : '',
+      empId: r.user?.empId || '',
+      email: r.user?.email || '',
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  }
+}

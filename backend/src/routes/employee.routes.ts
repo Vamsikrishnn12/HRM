@@ -64,6 +64,20 @@ router.get('/', asyncHandler(EmployeeController.list));
 
 /**
  * @swagger
+ * /api/employees/dropdown:
+ *   get:
+ *     tags: [Employees]
+ *     summary: Get employee dropdown list
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Employee dropdown list
+ */
+router.get('/dropdown', asyncHandler(EmployeeController.dropdown));
+
+/**
+ * @swagger
  * /api/employees/{id}:
  *   get:
  *     tags: [Employees]

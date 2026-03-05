@@ -3,6 +3,9 @@ import { env } from './env';
 import { User } from '../entities/User.entity';
 import { RefreshToken } from '../entities/RefreshToken.entity';
 import { EmployeeProfile } from '../entities/EmployeeProfile.entity';
+import { PersonalDetails } from '../entities/PersonalDetails.entity';
+import { SalaryDetails } from '../entities/SalaryDetails.entity';
+import { EmployeeDocument } from '../entities/EmployeeDocument.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -17,6 +20,9 @@ export const AppDataSource = new DataSource({
     User,
     RefreshToken,
     EmployeeProfile,
+    PersonalDetails,
+    SalaryDetails,
+    EmployeeDocument,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],

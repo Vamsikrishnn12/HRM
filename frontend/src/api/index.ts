@@ -1,2 +1,2 @@
 export { authApi } from "./auth.api";
-export { employeeApi } from "./employee.api";
+export { employeeApi, personalDetailsApi, salaryDetailsApi, documentsApi } from "./employee.api";

@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -11,13 +12,26 @@ import { errorMiddleware } from './middlewares/error.middleware';
 import { swaggerSpec } from './docs/swagger';
 import authRoutes from './routes/auth.routes';
 import employeeRoutes from './routes/employee.routes';
+import personalDetailsRoutes from './routes/personalDetails.routes';
+import salaryDetailsRoutes from './routes/salaryDetails.routes';
+import documentRoutes from './routes/document.routes';
 
 const app = express();
 
 // --------------- Global Middlewares ---------------
 
 // Security headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'frame-ancestors': ["'self'", ...env.CORS_ORIGIN.split(',').map((o) => o.trim())],
+      },
+    },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 
 // CORS
 app.use(
@@ -48,7 +62,12 @@ app.get('/api/health', (_req, res) => {
 // --------------- Routes ---------------
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/personal-details', personalDetailsRoutes);
+app.use('/api/salary-details', salaryDetailsRoutes);
+app.use('/api/documents', documentRoutes);
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.resolve('uploads')));
 
 // --------------- 404 Handler ---------------
 app.use((_req, res) => {

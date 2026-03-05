@@ -28,6 +28,11 @@ export class EmployeeController {
     ApiResponse.success(res, 'Employees retrieved', result);
   }
 
+  static async dropdown(_req: Request, res: Response): Promise<void> {
+    const result = await employeeService.dropdownEmployees();
+    ApiResponse.success(res, 'Employee dropdown retrieved', result);
+  }
+
   static async getById(req: Request, res: Response): Promise<void> {
     const id = req.params.id as string;
     const result = await employeeService.getEmployee(id);

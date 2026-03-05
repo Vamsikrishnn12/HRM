@@ -92,6 +92,16 @@ export interface PersonalForm {
   graduationYear: string;
 }
 
+export interface PersonalDetailsRow extends PersonalForm {
+  id: string;
+  userId: string;
+  employeeName: string;
+  empId: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SalaryForm {
   ctc: string;
   basic: string;
@@ -109,6 +119,30 @@ export interface SalaryForm {
   uanNumber: string;
 }
 
+export interface SalaryDetailsRow {
+  id: string;
+  userId: string;
+  ctc: number;
+  basic: number;
+  hra: number;
+  allowances: number;
+  pfApplicable: boolean;
+  pfEmployeeContribution: number;
+  pfEmployerContribution: number;
+  taxRegime: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  branchName: string;
+  panNumber: string;
+  uanNumber: string;
+  employeeName: string;
+  empId: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ExistingDoc {
   id: string;
   fileName: string;
@@ -116,6 +150,22 @@ export interface ExistingDoc {
   size: number;
   documentType: string | null;
   uploadedAt: string;
+}
+
+export interface DocumentRow {
+  id: string;
+  userId: string;
+  documentType: string;
+  originalName: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  filePath: string;
+  employeeName: string;
+  empId: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AddEmployeeFormState {
