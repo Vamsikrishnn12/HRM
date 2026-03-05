@@ -11,46 +11,61 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
+import {
+  api,
+  setAccessToken,
+  clearAccessToken,
+  getAccessToken,
+  ApiError,
+} from "@/lib/api";
 
 // ── Types ──
 export type UserRole = "admin" | "employee";
 
 export interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: UserRole;
 }
+
+interface LoginPayload {
+  email: string;
+  password: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+interface LoginResponseData {
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+interface MeResponseData {
+  userId: string;
+  email: string;
+  role: string;
+}
+
+export type AuthStatus = "idle" | "checking" | "authenticated" | "unauthenticated" | "redirecting";
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<User | null>;
+  authStatus: AuthStatus;
+  login: (payload: LoginPayload) => Promise<User | null>;
   logout: () => void;
 }
 
-// ── Dummy Credentials ──
-interface Credential {
-  email: string;
-  password: string;
-  user: User;
-}
-
-const CREDENTIALS: Credential[] = [
-  {
-    email: "admin@hrms.com",
-    password: "Admin@123",
-    user: { id: "1", name: "Admin User", email: "admin@hrms.com", role: "admin" },
-  },
-  {
-    email: "user@hrms.com",
-    password: "User@123",
-    user: { id: "2", name: "John Employee", email: "user@hrms.com", role: "employee" },
-  },
-];
-
-const STORAGE_KEY = "hrms_auth_user";
+const USER_STORAGE_KEY = "hrms_user";
 
 // ── Context ──
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,37 +73,94 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("idle");
   const router = useRouter();
   const toast = useToast();
 
-  // Hydration guard — read localStorage only after mount
+  /**
+   * On mount: quickly check localStorage. Only call /auth/me if we have
+   * both a token AND stored user (i.e. returning session).
+   * Use AbortController with a 4s timeout so the app never hangs.
+   */
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
+    const rehydrate = async () => {
+      const token = getAccessToken();
+      const stored = localStorage.getItem(USER_STORAGE_KEY);
+
+      // No stored session → immediately mark unauthenticated, no API call
+      if (!token || !stored) {
+        clearAccessToken();
+        localStorage.removeItem(USER_STORAGE_KEY);
+        setAuthStatus("unauthenticated");
+        setIsLoading(false);
+        return;
+      }
+
+      // We have a stored session — validate it
+      setAuthStatus("checking");
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+
+      try {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/me`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
+            signal: controller.signal,
+          },
+        );
+        clearTimeout(timeout);
+
         const parsed: User = JSON.parse(stored);
         setUser(parsed);
+        setAuthStatus("authenticated");
+      } catch {
+        clearTimeout(timeout);
+        // Session invalid or backend unreachable — still try to use stored user
+        // if token exists (will refresh on next API call)
+        try {
+          const parsed: User = JSON.parse(stored);
+          setUser(parsed);
+          setAuthStatus("authenticated");
+        } catch {
+          clearAccessToken();
+          localStorage.removeItem(USER_STORAGE_KEY);
+          setAuthStatus("unauthenticated");
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    rehydrate();
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<User | null> => {
-      // Simulate network delay
-      await new Promise((r) => setTimeout(r, 800));
+    async (payload: LoginPayload): Promise<User | null> => {
+      try {
+        setAuthStatus("checking");
 
-      const match = CREDENTIALS.find(
-        (c) => c.email === email && c.password === password
-      );
+        const data = await api.post<LoginResponseData>("/auth/login", payload);
 
-      if (match) {
-        setUser(match.user);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(match.user));
-        const label = match.user.role === "admin" ? "Admin" : "Employee";
+        // Store access token
+        setAccessToken(data.accessToken);
+
+        const role = data.user.role.toLowerCase() as UserRole;
+        const loggedInUser: User = {
+          id: data.user.id,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          email: data.user.email,
+          role,
+        };
+
+        setUser(loggedInUser);
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
+        setAuthStatus("redirecting");
+
+        const label = role === "admin" ? "Admin" : "Employee";
         toast({
           title: `Welcome, ${label}`,
           description: "You have logged in successfully.",
@@ -97,26 +169,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isClosable: true,
           position: "top-right",
         });
-        return match.user;
-      }
 
-      toast({
-        title: "Invalid credentials",
-        description: "Please check your email and password.",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-        position: "top-right",
-      });
-      return null;
+        return loggedInUser;
+      } catch (err) {
+        setAuthStatus("unauthenticated");
+
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : "Something went wrong. Please try again.";
+
+        toast({
+          title: "Login failed",
+          description: message,
+          status: "error",
+          duration: 4000,
+          isClosable: true,
+          position: "top-right",
+        });
+
+        return null;
+      }
     },
-    [toast]
+    [toast],
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // best-effort — still clear local state
+    }
+
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
+    clearAccessToken();
+    localStorage.removeItem(USER_STORAGE_KEY);
+    setAuthStatus("unauthenticated");
     router.push("/login");
+
     toast({
       title: "Logged out",
       description: "You have been signed out.",
@@ -132,10 +222,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: !!user,
       isLoading,
+      authStatus,
       login,
       logout,
     }),
-    [user, isLoading, login, logout]
+    [user, isLoading, authStatus, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

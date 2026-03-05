@@ -2,11 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Flex, Spinner } from "@chakra-ui/react";
 import { useAuth } from "@/context/AuthContext";
+import AuthLoader from "@/components/ui/AuthLoader";
 
 export default function Home() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, authStatus } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -20,9 +20,5 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, user, router]);
 
-  return (
-    <Flex minH="100vh" align="center" justify="center" bg="surface.bg">
-      <Spinner size="lg" color="brand.400" thickness="3px" />
-    </Flex>
-  );
+  return <AuthLoader status={authStatus} />;
 }

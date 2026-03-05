@@ -10,7 +10,7 @@ export default function EmployeeDashboard() {
   return (
     <Box>
       <Heading size="lg" color="text.heading" mb={2}>
-        Welcome, {user?.name ?? "Employee"}
+        Welcome, {user ? `${user.firstName} ${user.lastName}` : "Employee"}
       </Heading>
       <Text color="text.muted" fontSize="sm" mb={6}>
         Your personal dashboard

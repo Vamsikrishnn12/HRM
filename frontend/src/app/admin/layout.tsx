@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
 import { useAuth } from "@/context/AuthContext";
 import AppShell from "@/components/layout/AppShell";
+import AuthLoader from "@/components/ui/AuthLoader";
 import { useToast } from "@chakra-ui/react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, authStatus } = useAuth();
   const router = useRouter();
   const toast = useToast();
 
@@ -40,16 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [isAuthenticated, isLoading, user, router, toast]);
 
   if (isLoading) {
-    return (
-      <Flex minH="100vh" align="center" justify="center" bg="surface.bg">
-        <Flex direction="column" align="center" gap={3}>
-          <Spinner size="lg" color="brand.400" thickness="3px" />
-          <Text color="text.muted" fontSize="sm">
-            Loading...
-          </Text>
-        </Flex>
-      </Flex>
-    );
+    return <AuthLoader status={authStatus} />;
   }
 
   if (!isAuthenticated || user?.role !== "admin") {

@@ -1,0 +1,336 @@
+2026-03-04 17:22:29:2229 error: Failed to start server {"error":{"length":104,"name":"error","severity":"FATAL","code":"28P01","file":"auth.c","line":"320","routine":"auth_failed"}}
+2026-03-04 17:23:36:2336 info: Database connection established
+2026-03-04 17:23:37:2337 info: Admin user seeded successfully: admin@hrms.com
+2026-03-04 17:23:37:2337 info: Server running on http://localhost:5000
+2026-03-04 17:23:37:2337 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 17:23:37:2337 info: Environment: development
+2026-03-04 17:39:44:3944 http: [f12eb336-e06e-48e2-9012-1a506ebb5d37] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:39:45:3945 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 17:40:01:401 http: [ebc56f62-a268-4c7b-adf8-0cc74c8e2a96] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:01:401 http: [7908cc98-5c8b-45b0-9aba-a98c86b091dc] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:06:406 http: [355ebde9-ecd4-4775-a45f-b6e249e89231] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:06:406 info: User logged out
+2026-03-04 17:40:17:4017 http: [a3616d9a-9e9f-45df-a86f-d833b82ce797] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:17:4017 info: Login attempt failed – user not found {"email":"viratjohn110@gmail.com"}
+2026-03-04 17:40:17:4017 warn: [a3616d9a-9e9f-45df-a86f-d833b82ce797] AUTH_INVALID_CREDENTIALS: Invalid credentials {"statusCode":401,"path":"/api/auth/login"}
+2026-03-04 17:40:17:4017 http: [cc503a65-bdec-4f18-b059-87b54f6d0ea7] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:17:4017 warn: [cc503a65-bdec-4f18-b059-87b54f6d0ea7] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-04 17:40:36:4036 http: [be8a0a26-08aa-4d51-a2f6-dd901bf3d022] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:36:4036 info: Login attempt failed – user not found {"email":"viratjohn110@gmail.com"}
+2026-03-04 17:40:36:4036 warn: [be8a0a26-08aa-4d51-a2f6-dd901bf3d022] AUTH_INVALID_CREDENTIALS: Invalid credentials {"statusCode":401,"path":"/api/auth/login"}
+2026-03-04 17:40:36:4036 http: [6f76e7b3-26bb-4420-9ab4-6c3ead1a257c] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:40:36:4036 warn: [6f76e7b3-26bb-4420-9ab4-6c3ead1a257c] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-04 17:41:05:415 http: [a3df9870-600a-4508-ac88-5704f90e6eed] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:41:05:415 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 17:44:06:446 http: [6a82a0ed-6c17-46c1-a3ec-43cfb3493465] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:44:06:446 http: [2a79d42b-f5f2-449b-a798-05778ef48b90] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:45:22:4522 http: [1cee6433-f7bc-4089-9e14-0cc8e86eb5ed] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:45:22:4522 http: [4f14cd61-0a1b-489e-81f2-2a4edb44b2e8] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:48:44:4844 http: [231d45c0-ad80-4db4-b72f-1ec3069e3fc2] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:48:44:4844 info: Login attempt failed – wrong password {"email":"admin@hrms.com"}
+2026-03-04 17:48:44:4844 warn: [231d45c0-ad80-4db4-b72f-1ec3069e3fc2] AUTH_INVALID_CREDENTIALS: Invalid credentials {"statusCode":401,"path":"/api/auth/login"}
+2026-03-04 17:48:44:4844 http: [0421e5bc-3ee6-4c05-96dc-30e022b27082] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:48:44:4844 warn: [0421e5bc-3ee6-4c05-96dc-30e022b27082] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-04 17:48:54:4854 http: [3289d6f0-bee2-4aa1-8de1-d650852e4da5] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:48:54:4854 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 17:50:07:507 http: [f2eec531-e3fd-4d22-8fab-48497a128d6c] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:50:07:507 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 17:50:11:5011 http: [b6dec939-3be1-43bb-ad46-36d986ffcd04] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:50:11:5011 info: User logged out
+2026-03-04 17:50:35:5035 http: [6e100077-b29f-46c4-8eb4-81e70aef6267] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:50:36:5036 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 17:50:54:5054 http: [4be8b5fb-7e3d-4fa0-b8ae-2795f207e6db] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:50:54:5054 http: [23ff2867-0ba6-46b4-a96d-f4d12bfb9341] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:51:03:513 http: [18dff60a-6850-4dc3-bcba-9ab0b662c35b] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:51:03:513 http: [978bbab5-b6e7-433c-a4c4-bc793220bba9] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:12:5512 http: [7d6f29c7-5f83-43f0-bf4c-f49274ca88fd] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:12:5512 http: [838c5e12-0faa-4b9b-86e7-a3cebee412a4] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:15:5515 http: [6fe11cee-8cb0-4eea-ab74-fa547d077e0f] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:15:5515 http: [adb83e0a-2199-49d5-a720-bcc9c8b22344] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:17:5517 http: [cf92e3b5-16a9-437c-bdbc-d7ba70d36303] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:17:5517 info: User logged out
+2026-03-04 17:55:50:5550 http: [1e3a7e0a-86d8-46d6-b1f9-faa7cf94db4c] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 17:55:50:5550 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 21:48:02:482 info: Database connection established
+2026-03-04 21:48:02:482 info: Admin user already exists, skipping seed.
+2026-03-04 21:48:02:482 info: Server running on http://localhost:5000
+2026-03-04 21:48:02:482 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 21:48:02:482 info: Environment: development
+2026-03-04 21:48:39:4839 info: Database connection established
+2026-03-04 21:48:39:4839 info: Admin user already exists, skipping seed.
+2026-03-04 21:48:39:4839 info: Server running on http://localhost:5000
+2026-03-04 21:48:39:4839 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 21:48:39:4839 info: Environment: development
+2026-03-04 21:49:22:4922 http: [326da073-c4de-4927-a4ae-b998e51e4672] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:49:22:4922 warn: [326da073-c4de-4927-a4ae-b998e51e4672] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/auth/me"}
+2026-03-04 21:49:22:4922 http: [8f03a6eb-a3aa-4342-be7e-e2c524f402e9] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:49:22:4922 warn: [8f03a6eb-a3aa-4342-be7e-e2c524f402e9] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/auth/me"}
+2026-03-04 21:49:29:4929 http: [3bc5468d-0387-4cfc-aa88-4356eea71fa0] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:49:29:4929 info: User logged out
+2026-03-04 21:49:49:4949 http: [504336a9-2acf-4b34-9b19-1a23b6dbceec] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:49:50:4950 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-04 21:49:53:4953 http: [014b9d1e-72cb-4623-b27a-ab0216b66e15] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:49:54:4954 error: [014b9d1e-72cb-4623-b27a-ab0216b66e15] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 21:49:54:4954 http: [00f0c83f-1717-4e9c-aa9a-d1ed3ffc18ac] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:49:54:4954 error: [00f0c83f-1717-4e9c-aa9a-d1ed3ffc18ac] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 21:54:26:5426 http: [a3d67734-07b4-41d4-8db2-e31400fba1c9] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:54:26:5426 error: [a3d67734-07b4-41d4-8db2-e31400fba1c9] Unhandled error: value too long for type character varying(10) {"path":"/api/employees"}
+QueryFailedError: value too long for type character varying(10)
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async InsertQueryBuilder.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\InsertQueryBuilder.ts:164:33)
+    at async SubjectExecutor.executeInsertOperations (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:435:42)
+    at async SubjectExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:137:9)
+    at async EntityPersistExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\EntityPersistExecutor.ts:182:21)
+    at async EmployeeService.createEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:99:21)
+    at async create (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:26:20)
+2026-03-04 21:54:39:5439 http: [929cce28-e798-4701-87c1-d2b1410306a8] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:54:39:5439 warn: [929cce28-e798-4701-87c1-d2b1410306a8] EMAIL_EXISTS: An account with this email already exists {"statusCode":409,"path":"/api/employees"}
+2026-03-04 21:54:52:5452 http: [9bb7a315-8f91-4064-afde-31634d489ebc] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:54:52:5452 warn: [9bb7a315-8f91-4064-afde-31634d489ebc] EMAIL_EXISTS: An account with this email already exists {"statusCode":409,"path":"/api/employees"}
+2026-03-04 21:59:09:599 http: [ac48a32d-fd92-4f5b-a4c4-39f6c8247e4e] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:59:09:599 error: [ac48a32d-fd92-4f5b-a4c4-39f6c8247e4e] Unhandled error: value too long for type character varying(10) {"path":"/api/employees"}
+QueryFailedError: value too long for type character varying(10)
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async InsertQueryBuilder.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\InsertQueryBuilder.ts:164:33)
+    at async SubjectExecutor.executeInsertOperations (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:435:42)
+    at async SubjectExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:137:9)
+    at async EntityPersistExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\EntityPersistExecutor.ts:182:21)
+    at async EmployeeService.createEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:99:21)
+    at async create (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:26:20)
+2026-03-04 21:59:50:5950 http: [b710b562-d021-4377-bc60-66b7402a64d2] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:59:50:5950 error: [b710b562-d021-4377-bc60-66b7402a64d2] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 21:59:50:5950 http: [80ee60ad-f25f-4f5c-af20-05f380576ed2] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 21:59:50:5950 error: [80ee60ad-f25f-4f5c-af20-05f380576ed2] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 22:25:58:2558 info: Database connection established
+2026-03-04 22:25:58:2558 info: Admin user already exists, skipping seed.
+2026-03-04 22:25:58:2558 info: Server running on http://localhost:5000
+2026-03-04 22:25:58:2558 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:25:58:2558 info: Environment: development
+2026-03-04 22:26:05:265 info: Database connection established
+2026-03-04 22:26:05:265 info: Admin user already exists, skipping seed.
+2026-03-04 22:26:05:265 info: Server running on http://localhost:5000
+2026-03-04 22:26:05:265 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:26:05:265 info: Environment: development
+2026-03-04 22:26:38:2638 info: Database connection established
+2026-03-04 22:26:38:2638 info: Admin user already exists, skipping seed.
+2026-03-04 22:26:38:2638 info: Server running on http://localhost:5000
+2026-03-04 22:26:38:2638 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:26:38:2638 info: Environment: development
+2026-03-04 22:27:27:2727 info: Database connection established
+2026-03-04 22:27:27:2727 info: Admin user already exists, skipping seed.
+2026-03-04 22:27:27:2727 info: Server running on http://localhost:5000
+2026-03-04 22:27:27:2727 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:27:27:2727 info: Environment: development
+2026-03-04 22:27:47:2747 info: Database connection established
+2026-03-04 22:27:47:2747 info: Admin user already exists, skipping seed.
+2026-03-04 22:27:47:2747 info: Server running on http://localhost:5000
+2026-03-04 22:27:47:2747 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:27:47:2747 info: Environment: development
+2026-03-04 22:28:02:282 info: Database connection established
+2026-03-04 22:28:02:282 info: Admin user already exists, skipping seed.
+2026-03-04 22:28:02:282 info: Server running on http://localhost:5000
+2026-03-04 22:28:02:282 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:28:02:282 info: Environment: development
+2026-03-04 22:28:24:2824 info: Database connection established
+2026-03-04 22:28:24:2824 info: Admin user already exists, skipping seed.
+2026-03-04 22:28:24:2824 info: Server running on http://localhost:5000
+2026-03-04 22:28:24:2824 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:28:24:2824 info: Environment: development
+2026-03-04 22:29:38:2938 info: Database connection established
+2026-03-04 22:29:38:2938 info: Admin user already exists, skipping seed.
+2026-03-04 22:29:38:2938 info: Server running on http://localhost:5000
+2026-03-04 22:29:38:2938 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:29:38:2938 info: Environment: development
+2026-03-04 22:30:16:3016 info: Database connection established
+2026-03-04 22:30:16:3016 info: Admin user already exists, skipping seed.
+2026-03-04 22:30:16:3016 info: Server running on http://localhost:5000
+2026-03-04 22:30:16:3016 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:30:16:3016 info: Environment: development
+2026-03-04 22:32:27:3227 http: [7ef06b49-2570-4c3f-8100-abf8913e3791] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 22:32:27:3227 warn: [7ef06b49-2570-4c3f-8100-abf8913e3791] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/auth/me"}
+2026-03-04 22:32:27:3227 http: [ff73114c-c17f-42fc-8e6d-16e15427632b] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 22:32:27:3227 warn: [ff73114c-c17f-42fc-8e6d-16e15427632b] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/auth/me"}
+2026-03-04 22:38:47:3847 info: Database connection established
+2026-03-04 22:38:47:3847 info: Admin user already exists, skipping seed.
+2026-03-04 22:38:47:3847 info: Server running on http://localhost:5000
+2026-03-04 22:38:47:3847 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:38:47:3847 info: Environment: development
+2026-03-04 22:47:55:4755 info: Database connection established
+2026-03-04 22:47:55:4755 info: Admin user already exists, skipping seed.
+2026-03-04 22:47:55:4755 info: Server running on http://localhost:5000
+2026-03-04 22:47:55:4755 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 22:47:55:4755 info: Environment: development
+2026-03-04 23:00:59:059 info: Database connection established
+2026-03-04 23:00:59:059 info: Admin user already exists, skipping seed.
+2026-03-04 23:00:59:059 info: Server running on http://localhost:5000
+2026-03-04 23:00:59:059 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 23:00:59:059 info: Environment: development
+2026-03-04 23:09:07:97 info: Database connection established
+2026-03-04 23:09:07:97 info: Admin user already exists, skipping seed.
+2026-03-04 23:09:07:97 info: Server running on http://localhost:5000
+2026-03-04 23:09:07:97 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 23:09:07:97 info: Environment: development
+2026-03-04 23:12:43:1243 info: Database connection established
+2026-03-04 23:12:43:1243 info: Admin user already exists, skipping seed.
+2026-03-04 23:12:43:1243 info: Server running on http://localhost:5000
+2026-03-04 23:12:43:1243 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-04 23:12:43:1243 info: Environment: development
+2026-03-04 23:13:05:135 http: [a9806c36-01dc-48b4-998b-e128e1592e06] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:05:135 warn: [a9806c36-01dc-48b4-998b-e128e1592e06] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-04 23:13:05:135 http: [9643cb1f-8378-49d1-b9e3-ccf41fed16ed] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:05:135 warn: [9643cb1f-8378-49d1-b9e3-ccf41fed16ed] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-04 23:13:05:135 http: [18407541-647c-41bb-878d-a5c2953641a0] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:05:135 http: [34dcb263-fe5d-4edf-881e-a20c254ef09f] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:05:135 http: [bf68a83d-b02f-4eee-896b-d5a212b3249f] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:51:1351 http: [6a9714b7-f504-45ea-a39b-d4da296e590a] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:51:1351 http: [cdf164c3-e4b9-4800-b508-58e68c75de69] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:57:1357 http: [a168efd1-f508-4c07-8ec4-db7a0b3286f5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:13:57:1357 http: [bc5f2a92-712f-4525-842c-fd382d5bceef] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:14:00:140 http: [c70ccfa3-d038-4901-8307-30819da4e845] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:14:00:140 http: [e0d2728e-12e6-4060-b4a3-c4d5928ac3ae] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:14:01:141 http: [814b3952-147d-45e6-9693-7463c4fa4826] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:14:01:141 http: [6c1c8a4f-6d49-4d03-b195-596f2453baf5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:07:157 http: [3c7b3629-1bef-48fe-a169-0421ac2b304f] GET /api/attendance?date=2026-03-04 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:07:157 http: [3ccae4be-d672-41d4-842b-70ce9fc8c6c1] GET /api/attendance?date=2026-03-04 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:12:1512 http: [eaa40cea-09c4-4c33-b7d8-0393babbd311] GET /api/leaves {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:12:1512 http: [ee19d8c9-b515-4e3b-b399-cc0146cbd469] GET /api/leaves {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:14:1514 http: [ca93c218-1c6f-4e32-876e-892fcea70772] GET /api/payroll?month=Feb%202026 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:14:1514 http: [ecca2d50-e426-410e-b75c-19628fdd1e89] GET /api/payroll/summary?month=Feb%202026 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:14:1514 http: [2aa40a11-f1b7-49cc-aa86-3bacd7912c0b] GET /api/payroll?month=Feb%202026 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:14:1514 http: [f7046c4a-2547-4e9e-8a0e-840a8d637e7e] GET /api/payroll/summary?month=Feb%202026 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:31:1531 http: [ea3e696c-d2f0-474c-907c-5c0182406937] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:31:1531 http: [d6b2f55b-256a-481a-ac14-3ca920610a56] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:34:1534 http: [1f38306a-49da-4b92-837f-5f72b7c36a72] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:34:1534 http: [c60bc560-a2d6-462e-865f-ea76af651b18] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:36:1536 http: [df54dc9b-e526-4d4c-9131-911911815a01] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:15:36:1536 http: [485f4b6a-9f8e-46de-bcd2-54679f946156] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:16:01:161 http: [aee37161-e88d-4afc-a602-c74aab40ad0f] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:16:01:161 http: [03275945-2499-4bff-a4db-07a368fb1882] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:17:16:1716 http: [19fb9161-1fc4-4810-a1df-7a7aa4352e2e] GET /api/leaves {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:17:16:1716 http: [5601da51-6d6f-412a-81c0-fd04438d37c0] GET /api/leaves {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:17:33:1733 http: [a5c81aaf-8aa7-427a-8a9b-43c7a0aae842] GET /api/attendance?date=2026-03-04 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-04 23:17:33:1733 http: [2fd43a75-4764-4f02-a7d1-eeb21a5d33c5] GET /api/attendance?date=2026-03-04 {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:05:36:536 info: Database connection established
+2026-03-05 11:05:36:536 info: Admin user already exists, skipping seed.
+2026-03-05 11:05:36:536 info: Server running on http://localhost:5000
+2026-03-05 11:05:36:536 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:05:36:536 info: Environment: development
+2026-03-05 11:26:29:2629 info: Database connection established
+2026-03-05 11:26:29:2629 info: Admin user already exists, skipping seed.
+2026-03-05 11:26:29:2629 info: Server running on http://localhost:5000
+2026-03-05 11:26:29:2629 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:26:29:2629 info: Environment: development
+2026-03-05 11:33:31:3331 info: Database connection established
+2026-03-05 11:33:31:3331 info: Admin user seeded successfully: admin@hrms.com
+2026-03-05 11:33:31:3331 info: Server running on http://localhost:5000
+2026-03-05 11:33:31:3331 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:33:31:3331 info: Environment: development
+2026-03-05 11:35:31:3531 info: Database connection established
+2026-03-05 11:35:32:3532 info: Admin user already exists, skipping seed.
+2026-03-05 11:35:32:3532 info: Server running on http://localhost:5000
+2026-03-05 11:35:32:3532 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:35:32:3532 info: Environment: development
+2026-03-05 11:37:30:3730 info: Database connection established
+2026-03-05 11:37:30:3730 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:37:30:3730 info: Server running on http://localhost:5000
+2026-03-05 11:37:30:3730 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:37:30:3730 info: Environment: development
+2026-03-05 11:37:37:3737 info: Database connection established
+2026-03-05 11:37:37:3737 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:37:37:3737 info: Server running on http://localhost:5000
+2026-03-05 11:37:37:3737 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:37:37:3737 info: Environment: development
+2026-03-05 11:38:19:3819 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:40:10:4010 info: Database connection established
+2026-03-05 11:40:10:4010 info: Database connection established
+2026-03-05 11:40:10:4010 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:40:10:4010 info: Server running on http://localhost:5000
+2026-03-05 11:40:10:4010 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:40:10:4010 info: Environment: development
+2026-03-05 11:40:10:4010 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:40:10:4010 info: Server running on http://localhost:5000
+2026-03-05 11:40:10:4010 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:40:10:4010 info: Environment: development
+2026-03-05 11:40:13:4013 info: Database connection established
+2026-03-05 11:40:13:4013 info: Database connection established
+2026-03-05 11:40:14:4014 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:40:14:4014 info: Server running on http://localhost:5000
+2026-03-05 11:40:14:4014 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:40:14:4014 info: Environment: development
+2026-03-05 11:40:14:4014 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:40:14:4014 info: Server running on http://localhost:5000
+2026-03-05 11:40:14:4014 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:40:14:4014 info: Environment: development
+2026-03-05 11:40:59:4059 info: Database connection established
+2026-03-05 11:41:00:410 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:41:00:410 info: Server running on http://localhost:5000
+2026-03-05 11:41:00:410 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:41:00:410 info: Environment: development
+2026-03-05 11:46:12:4612 info: Database connection established
+2026-03-05 11:46:12:4612 info: Database connection established
+2026-03-05 11:46:12:4612 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:46:12:4612 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:46:12:4612 info: Server running on http://localhost:5000
+2026-03-05 11:46:12:4612 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:46:12:4612 info: Environment: development
+2026-03-05 11:46:12:4612 info: Server running on http://localhost:5000
+2026-03-05 11:46:12:4612 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:46:12:4612 info: Environment: development
+2026-03-05 11:46:35:4635 info: Database connection established
+2026-03-05 11:46:35:4635 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:46:35:4635 info: Server running on http://localhost:5000
+2026-03-05 11:46:35:4635 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:46:35:4635 info: Environment: development
+2026-03-05 11:48:46:4846 info: Database connection established
+2026-03-05 11:48:46:4846 info: Admin user already exists, credentials updated from env.
+2026-03-05 11:48:46:4846 info: Server running on http://localhost:5000
+2026-03-05 11:48:46:4846 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 11:48:46:4846 info: Environment: development
+2026-03-05 11:49:41:4941 http: [c531b3ce-eb87-4c0a-82bb-01c8f9783aca] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:49:41:4941 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-05 11:49:57:4957 http: [14636364-9b17-44a0-8616-a795b0684fde] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:49:57:4957 http: [4e138d0c-19d4-4116-8f6d-9ccc5dfde7f3] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:49:59:4959 http: [8562dc0e-5d74-4614-9a91-a42d683b3061] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:49:59:4959 http: [2411c3a3-d535-43ca-a87b-629f5ee3310b] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:53:13:5313 http: [6f053aa8-bd27-42bd-9d2d-11092efabfcb] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:53:13:5313 http: [febe3dbe-cf75-4efb-ae0b-4a4ce95158e7] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:53:13:5313 http: [bd2a3ec5-7dd9-4adc-8970-ad522a0c5e67] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 11:53:13:5313 http: [7707bb5b-f9c5-407f-a413-1501b0d97c54] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}

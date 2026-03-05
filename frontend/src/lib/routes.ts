@@ -1,6 +1,11 @@
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
+  UserCog,
+  Banknote,
+  FileText,
+  Eye,
   CalendarCheck,
   CalendarOff,
   Wallet,
@@ -12,17 +17,26 @@ export interface RouteItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  children?: RouteItem[];
 }
 
 export const adminRoutes: RouteItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Employees", href: "/admin/employees", icon: Users },
+  {
+    label: "Employees",
+    href: "/admin/employees",
+    icon: Users,
+    children: [
+      { label: "Employee Details", href: "/admin/employees/add", icon: UserPlus },
+      { label: "Personal Details", href: "/admin/employees/personal", icon: UserCog },
+      { label: "Salary & Banking", href: "/admin/employees/salary", icon: Banknote },
+      { label: "Documents", href: "/admin/employees/documents", icon: FileText },
+      { label: "View Employee", href: "/admin/employees/view", icon: Eye },
+    ],
+  },
   { label: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
   { label: "Leave", href: "/admin/leave", icon: CalendarOff },
   { label: "Payroll", href: "/admin/payroll", icon: Wallet },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export const employeeRoutes: RouteItem[] = [
-  { label: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard },
-];

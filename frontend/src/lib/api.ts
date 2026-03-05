@@ -1,0 +1,164 @@
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+/**
+ * Lightweight fetch wrapper for the HRMS backend.
+ *
+ * - Automatically attaches the access token from localStorage.
+ * - On 401, attempts a silent refresh and retries once.
+ * - Returns typed JSON or throws an `ApiError`.
+ */
+
+// ─── Types ───────────────────────────────────────────────────────────
+export interface ApiSuccessResponse<T = unknown> {
+  success: true;
+  message: string;
+  data: T;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  message: string;
+  errorCode: string;
+}
+
+export type ApiResult<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+export class ApiError extends Error {
+  constructor(
+    public message: string,
+    public errorCode: string,
+    public statusCode: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// ─── Token helpers ───────────────────────────────────────────────────
+const TOKEN_KEY = "hrms_access_token";
+
+export const getAccessToken = (): string | null =>
+  typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+
+export const setAccessToken = (token: string): void =>
+  localStorage.setItem(TOKEN_KEY, token);
+
+export const clearAccessToken = (): void =>
+  localStorage.removeItem(TOKEN_KEY);
+
+// ─── Core request function ───────────────────────────────────────────
+async function request<T = unknown>(
+  endpoint: string,
+  options: RequestInit = {},
+  retry = true,
+): Promise<T> {
+  const token = getAccessToken();
+
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+
+  // Only set Content-Type for non-FormData bodies
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+    credentials: "include", // send httpOnly cookies (refresh token)
+  });
+
+  const body = await res.json().catch(() => null);
+
+  // Successful response
+  if (res.ok && body?.success) {
+    return body.data as T;
+  }
+
+  // 401 — attempt silent token refresh, then retry once
+  if (res.status === 401 && retry) {
+    const refreshed = await silentRefresh();
+    if (refreshed) {
+      return request<T>(endpoint, options, false);
+    }
+  }
+
+  // Error
+  const msg = body?.message || res.statusText || "Request failed";
+  const code = body?.errorCode || "UNKNOWN_ERROR";
+  throw new ApiError(msg, code, res.status);
+}
+
+// ─── Silent refresh ──────────────────────────────────────────────────
+let refreshPromise: Promise<boolean> | null = null;
+
+async function silentRefresh(): Promise<boolean> {
+  // Deduplicate concurrent refresh calls
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const body = await res.json().catch(() => null);
+
+      if (res.ok && body?.success && body?.data?.accessToken) {
+        setAccessToken(body.data.accessToken);
+        return true;
+      }
+
+      // Refresh failed — clear everything
+      clearAccessToken();
+      return false;
+    } catch {
+      clearAccessToken();
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+// ─── Public helpers ──────────────────────────────────────────────────
+export const api = {
+  get: <T = unknown>(endpoint: string) =>
+    request<T>(endpoint, { method: "GET" }),
+
+  post: <T = unknown>(endpoint: string, data?: unknown) =>
+    request<T>(endpoint, {
+      method: "POST",
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  put: <T = unknown>(endpoint: string, data?: unknown) =>
+    request<T>(endpoint, {
+      method: "PUT",
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  patch: <T = unknown>(endpoint: string, data?: unknown) =>
+    request<T>(endpoint, {
+      method: "PATCH",
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  delete: <T = unknown>(endpoint: string) =>
+    request<T>(endpoint, { method: "DELETE" }),
+
+  postFormData: <T = unknown>(endpoint: string, formData: FormData) =>
+    request<T>(endpoint, {
+      method: "POST",
+      body: formData,
+    }),
+};

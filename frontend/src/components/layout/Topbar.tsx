@@ -165,14 +165,14 @@ export default function Topbar() {
               <Flex align="center" gap={2}>
                 <Avatar
                   size="sm"
-                  name={user?.name ?? "User"}
+                  name={user ? `${user.firstName} ${user.lastName}` : "User"}
                   bg="brand.400"
                   color="white"
                   fontSize="xs"
                 />
                 <Box display={{ base: "none", md: "block" }}>
                   <Text fontSize="sm" fontWeight="600" color="text.heading" lineHeight="1.2">
-                    {user?.name ?? "User"}
+                    {user ? `${user.firstName} ${user.lastName}` : "User"}
                   </Text>
                   <Text fontSize="xs" color="text.muted" lineHeight="1.2" textTransform="capitalize">
                     {user?.role ?? "—"}

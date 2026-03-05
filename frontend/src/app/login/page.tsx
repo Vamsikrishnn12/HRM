@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import AuthLoader from "@/components/ui/AuthLoader";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Enter a valid email"),
@@ -31,7 +32,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated, user } = useAuth();
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const { login, isAuthenticated, user, authStatus } = useAuth();
   const router = useRouter();
 
   // Redirect if already authenticated
@@ -49,14 +51,52 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  /**
+   * Try to get the user's current coordinates.
+   * Returns undefined if denied / unavailable — backend will decide
+   * whether location is required for this account.
+   */
+  const getCoordinates = (): Promise<{ latitude: number; longitude: number } | undefined> =>
+    new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(undefined);
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          resolve({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          }),
+        () => resolve(undefined),
+        { enableHighAccuracy: true, timeout: 5000 },
+      );
+    });
+
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-    const loggedInUser = await login(data.email, data.password);
+    setLocationError(null);
+
+    const coords = await getCoordinates();
+
+    const loggedInUser = await login({
+      email: data.email,
+      password: data.password,
+      latitude: coords?.latitude,
+      longitude: coords?.longitude,
+    });
+
     if (loggedInUser) {
-      router.push(loggedInUser.role === "admin" ? "/admin/dashboard" : "/employee/dashboard");
+      // Small delay so user sees the "Preparing your dashboard..." transition
+      setTimeout(() => {
+        router.push(loggedInUser.role === "admin" ? "/admin/dashboard" : "/employee/dashboard");
+      }, 1500);
+    } else {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
+
+  // Show auth transition screen during checking/redirecting
+  if (authStatus === "checking" || authStatus === "redirecting") {
+    return <AuthLoader status={authStatus} />;
+  }
 
   return (
     <Flex minH="100vh">
@@ -266,20 +306,17 @@ export default function LoginPage() {
               <Text as="span" fontWeight="600" color="text.heading">
                 Location Based Login
               </Text>{" "}
-              — Geo-validation will be integrated in a future update.
+              — Your browser location will be sent for geo-validation if your account requires it.
             </Text>
           </Flex>
 
-          {/* Demo credentials hint */}
+          {/* Credentials hint */}
           <Box mt={4} p={3} borderRadius="lg" bg="brand.50">
             <Text fontSize="xs" color="brand.700" fontWeight="600" mb={1}>
-              Demo Credentials
+              Default Admin Account
             </Text>
             <Text fontSize="xs" color="brand.600">
-              Admin: admin@hrms.com / Admin@123
-            </Text>
-            <Text fontSize="xs" color="brand.600">
-              Employee: user@hrms.com / User@123
+              admin@hrms.com / Admin@123
             </Text>
           </Box>
         </Box>

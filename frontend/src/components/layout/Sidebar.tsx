@@ -1,12 +1,151 @@
 "use client";
 
-import { Box, Flex, Text, VStack, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Text, VStack, IconButton, Collapse } from "@chakra-ui/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useCallback } from "react";
+import { LogOut, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
 import { adminRoutes, type RouteItem } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
+
+function NavItem({
+  route,
+  pathname,
+  collapsed,
+}: {
+  route: RouteItem;
+  pathname: string;
+  collapsed: boolean;
+}) {
+  const isActive = pathname === route.href || pathname.startsWith(route.href + "/");
+  const Icon = route.icon;
+  return (
+    <Link href={route.href}>
+      <Flex
+        align="center"
+        gap={3}
+        px={3}
+        py={2.5}
+        borderRadius="lg"
+        bg={isActive ? "brand.50" : "transparent"}
+        color={isActive ? "brand.400" : "text.muted"}
+        fontWeight={isActive ? "600" : "500"}
+        fontSize="sm"
+        transition="all 0.15s"
+        _hover={{ bg: isActive ? "brand.50" : "surface.bg", color: "brand.400" }}
+        justify={collapsed ? "center" : "flex-start"}
+        title={collapsed ? route.label : undefined}
+      >
+        <Icon size={20} aria-hidden="true" />
+        {!collapsed && <Text>{route.label}</Text>}
+      </Flex>
+    </Link>
+  );
+}
+
+function NavGroup({
+  route,
+  pathname,
+  collapsed,
+}: {
+  route: RouteItem;
+  pathname: string;
+  collapsed: boolean;
+}) {
+  const isChildActive = route.children?.some(
+    (c) => pathname === c.href || pathname.startsWith(c.href + "/"),
+  );
+  const [open, setOpen] = useState(!!isChildActive);
+  const Icon = route.icon;
+
+  useEffect(() => {
+    if (isChildActive) setOpen(true);
+  }, [isChildActive]);
+
+  if (collapsed) {
+    return (
+      <Box>
+        <Link href={route.href}>
+          <Flex
+            align="center"
+            justify="center"
+            px={3}
+            py={2.5}
+            borderRadius="lg"
+            bg={isChildActive ? "brand.50" : "transparent"}
+            color={isChildActive ? "brand.400" : "text.muted"}
+            transition="all 0.15s"
+            _hover={{ bg: "surface.bg", color: "brand.400" }}
+            title={route.label}
+          >
+            <Icon size={20} />
+          </Flex>
+        </Link>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Flex
+        as="button"
+        w="100%"
+        align="center"
+        gap={3}
+        px={3}
+        py={2.5}
+        borderRadius="lg"
+        bg={isChildActive && !open ? "brand.50" : "transparent"}
+        color={isChildActive ? "brand.400" : "text.muted"}
+        fontWeight={isChildActive ? "600" : "500"}
+        fontSize="sm"
+        transition="all 0.15s"
+        _hover={{ bg: "surface.bg", color: "brand.400" }}
+        onClick={() => setOpen((p) => !p)}
+      >
+        <Icon size={20} aria-hidden="true" />
+        <Text flex={1} textAlign="left">
+          {route.label}
+        </Text>
+        <Box
+          transform={open ? "rotate(180deg)" : "rotate(0deg)"}
+          transition="transform 0.2s"
+        >
+          <ChevronDown size={16} />
+        </Box>
+      </Flex>
+
+      <Collapse in={open} animateOpacity>
+        <VStack spacing={0.5} pl={6} mt={1} align="stretch">
+          {route.children?.map((child) => {
+            const childActive = pathname === child.href || pathname.startsWith(child.href + "/");
+            const ChildIcon = child.icon;
+            return (
+              <Link key={child.href} href={child.href}>
+                <Flex
+                  align="center"
+                  gap={2.5}
+                  px={3}
+                  py={2}
+                  borderRadius="lg"
+                  bg={childActive ? "brand.50" : "transparent"}
+                  color={childActive ? "brand.400" : "text.muted"}
+                  fontWeight={childActive ? "600" : "500"}
+                  fontSize="13px"
+                  transition="all 0.15s"
+                  _hover={{ bg: "surface.bg", color: "brand.400" }}
+                >
+                  <ChildIcon size={16} aria-hidden="true" />
+                  <Text>{child.label}</Text>
+                </Flex>
+              </Link>
+            );
+          })}
+        </VStack>
+      </Collapse>
+    </Box>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -91,35 +230,13 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <VStack as="nav" spacing={1} px={2} flex={1} align="stretch">
-        {adminRoutes.map((route: RouteItem) => {
-          const isActive = pathname === route.href || pathname.startsWith(route.href + "/");
-          const Icon = route.icon;
-          return (
-            <Link key={route.href} href={route.href}>
-              <Flex
-                align="center"
-                gap={3}
-                px={3}
-                py={2.5}
-                borderRadius="lg"
-                bg={isActive ? "brand.50" : "transparent"}
-                color={isActive ? "brand.400" : "text.muted"}
-                fontWeight={isActive ? "600" : "500"}
-                fontSize="sm"
-                transition="all 0.15s"
-                _hover={{
-                  bg: isActive ? "brand.50" : "surface.bg",
-                  color: "brand.400",
-                }}
-                justify={collapsed ? "center" : "flex-start"}
-                title={collapsed ? route.label : undefined}
-              >
-                <Icon size={20} aria-hidden="true" />
-                {!collapsed && <Text>{route.label}</Text>}
-              </Flex>
-            </Link>
-          );
-        })}
+        {adminRoutes.map((route: RouteItem) =>
+          route.children ? (
+            <NavGroup key={route.href} route={route} pathname={pathname} collapsed={collapsed} />
+          ) : (
+            <NavItem key={route.href} route={route} pathname={pathname} collapsed={collapsed} />
+          ),
+        )}
       </VStack>
 
       {/* Logout */}

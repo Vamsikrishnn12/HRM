@@ -1,0 +1,61 @@
+2026-03-04 17:22:29:2229 error: Failed to start server {"error":{"length":104,"name":"error","severity":"FATAL","code":"28P01","file":"auth.c","line":"320","routine":"auth_failed"}}
+2026-03-04 21:49:54:4954 error: [014b9d1e-72cb-4623-b27a-ab0216b66e15] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 21:49:54:4954 error: [00f0c83f-1717-4e9c-aa9a-d1ed3ffc18ac] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 21:54:26:5426 error: [a3d67734-07b4-41d4-8db2-e31400fba1c9] Unhandled error: value too long for type character varying(10) {"path":"/api/employees"}
+QueryFailedError: value too long for type character varying(10)
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async InsertQueryBuilder.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\InsertQueryBuilder.ts:164:33)
+    at async SubjectExecutor.executeInsertOperations (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:435:42)
+    at async SubjectExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:137:9)
+    at async EntityPersistExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\EntityPersistExecutor.ts:182:21)
+    at async EmployeeService.createEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:99:21)
+    at async create (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:26:20)
+2026-03-04 21:59:09:599 error: [ac48a32d-fd92-4f5b-a4c4-39f6c8247e4e] Unhandled error: value too long for type character varying(10) {"path":"/api/employees"}
+QueryFailedError: value too long for type character varying(10)
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async InsertQueryBuilder.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\InsertQueryBuilder.ts:164:33)
+    at async SubjectExecutor.executeInsertOperations (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:435:42)
+    at async SubjectExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\SubjectExecutor.ts:137:9)
+    at async EntityPersistExecutor.execute (C:\Users\HP\Desktop\hrms\backend\node_modules\src\persistence\EntityPersistExecutor.ts:182:21)
+    at async EmployeeService.createEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:99:21)
+    at async create (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:26:20)
+2026-03-04 21:59:50:5950 error: [b710b562-d021-4377-bc60-66b7402a64d2] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)
+2026-03-04 21:59:50:5950 error: [80ee60ad-f25f-4f5c-af20-05f380576ed2] Unhandled error: column distinctAlias.profile_createdAt does not exist {"path":"/api/employees"}
+QueryFailedError: column distinctAlias.profile_createdAt does not exist
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getManyAndCount (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1874:36)
+    at async EmployeeRepository.findAll (C:\Users\HP\Desktop\hrms\backend\src\repositories\employee.repository.ts:52:27)
+    at async list (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:15:20)

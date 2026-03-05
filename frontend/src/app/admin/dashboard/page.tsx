@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { Box, Flex, SimpleGrid, Text, Badge, VStack, HStack } from "@chakra-ui/react";
-import { Calendar, Megaphone, Info, PartyPopper, RefreshCw } from "lucide-react";
+import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react";
+import { Calendar, Megaphone, Info, RefreshCw } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import SectionCard from "@/components/ui/SectionCard";

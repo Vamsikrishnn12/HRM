@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Box,
   Flex,
@@ -8,21 +8,80 @@ import {
   InputGroup,
   InputLeftElement,
   Select,
-  Button,
   Text,
+  Spinner,
+  Center,
 } from "@chakra-ui/react";
-import Link from "next/link"; // ✅ ADD THIS LINE
+import Link from "next/link";
 import { Search, Plus, Download } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
-import { employees, type Employee } from "@/lib/mockData";
+import { api } from "@/lib/api";
+
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  designation: string;
+  status: "Active" | "On Leave" | "Inactive";
+  joinDate: string;
+}
 
 export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const result = await api.get<{
+        data: Array<{
+          id: string;
+          department: string;
+          designation: string;
+          dateOfJoining: string;
+          user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            isActive: boolean;
+            empId: string | null;
+          };
+        }>;
+        total: number;
+      }>("/employees");
+
+      const mapped: Employee[] = result.data.map((emp) => ({
+        id: emp.user.empId || emp.user.id.slice(0, 8),
+        name: `${emp.user.firstName} ${emp.user.lastName}`,
+        email: emp.user.email,
+        department: emp.department,
+        designation: emp.designation,
+        status: emp.user.isActive ? "Active" : "Inactive",
+        joinDate: emp.dateOfJoining,
+      }));
+
+      setEmployees(mapped);
+      setDepartments(Array.from(new Set(mapped.map((e) => e.department))));
+    } catch {
+      // Fall back to empty if API not yet available
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return employees.filter((e) => {
@@ -34,12 +93,7 @@ export default function EmployeesPage() {
       const matchDept = !deptFilter || e.department === deptFilter;
       return matchSearch && matchDept;
     });
-  }, [search, deptFilter]);
-
-  const departments = useMemo(
-    () => Array.from(new Set(employees.map((e) => e.department))),
-    []
-  );
+  }, [search, deptFilter, employees]);
 
   const columns = useMemo<Column<Employee>[]>(
     () => [
@@ -85,15 +139,14 @@ export default function EmployeesPage() {
               Export
             </SecondaryButton>
 
-            {/* ✅ ONLY CHANGE: make it navigate */}
-            <PrimaryButton
-              as={Link}
-              href="/admin/employees/add"
-              leftIcon={<Plus size={16} />}
-              size="sm"
-            >
-              Add Employee
-            </PrimaryButton>
+            <Link href="/admin/employees/add">
+              <PrimaryButton
+                leftIcon={<Plus size={16} />}
+                size="sm"
+              >
+                Add Employee
+              </PrimaryButton>
+            </Link>
           </>
         }
       />
@@ -138,7 +191,19 @@ export default function EmployeesPage() {
         </Flex>
 
         <Box p={5} pt={4}>
-          <DataTable<Employee> columns={columns} data={filtered} keyField="id" />
+          {loading ? (
+            <Center py={10}>
+              <Spinner color="brand.500" />
+            </Center>
+          ) : filtered.length === 0 ? (
+            <Center py={10}>
+              <Text color="text.muted" fontSize="sm">
+                No employees found. Add your first employee to get started.
+              </Text>
+            </Center>
+          ) : (
+            <DataTable<Employee> columns={columns} data={filtered} keyField="id" />
+          )}
         </Box>
       </SectionCard>
     </Box>
