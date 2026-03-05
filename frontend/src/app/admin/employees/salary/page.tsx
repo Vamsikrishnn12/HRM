@@ -10,29 +10,13 @@ import {
   Checkbox,
   useToast,
 } from "@chakra-ui/react";
-import { api } from "@/lib/api";
+import { employeeApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
-
-interface SalaryForm {
-  ctc: string;
-  basic: string;
-  hra: string;
-  allowances: string;
-  pfApplicable: boolean;
-  pfEmployeeContribution: string;
-  pfEmployerContribution: string;
-  taxRegime: string;
-  accountNumber: string;
-  ifscCode: string;
-  bankName: string;
-  branchName: string;
-  panNumber: string;
-  uanNumber: string;
-}
+import type { SalaryForm } from "@/types";
 
 const emptyForm: SalaryForm = {
   ctc: "",
@@ -59,7 +43,7 @@ export default function SalaryBankingPage() {
 
   useEffect(() => {
     if (!selectedUserId) { setForm({ ...emptyForm }); return; }
-    api.get<any>(`/employees/user/${selectedUserId}`).then((data) => {
+    employeeApi.getByUserId(selectedUserId).then((data) => {
       const sal = data.salaryStructure;
       const bank = data.bankAccount;
       setForm({
@@ -84,7 +68,7 @@ export default function SalaryBankingPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await api.put(`/employees/${selectedUserId}/salary`, {
+      await employeeApi.saveSalary(selectedUserId, {
         ctc: parseFloat(form.ctc) || 0,
         basic: parseFloat(form.basic) || 0,
         hra: parseFloat(form.hra) || 0,

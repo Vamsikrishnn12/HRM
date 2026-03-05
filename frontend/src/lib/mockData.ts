@@ -1,4 +1,13 @@
 // ── KPI Stats ──
+import type {
+  AttendanceRecord,
+  Employee,
+  LeaveRequest,
+  PayrollRecord,
+} from "@/types";
+
+export type { AttendanceRecord, Employee, LeaveRequest, PayrollRecord };
+
 export const kpiStats = [
   { label: "Total Employees", value: "248", change: "+12", changeType: "up" as const, icon: "Users" },
   { label: "Present Today", value: "213", change: "85.8%", changeType: "up" as const, icon: "UserCheck" },
@@ -47,16 +56,6 @@ export const leaveTypesData = [
 ];
 
 // ── Recent Attendance ──
-export interface AttendanceRecord {
-  id: string;
-  name: string;
-  department: string;
-  date: string;
-  checkIn: string;
-  checkOut: string;
-  status: "Present" | "Absent" | "Late" | "Half Day";
-}
-
 export const recentAttendance: AttendanceRecord[] = [
   { id: "EMP001", name: "Sarah Johnson", department: "Engineering", date: "Mar 02", checkIn: "09:02", checkOut: "18:15", status: "Present" },
   { id: "EMP002", name: "Michael Chen", department: "Marketing", date: "Mar 02", checkIn: "09:45", checkOut: "18:00", status: "Late" },
@@ -83,16 +82,6 @@ export const upcomingHolidays = [
 ];
 
 // ── Employees List ──
-export interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  designation: string;
-  status: "Active" | "On Leave" | "Inactive";
-  joinDate: string;
-}
-
 export const employees: Employee[] = [
   { id: "EMP001", name: "Sarah Johnson", email: "sarah.j@hrms.com", department: "Engineering", designation: "Sr. Developer", status: "Active", joinDate: "2023-03-15" },
   { id: "EMP002", name: "Michael Chen", email: "michael.c@hrms.com", department: "Marketing", designation: "Marketing Lead", status: "Active", joinDate: "2022-08-01" },
@@ -107,18 +96,6 @@ export const employees: Employee[] = [
 ];
 
 // ── Leave Requests ──
-export interface LeaveRequest {
-  id: string;
-  employeeName: string;
-  type: string;
-  from: string;
-  to: string;
-  days: number;
-  reason: string;
-  status: "Pending" | "Approved" | "Rejected";
-  appliedOn: string;
-}
-
 export const leaveRequests: LeaveRequest[] = [
   { id: "LR001", employeeName: "Sarah Johnson", type: "Casual Leave", from: "Mar 05", to: "Mar 06", days: 2, reason: "Personal work", status: "Pending", appliedOn: "Mar 01" },
   { id: "LR002", employeeName: "Michael Chen", type: "Sick Leave", from: "Feb 28", to: "Feb 28", days: 1, reason: "Not feeling well", status: "Approved", appliedOn: "Feb 28" },
@@ -130,18 +107,6 @@ export const leaveRequests: LeaveRequest[] = [
 ];
 
 // ── Payroll Data ──
-export interface PayrollRecord {
-  id: string;
-  employeeName: string;
-  department: string;
-  basicSalary: number;
-  allowances: number;
-  deductions: number;
-  netPay: number;
-  status: "Processed" | "Pending" | "On Hold";
-  month: string;
-}
-
 export const payrollRecords: PayrollRecord[] = [
   { id: "PAY001", employeeName: "Sarah Johnson", department: "Engineering", basicSalary: 8500, allowances: 1200, deductions: 950, netPay: 8750, status: "Processed", month: "Feb 2026" },
   { id: "PAY002", employeeName: "Michael Chen", department: "Marketing", basicSalary: 7200, allowances: 1000, deductions: 820, netPay: 7380, status: "Processed", month: "Feb 2026" },

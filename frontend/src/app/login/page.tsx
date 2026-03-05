@@ -256,7 +256,7 @@ export default function LoginPage() {
                 <FormErrorMessage fontSize="xs">{errors.password?.message}</FormErrorMessage>
               </FormControl>
 
-              <Flex justify="space-between" align="center">
+              {/* <Flex justify="space-between" align="center">
                 <Checkbox size="sm" colorScheme="purple">
                   <Text fontSize="sm" color="text.muted">
                     Remember me
@@ -271,7 +271,7 @@ export default function LoginPage() {
                 >
                   Forgot password?
                 </Text>
-              </Flex>
+              </Flex> */}
 
               <Button
                 type="submit"
@@ -290,35 +290,9 @@ export default function LoginPage() {
             </VStack>
           </form>
 
-          {/* Location note */}
-          <Flex
-            mt={6}
-            p={3}
-            borderRadius="lg"
-            bg="surface.bg"
-            border="1px dashed"
-            borderColor="surface.border"
-            align="center"
-            gap={2}
-          >
-            <MapPin size={16} color="#64748B" />
-            <Text fontSize="xs" color="text.muted">
-              <Text as="span" fontWeight="600" color="text.heading">
-                Location Based Login
-              </Text>{" "}
-              — Your browser location will be sent for geo-validation if your account requires it.
-            </Text>
-          </Flex>
+         
 
-          {/* Credentials hint */}
-          <Box mt={4} p={3} borderRadius="lg" bg="brand.50">
-            <Text fontSize="xs" color="brand.700" fontWeight="600" mb={1}>
-              Default Admin Account
-            </Text>
-            <Text fontSize="xs" color="brand.600">
-              admin@hrms.com / Admin@123
-            </Text>
-          </Box>
+      
         </Box>
       </Flex>
     </Flex>

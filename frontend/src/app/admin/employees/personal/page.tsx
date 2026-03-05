@@ -10,40 +10,13 @@ import {
   Checkbox,
   useToast,
 } from "@chakra-ui/react";
-import { api } from "@/lib/api";
+import { employeeApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
-
-interface PersonalForm {
-  aadhaarNumber: string;
-  mobileNumber: string;
-  whatsappNumber: string;
-  dateOfBirth: string;
-  gender: string;
-  maritalStatus: string;
-  nationality: string;
-  currentAddressLine1: string;
-  currentCity: string;
-  currentState: string;
-  currentPincode: string;
-  currentCountry: string;
-  permanentSameAsCurrent: boolean;
-  permanentAddressLine1: string;
-  permanentCity: string;
-  permanentState: string;
-  permanentPincode: string;
-  permanentCountry: string;
-  totalExperienceYears: string;
-  lastCompany: string;
-  lastDesignation: string;
-  reasonForLeaving: string;
-  highestQualification: string;
-  institutionName: string;
-  graduationYear: string;
-}
+import type { PersonalForm } from "@/types";
 
 const emptyForm: PersonalForm = {
   aadhaarNumber: "",
@@ -82,7 +55,7 @@ export default function PersonalDetailsPage() {
 
   useEffect(() => {
     if (!selectedUserId) { setForm({ ...emptyForm }); return; }
-    api.get<any>(`/employees/user/${selectedUserId}`).then((data) => {
+    employeeApi.getByUserId(selectedUserId).then((data) => {
       setEmploymentType(data.employmentType || "");
       setForm({
         aadhaarNumber: data.aadhaarNumber || "",
@@ -117,7 +90,7 @@ export default function PersonalDetailsPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await api.put(`/employees/${selectedUserId}/personal`, form);
+      await employeeApi.savePersonal(selectedUserId, form);
       toast({ title: "Personal details saved", status: "success", duration: 3000, isClosable: true });
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Failed to save", status: "error", duration: 4000, isClosable: true });

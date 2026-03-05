@@ -27,7 +27,7 @@ export const adminRoutes: RouteItem[] = [
     href: "/admin/employees",
     icon: Users,
     children: [
-      { label: "Employee Details", href: "/admin/employees/add", icon: UserPlus },
+      { label: "Employee Details", href: "/admin/employees", icon: UserPlus },
       { label: "Personal Details", href: "/admin/employees/personal", icon: UserCog },
       { label: "Salary & Banking", href: "/admin/employees/salary", icon: Banknote },
       { label: "Documents", href: "/admin/employees/documents", icon: FileText },

@@ -1,0 +1,135 @@
+// ── Employee types ──
+
+export interface EmployeeFromAPI {
+  id: string;
+  department: string;
+  designation: string;
+  employmentType: string;
+  dateOfJoining: string;
+  reportingManager: string;
+  shiftSchedule: string;
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    isActive: boolean;
+    empId: string | null;
+    officeLocationRequired: boolean;
+    officeLatitude: number | null;
+    officeLongitude: number | null;
+    officeRadiusMeters: number | null;
+    lastLoginAt: string | null;
+  };
+}
+
+export interface EmployeeRow {
+  profileId: string;
+  empId: string;
+  name: string;
+  email: string;
+  department: string;
+  designation: string;
+  status: "Active" | "Inactive";
+  joinDate: string;
+  raw: EmployeeFromAPI;
+}
+
+export interface DropdownEmployee {
+  userId: string;
+  empId: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface CreateEmployeePayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  designation: string;
+  employmentType: string;
+  dateOfJoining: string;
+  reportingManager: string;
+  shiftSchedule: string;
+  allowLoginOnlyInsideOffice: boolean;
+  officeLatitude?: number;
+  officeLongitude?: number;
+  officeRadiusMeters?: number;
+}
+
+export interface CreateEmployeeResult {
+  empId: string;
+  generatedPassword: string;
+  profile: unknown;
+}
+
+export interface PersonalForm {
+  aadhaarNumber: string;
+  mobileNumber: string;
+  whatsappNumber: string;
+  dateOfBirth: string;
+  gender: string;
+  maritalStatus: string;
+  nationality: string;
+  currentAddressLine1: string;
+  currentCity: string;
+  currentState: string;
+  currentPincode: string;
+  currentCountry: string;
+  permanentSameAsCurrent: boolean;
+  permanentAddressLine1: string;
+  permanentCity: string;
+  permanentState: string;
+  permanentPincode: string;
+  permanentCountry: string;
+  totalExperienceYears: string;
+  lastCompany: string;
+  lastDesignation: string;
+  reasonForLeaving: string;
+  highestQualification: string;
+  institutionName: string;
+  graduationYear: string;
+}
+
+export interface SalaryForm {
+  ctc: string;
+  basic: string;
+  hra: string;
+  allowances: string;
+  pfApplicable: boolean;
+  pfEmployeeContribution: string;
+  pfEmployerContribution: string;
+  taxRegime: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  branchName: string;
+  panNumber: string;
+  uanNumber: string;
+}
+
+export interface ExistingDoc {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  documentType: string | null;
+  uploadedAt: string;
+}
+
+export interface AddEmployeeFormState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  designation: string;
+  employmentType: string;
+  dateOfJoining: string;
+  reportingManager: string;
+  shiftSchedule: string;
+  allowLoginOnlyInsideOffice: boolean;
+  officeLatitude: string;
+  officeLongitude: string;
+  officeRadiusMeters: string;
+}

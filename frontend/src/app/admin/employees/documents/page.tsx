@@ -2,22 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Box, Flex, Text, useToast } from "@chakra-ui/react";
-import { api } from "@/lib/api";
+import { employeeApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { Field } from "@/components/ui/FormHelpers";
 import UploadDropzone, { formatBytes } from "@/components/ui/UploadDropzone";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
-
-interface ExistingDoc {
-  id: string;
-  fileName: string;
-  mimeType: string;
-  size: number;
-  documentType: string | null;
-  uploadedAt: string;
-}
+import type { ExistingDoc } from "@/types";
 
 export default function DocumentsPage() {
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -28,7 +20,7 @@ export default function DocumentsPage() {
 
   useEffect(() => {
     if (!selectedUserId) { setExisting([]); setFiles([]); return; }
-    api.get<any>(`/employees/user/${selectedUserId}`)
+    employeeApi.getByUserId(selectedUserId)
       .then((data) => setExisting(data.documents || []))
       .catch(() => {});
   }, [selectedUserId]);
@@ -42,11 +34,11 @@ export default function DocumentsPage() {
       setUploading(true);
       const fd = new FormData();
       for (const f of files) fd.append("files", f);
-      await api.postFormData(`/employees/${selectedUserId}/documents`, fd);
+      await employeeApi.uploadDocuments(selectedUserId, fd);
       toast({ title: "Documents uploaded", status: "success", duration: 3000, isClosable: true });
       setFiles([]);
       // Refresh existing
-      const data = await api.get<any>(`/employees/user/${selectedUserId}`);
+      const data = await employeeApi.getByUserId(selectedUserId);
       setExisting(data.documents || []);
     } catch (err: any) {
       toast({ title: "Upload failed", description: err?.message || "Error", status: "error", duration: 4000, isClosable: true });

@@ -2,20 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Box, Flex, Text, SimpleGrid, Divider, Badge, Spinner, useToast } from "@chakra-ui/react";
-import { api } from "@/lib/api";
+import { employeeApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
+import { InfoRow } from "@/components/ui/DetailItem";
 import { formatBytes } from "@/components/ui/UploadDropzone";
-
-function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
-  return (
-    <Box>
-      <Text fontSize="xs" color="text.muted" mb={0.5}>{label}</Text>
-      <Text fontSize="sm" fontWeight="600" color="text.heading">{value || "-"}</Text>
-    </Box>
-  );
-}
 
 export default function ViewEmployeePage() {
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -26,7 +18,7 @@ export default function ViewEmployeePage() {
   useEffect(() => {
     if (!selectedUserId) { setData(null); return; }
     setLoading(true);
-    api.get<any>(`/employees/user/${selectedUserId}`)
+    employeeApi.getByUserId(selectedUserId)
       .then(setData)
       .catch(() => toast({ title: "Failed to load employee", status: "error", duration: 3000, isClosable: true }))
       .finally(() => setLoading(false));

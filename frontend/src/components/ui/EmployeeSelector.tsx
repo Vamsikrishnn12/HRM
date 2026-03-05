@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Box, Text } from "@chakra-ui/react";
-import { api } from "@/lib/api";
+import { employeeApi } from "@/api";
 import { StyledSelect } from "./FormHelpers";
-
-interface DropdownEmployee {
-  userId: string;
-  empId: string;
-  firstName: string;
-  lastName: string;
-}
+import type { DropdownEmployee } from "@/types";
 
 export default function EmployeeSelector({
   value,
@@ -23,8 +17,8 @@ export default function EmployeeSelector({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get<DropdownEmployee[]>("/employees/dropdown")
+    employeeApi
+      .dropdown()
       .then(setEmployees)
       .catch(() => {})
       .finally(() => setLoading(false));

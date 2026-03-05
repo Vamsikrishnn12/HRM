@@ -86,6 +86,10 @@ async function request<T = unknown>(
     if (refreshed) {
       return request<T>(endpoint, options, false);
     }
+    // Refresh failed — notify app to redirect to login
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("auth:expired"));
+    }
   }
 
   // Error

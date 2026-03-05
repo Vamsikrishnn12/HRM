@@ -1296,3 +1296,15 @@ QueryFailedError: invalid input syntax for type uuid: "dropdown"
 2026-03-05 14:47:35:4735 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
 2026-03-05 14:47:41:4741 http: [2eb8d74f-d99d-4ef9-920f-9725c7d4f3f1] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
 2026-03-05 14:47:41:4741 info: User logged out
+2026-03-05 14:48:17:4817 info: SMTP transporter initialised {"host":"smtp.gmail.com","port":587}
+2026-03-05 14:48:17:4817 info: SMTP transporter initialised {"host":"smtp.gmail.com","port":587}
+2026-03-05 14:48:17:4817 info: Database connection established
+2026-03-05 14:48:17:4817 info: Database connection established
+2026-03-05 14:48:17:4817 info: Admin user already exists, credentials updated from env.
+2026-03-05 14:48:17:4817 info: Admin user already exists, credentials updated from env.
+2026-03-05 14:48:17:4817 info: Server running on http://localhost:5000
+2026-03-05 14:48:17:4817 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 14:48:17:4817 info: Environment: development
+2026-03-05 14:48:17:4817 info: Server running on http://localhost:5000
+2026-03-05 14:48:17:4817 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 14:48:17:4817 info: Environment: development
