@@ -26,7 +26,7 @@ export class AuthService {
 
     // 1. Find user
     const user = await this.userRepo.findByEmail(email);
-    console.log('User found:', user);
+  
     if (!user) {
       logger.info('Login attempt failed – user not found', { email });
       throw ApiError.unauthorized('Invalid credentials', 'AUTH_INVALID_CREDENTIALS');
@@ -107,6 +107,8 @@ export class AuthService {
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
+        empId: user.empId,
+        officeLocationRequired: user.officeLocationRequired,
       },
     };
   }

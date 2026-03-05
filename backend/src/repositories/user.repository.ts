@@ -41,6 +41,10 @@ export class UserRepository {
     });
   }
 
+  async update(id: string, data: Partial<User>): Promise<void> {
+    await this.repo.update(id, data);
+  }
+
   async count(): Promise<number> {
     return this.repo.count();
   }

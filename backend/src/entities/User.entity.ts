@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { RefreshToken } from './RefreshToken.entity';
+import type { EmployeeProfile } from './EmployeeProfile.entity';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -63,4 +65,8 @@ export class User {
   // Relationship: Refresh Tokens
   @OneToMany(() => RefreshToken, (token) => token.user)
   refreshTokens: RefreshToken[];
+
+  // Relationship: Employee Profile
+  @OneToOne('EmployeeProfile', 'user')
+  employeeProfile: EmployeeProfile;
 }

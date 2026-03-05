@@ -11,32 +11,33 @@ import {
   Text,
   Spinner,
   Center,
+  IconButton,
+  useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
 import Link from "next/link";
-import { Search, Plus, Download } from "lucide-react";
+import { Search, Plus, Download, Eye, Pencil } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
-import { api } from "@/lib/api";
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  designation: string;
-  status: "Active" | "On Leave" | "Inactive";
-  joinDate: string;
-}
+import EmployeeViewModal from "@/components/employees/EmployeeViewModal";
+import EmployeeEditModal from "@/components/employees/EmployeeEditModal";
+import { employeeApi } from "@/api";
+import type { EmployeeFromAPI, EmployeeRow } from "@/types";
 
 export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<EmployeeFromAPI | null>(null);
+  const toast = useToast();
+
+  const viewModal = useDisclosure();
+  const editModal = useDisclosure();
 
   useEffect(() => {
     fetchEmployees();
@@ -45,42 +46,37 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const result = await api.get<{
-        data: Array<{
-          id: string;
-          department: string;
-          designation: string;
-          dateOfJoining: string;
-          user: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            isActive: boolean;
-            empId: string | null;
-          };
-        }>;
-        total: number;
-      }>("/employees");
+      const result = await employeeApi.list();
 
-      const mapped: Employee[] = result.data.map((emp) => ({
-        id: emp.user.empId || emp.user.id.slice(0, 8),
+      const mapped: EmployeeRow[] = result.data.map((emp) => ({
+        profileId: emp.id,
+        empId: emp.user.empId || emp.user.id.slice(0, 8),
         name: `${emp.user.firstName} ${emp.user.lastName}`,
         email: emp.user.email,
         department: emp.department,
         designation: emp.designation,
         status: emp.user.isActive ? "Active" : "Inactive",
         joinDate: emp.dateOfJoining,
+        raw: emp,
       }));
 
       setEmployees(mapped);
       setDepartments(Array.from(new Set(mapped.map((e) => e.department))));
     } catch {
-      // Fall back to empty if API not yet available
       setEmployees([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const openView = (row: EmployeeRow) => {
+    setSelected(row.raw);
+    viewModal.onOpen();
+  };
+
+  const openEdit = (row: EmployeeRow) => {
+    setSelected(row.raw);
+    editModal.onOpen();
   };
 
   const filtered = useMemo(() => {
@@ -89,26 +85,22 @@ export default function EmployeesPage() {
         !search ||
         e.name.toLowerCase().includes(search.toLowerCase()) ||
         e.email.toLowerCase().includes(search.toLowerCase()) ||
-        e.id.toLowerCase().includes(search.toLowerCase());
+        e.empId.toLowerCase().includes(search.toLowerCase());
       const matchDept = !deptFilter || e.department === deptFilter;
       return matchSearch && matchDept;
     });
   }, [search, deptFilter, employees]);
 
-  const columns = useMemo<Column<Employee>[]>(
+  const columns = useMemo<Column<EmployeeRow>[]>(
     () => [
-      { key: "id", header: "Emp ID", width: "100px" },
+      { key: "empId", header: "Emp ID", width: "100px" },
       {
         key: "name",
         header: "Name",
         render: (row) => (
           <Box>
-            <Text fontWeight="600" color="text.heading" fontSize="sm">
-              {row.name}
-            </Text>
-            <Text fontSize="xs" color="text.muted">
-              {row.designation}
-            </Text>
+            <Text fontWeight="600" color="text.heading" fontSize="sm">{row.name}</Text>
+            <Text fontSize="xs" color="text.muted">{row.designation}</Text>
           </Box>
         ),
       },
@@ -120,8 +112,34 @@ export default function EmployeesPage() {
         render: (row) => <StatusBadge status={row.status} />,
       },
       { key: "joinDate", header: "Join Date", width: "110px" },
+      {
+        key: "actions",
+        header: "Actions",
+        width: "100px",
+        render: (row) => (
+          <Flex gap={1}>
+            <IconButton
+              aria-label="View employee"
+              icon={<Eye size={15} />}
+              size="xs"
+              variant="ghost"
+              color="brand.500"
+              onClick={() => openView(row)}
+            />
+            <IconButton
+              aria-label="Edit employee"
+              icon={<Pencil size={15} />}
+              size="xs"
+              variant="ghost"
+              color="text.muted"
+              onClick={() => openEdit(row)}
+            />
+          </Flex>
+        ),
+      },
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,12 +156,8 @@ export default function EmployeesPage() {
             <SecondaryButton leftIcon={<Download size={16} />} size="sm">
               Export
             </SecondaryButton>
-
             <Link href="/admin/employees/add">
-              <PrimaryButton
-                leftIcon={<Plus size={16} />}
-                size="sm"
-              >
+              <PrimaryButton leftIcon={<Plus size={16} />} size="sm">
                 Add Employee
               </PrimaryButton>
             </Link>
@@ -152,7 +166,6 @@ export default function EmployeesPage() {
       />
 
       <SectionCard noPadding>
-        {/* Filters */}
         <Flex gap={3} p={5} pb={0} flexWrap="wrap">
           <InputGroup maxW="320px" size="sm">
             <InputLeftElement>
@@ -183,9 +196,7 @@ export default function EmployeesPage() {
             onChange={(e) => setDeptFilter(e.target.value)}
           >
             {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
+              <option key={d} value={d}>{d}</option>
             ))}
           </Select>
         </Flex>
@@ -202,10 +213,13 @@ export default function EmployeesPage() {
               </Text>
             </Center>
           ) : (
-            <DataTable<Employee> columns={columns} data={filtered} keyField="id" />
+            <DataTable<EmployeeRow> columns={columns} data={filtered} keyField="profileId" />
           )}
         </Box>
       </SectionCard>
+
+      <EmployeeViewModal isOpen={viewModal.isOpen} onClose={viewModal.onClose} employee={selected} />
+      <EmployeeEditModal isOpen={editModal.isOpen} onClose={editModal.onClose} employee={selected} onSaved={fetchEmployees} />
     </Box>
   );
 }

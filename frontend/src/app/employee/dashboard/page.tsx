@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Flex, Heading, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text, SimpleGrid } from "@chakra-ui/react";
 import { useAuth } from "@/context/AuthContext";
 import SectionCard from "@/components/ui/SectionCard";
 
@@ -13,8 +13,23 @@ export default function EmployeeDashboard() {
         Welcome, {user ? `${user.firstName} ${user.lastName}` : "Employee"}
       </Heading>
       <Text color="text.muted" fontSize="sm" mb={6}>
-        Your personal dashboard
+        Your personal dashboard {user?.empId && `• ${user.empId}`}
       </Text>
+
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+        <SectionCard>
+          <Flex direction="column" gap={2}>
+            <Text fontSize="sm" color="text.muted" fontWeight="500">Employee ID</Text>
+            <Text fontSize="lg" fontWeight="700" color="text.heading">{user?.empId || "—"}</Text>
+          </Flex>
+        </SectionCard>
+        <SectionCard>
+          <Flex direction="column" gap={2}>
+            <Text fontSize="sm" color="text.muted" fontWeight="500">Email</Text>
+            <Text fontSize="lg" fontWeight="700" color="text.heading">{user?.email || "—"}</Text>
+          </Flex>
+        </SectionCard>
+      </SimpleGrid>
 
       <SectionCard>
         <Flex
@@ -38,7 +53,7 @@ export default function EmployeeDashboard() {
             </Text>
           </Flex>
           <Heading size="md" color="text.heading" mb={2}>
-            Welcome to User Dashboard
+            Welcome to Your Dashboard
           </Heading>
           <Text color="text.muted" fontSize="sm" maxW="400px">
             This is your employee dashboard. Features like attendance tracking,

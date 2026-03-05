@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { env } from './env';
 import { User } from '../entities/User.entity';
 import { RefreshToken } from '../entities/RefreshToken.entity';
+import { EmployeeProfile } from '../entities/EmployeeProfile.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -15,7 +16,7 @@ export const AppDataSource = new DataSource({
   entities: [
     User,
     RefreshToken,
-  
+    EmployeeProfile,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],

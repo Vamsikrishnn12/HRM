@@ -18,52 +18,14 @@ import {
   getAccessToken,
   ApiError,
 } from "@/lib/api";
-
-// ── Types ──
-export type UserRole = "admin" | "employee";
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-}
-
-interface LoginPayload {
-  email: string;
-  password: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-interface LoginResponseData {
-  accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    firstName: string;
-    lastName: string;
-  };
-}
-
-interface MeResponseData {
-  userId: string;
-  email: string;
-  role: string;
-}
-
-export type AuthStatus = "idle" | "checking" | "authenticated" | "unauthenticated" | "redirecting";
-
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  authStatus: AuthStatus;
-  login: (payload: LoginPayload) => Promise<User | null>;
-  logout: () => void;
-}
+import { authApi } from "@/api";
+import type {
+  User,
+  UserRole,
+  LoginPayload,
+  AuthStatus,
+  AuthContextType,
+} from "@/types";
 
 const USER_STORAGE_KEY = "hrms_user";
 
@@ -100,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthStatus("checking");
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+      const timeout = setTimeout(() => controller.abort(), 1000);
 
       try {
         await fetch(
@@ -137,12 +99,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rehydrate();
   }, []);
 
+  // Listen for auth:expired events from the API layer (401 + refresh failed)
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      clearAccessToken();
+      localStorage.removeItem(USER_STORAGE_KEY);
+      setAuthStatus("unauthenticated");
+      router.push("/login");
+      toast({
+        title: "Session expired",
+        description: "Please log in again.",
+        status: "warning",
+        duration: 4000,
+        isClosable: true,
+        position: "top-right",
+      });
+    };
+
+    window.addEventListener("auth:expired", handleExpired);
+    return () => window.removeEventListener("auth:expired", handleExpired);
+  }, [router, toast]);
+
   const login = useCallback(
     async (payload: LoginPayload): Promise<User | null> => {
       try {
         setAuthStatus("checking");
 
-        const data = await api.post<LoginResponseData>("/auth/login", payload);
+        const data = await authApi.login(payload);
 
         // Store access token
         setAccessToken(data.accessToken);
@@ -154,6 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           lastName: data.user.lastName,
           email: data.user.email,
           role,
+          empId: data.user.empId,
+          officeLocationRequired: data.user.officeLocationRequired,
         };
 
         setUser(loggedInUser);
@@ -196,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await api.post("/auth/logout");
+      await authApi.logout();
     } catch {
       // best-effort — still clear local state
     }
@@ -237,3 +223,6 @@ export function useAuth(): AuthContextType {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
+
+// Re-export types so existing consumers don't break
+export type { User, UserRole, AuthStatus } from "@/types";

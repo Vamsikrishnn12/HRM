@@ -10,6 +10,7 @@ import { requestIdMiddleware } from './middlewares/requestId.middleware';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { swaggerSpec } from './docs/swagger';
 import authRoutes from './routes/auth.routes';
+import employeeRoutes from './routes/employee.routes';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.get('/api/health', (_req, res) => {
 
 // --------------- Routes ---------------
 app.use('/api/auth', authRoutes);
+app.use('/api/employees', employeeRoutes);
 
 
 // --------------- 404 Handler ---------------

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
+import { UserRepository } from '../repositories/user.repository';
 import { loginSchema } from '../validators/auth.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
@@ -13,7 +14,7 @@ export class AuthController {
    */
   static async login(req: Request, res: Response): Promise<void> {
     // Validate input
-    console.log("yess")
+   
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       const messages = parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`);
@@ -92,10 +93,20 @@ export class AuthController {
       throw ApiError.unauthorized('Not authenticated', 'AUTH_REQUIRED');
     }
 
+    const userRepo = new UserRepository();
+    const user = await userRepo.findById(req.user.userId);
+    if (!user) {
+      throw ApiError.unauthorized('User not found', 'AUTH_USER_NOT_FOUND');
+    }
+
     ApiResponse.success(res, 'User info retrieved', {
-      userId: req.user.userId,
-      email: req.user.email,
-      role: req.user.role,
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      empId: user.empId,
+      officeLocationRequired: user.officeLocationRequired,
     });
   }
 }

@@ -334,3 +334,965 @@ QueryFailedError: column distinctAlias.profile_createdAt does not exist
 2026-03-05 11:53:13:5313 http: [febe3dbe-cf75-4efb-ae0b-4a4ce95158e7] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
 2026-03-05 11:53:13:5313 http: [bd2a3ec5-7dd9-4adc-8970-ad522a0c5e67] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
 2026-03-05 11:53:13:5313 http: [7707bb5b-f9c5-407f-a413-1501b0d97c54] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:19:55:1955 info: Database connection established
+2026-03-05 12:19:56:1956 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:19:56:1956 info: Server running on http://localhost:5000
+2026-03-05 12:19:56:1956 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:19:56:1956 info: Environment: development
+2026-03-05 12:20:01:201 info: Database connection established
+2026-03-05 12:20:01:201 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:20:01:201 info: Server running on http://localhost:5000
+2026-03-05 12:20:01:201 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:20:01:201 info: Environment: development
+2026-03-05 12:20:10:2010 info: Database connection established
+2026-03-05 12:20:10:2010 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:20:10:2010 info: Server running on http://localhost:5000
+2026-03-05 12:20:10:2010 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:20:10:2010 info: Environment: development
+2026-03-05 12:20:21:2021 info: Database connection established
+2026-03-05 12:20:22:2022 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:20:22:2022 info: Server running on http://localhost:5000
+2026-03-05 12:20:22:2022 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:20:22:2022 info: Environment: development
+2026-03-05 12:20:39:2039 info: Database connection established
+2026-03-05 12:20:40:2040 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:20:40:2040 info: Server running on http://localhost:5000
+2026-03-05 12:20:40:2040 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:20:40:2040 info: Environment: development
+2026-03-05 12:20:48:2048 info: Database connection established
+2026-03-05 12:20:49:2049 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:20:49:2049 info: Server running on http://localhost:5000
+2026-03-05 12:20:49:2049 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:20:49:2049 info: Environment: development
+2026-03-05 12:20:57:2057 info: Database connection established
+2026-03-05 12:20:58:2058 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:20:58:2058 info: Server running on http://localhost:5000
+2026-03-05 12:20:58:2058 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:20:58:2058 info: Environment: development
+2026-03-05 12:21:11:2111 info: Database connection established
+2026-03-05 12:21:12:2112 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:21:12:2112 info: Server running on http://localhost:5000
+2026-03-05 12:21:12:2112 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:21:12:2112 info: Environment: development
+2026-03-05 12:25:30:2530 info: Database connection established
+2026-03-05 12:25:30:2530 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:25:30:2530 info: Server running on http://localhost:5000
+2026-03-05 12:25:30:2530 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:25:30:2530 info: Environment: development
+2026-03-05 12:25:47:2547 info: Database connection established
+2026-03-05 12:25:47:2547 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:25:47:2547 info: Server running on http://localhost:5000
+2026-03-05 12:25:47:2547 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:25:47:2547 info: Environment: development
+2026-03-05 12:27:04:274 http: [fdd8673f-21ff-497a-a686-4f936011675d] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:04:274 warn: [fdd8673f-21ff-497a-a686-4f936011675d] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/auth/me"}
+2026-03-05 12:27:04:274 http: [1e59fa74-44e9-44d4-bb33-56e45195acf0] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:04:274 warn: [1e59fa74-44e9-44d4-bb33-56e45195acf0] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/auth/me"}
+2026-03-05 12:27:43:2743 http: [59db5608-b50b-4b72-a0e7-865bd94cc2f5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:43:2743 warn: [59db5608-b50b-4b72-a0e7-865bd94cc2f5] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 12:27:43:2743 http: [ca2e4ee3-472f-4ab7-9f95-29606dcfcf34] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:43:2743 warn: [ca2e4ee3-472f-4ab7-9f95-29606dcfcf34] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 12:27:43:2743 http: [14ecc974-1c3b-4f7c-a587-0e726e1f4fef] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:43:2743 http: [3673bf5e-7e1e-4146-afa0-2c662d28eb46] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:43:2743 error: [3673bf5e-7e1e-4146-afa0-2c662d28eb46] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:27:43:2743 http: [ad8160df-7cc7-4e0f-b928-bf998b51a15c] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:43:2743 error: [ad8160df-7cc7-4e0f-b928-bf998b51a15c] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:27:47:2747 http: [b1761cfc-01f1-45ad-b99c-f3dcc3272863] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:47:2747 http: [8abc0d49-82ba-4802-85fc-2979f016c8e5] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:47:2747 http: [67d9b6cf-92b4-440c-b3f3-e766e5de4ab7] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:27:47:2747 http: [2a4f9a34-83d1-41e2-9f80-eb4422f90769] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:31:34:3134 info: Database connection established
+2026-03-05 12:31:35:3135 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:31:35:3135 info: Server running on http://localhost:5000
+2026-03-05 12:31:35:3135 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:31:35:3135 info: Environment: development
+2026-03-05 12:31:40:3140 info: Database connection established
+2026-03-05 12:31:43:3143 info: Database connection established
+2026-03-05 12:31:43:3143 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:31:43:3143 info: Server running on http://localhost:5000
+2026-03-05 12:31:43:3143 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:31:43:3143 info: Environment: development
+2026-03-05 12:31:47:3147 info: Database connection established
+2026-03-05 12:31:47:3147 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:31:47:3147 info: Server running on http://localhost:5000
+2026-03-05 12:31:47:3147 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:31:47:3147 info: Environment: development
+2026-03-05 12:32:03:323 info: Database connection established
+2026-03-05 12:32:04:324 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:32:04:324 info: Server running on http://localhost:5000
+2026-03-05 12:32:04:324 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:32:04:324 info: Environment: development
+2026-03-05 12:32:08:328 info: Database connection established
+2026-03-05 12:32:08:328 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:32:08:328 info: Server running on http://localhost:5000
+2026-03-05 12:32:08:328 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:32:08:328 info: Environment: development
+2026-03-05 12:34:26:3426 http: [3475f573-21fc-4484-bd01-2fe785db8548] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:34:27:3427 http: [ab71f338-6fd0-4934-9408-d51e8533f59c] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:35:49:3549 http: [f389d7d6-25c6-4940-94a0-6ab2e23457ec] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:35:49:3549 info: SMTP not configured — credentials for new employee: {"email":"viratjohn110@gmail.com","empId":"EMP001","password":"Emp@2jghRSSr"}
+2026-03-05 12:35:49:3549 info: Employee created {"empId":"EMP001","email":"viratjohn110@gmail.com"}
+2026-03-05 12:36:11:3611 http: [2c2239d1-e526-425a-8958-ab0c294c951d] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:36:11:3611 http: [95632f16-9eb4-481d-87f4-ec6c69d00758] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:00:370 http: [22b6cf63-9dc0-49ac-acff-95923161339f] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:00:370 error: [22b6cf63-9dc0-49ac-acff-95923161339f] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:37:00:370 http: [b906cdf0-849e-4666-88c6-47c678ddb958] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:00:370 error: [b906cdf0-849e-4666-88c6-47c678ddb958] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:37:07:377 http: [356f0165-fcd9-4e07-aa8b-c6c20266c8ee] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:07:377 error: [356f0165-fcd9-4e07-aa8b-c6c20266c8ee] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:37:07:377 http: [4227dbac-193c-4905-8be6-cb73a9d62ece] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:07:377 error: [4227dbac-193c-4905-8be6-cb73a9d62ece] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:37:08:378 http: [d5f5fa28-1ce7-4b2e-a83a-cafbc7abbaa5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:08:378 error: [d5f5fa28-1ce7-4b2e-a83a-cafbc7abbaa5] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:37:08:378 http: [957283d3-89f1-4b24-adc8-80339c63aaa1] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:08:378 error: [957283d3-89f1-4b24-adc8-80339c63aaa1] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:165:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:37:13:3713 http: [8e7112af-99af-4177-baac-533837141b39] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:13:3713 http: [edbe1161-9f54-40d1-97f9-a46d2b7c0133] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:13:3713 http: [7d525372-b100-457b-8001-043a01c931a3] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:37:13:3713 http: [2fd589ae-4c96-4fc8-9c19-938125132117] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:38:05:385 info: Database connection established
+2026-03-05 12:38:05:385 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:38:05:385 info: Server running on http://localhost:5000
+2026-03-05 12:38:05:385 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:38:05:385 info: Environment: development
+2026-03-05 12:44:08:448 info: SMTP transporter initialised {"host":"smtp.gmail.com","port":587}
+2026-03-05 12:44:09:449 info: Database connection established
+2026-03-05 12:44:09:449 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:44:09:449 info: Server running on http://localhost:5000
+2026-03-05 12:44:09:449 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:44:09:449 info: Environment: development
+2026-03-05 12:44:19:4419 info: SMTP transporter initialised {"host":"smtp.gmail.com","port":587}
+2026-03-05 12:44:19:4419 info: Database connection established
+2026-03-05 12:44:20:4420 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:44:20:4420 info: Server running on http://localhost:5000
+2026-03-05 12:44:20:4420 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:44:20:4420 info: Environment: development
+2026-03-05 12:46:58:4658 http: [be88989b-9116-4d9a-8cd6-c102e44b60be] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:58:4658 warn: [be88989b-9116-4d9a-8cd6-c102e44b60be] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 12:46:58:4658 http: [a6dea8c5-272e-4381-a716-20d3d041e9e6] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:58:4658 warn: [a6dea8c5-272e-4381-a716-20d3d041e9e6] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 12:46:58:4658 http: [149493c2-1a8a-4e9e-bdef-9d847b962e71] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:58:4658 http: [31bb9ff2-8ede-454e-b840-f48e2dd7566b] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:58:4658 error: [31bb9ff2-8ede-454e-b840-f48e2dd7566b] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:46:58:4658 http: [4856d621-811f-465b-bd91-111380dee1c8] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:58:4658 error: [4856d621-811f-465b-bd91-111380dee1c8] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:46:59:4659 http: [3ef5a54b-c511-4c51-a412-05376452ab54] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:59:4659 error: [3ef5a54b-c511-4c51-a412-05376452ab54] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:46:59:4659 http: [d56b5eec-891a-4443-85b7-d588c438d7f0] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:46:59:4659 error: [d56b5eec-891a-4443-85b7-d588c438d7f0] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:47:00:470 http: [d8ebb2ff-0520-4d35-be5b-6fc56fc6340c] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:47:00:470 error: [d8ebb2ff-0520-4d35-be5b-6fc56fc6340c] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:47:00:470 http: [36d34b08-7b0e-4f2d-9247-09c61345aadd] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:47:00:470 error: [36d34b08-7b0e-4f2d-9247-09c61345aadd] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:49:13:4913 info: SMTP transporter initialised {"host":"smtp.gmail.com","port":587}
+2026-03-05 12:49:14:4914 info: Database connection established
+2026-03-05 12:49:14:4914 info: Admin user already exists, credentials updated from env.
+2026-03-05 12:49:14:4914 info: Server running on http://localhost:5000
+2026-03-05 12:49:14:4914 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 12:49:14:4914 info: Environment: development
+2026-03-05 12:49:26:4926 http: [a8a75939-af52-401c-8756-3d3a924eb3bf] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:49:26:4926 error: [a8a75939-af52-401c-8756-3d3a924eb3bf] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:49:26:4926 http: [ec83ca29-c2cd-4c7e-8ecf-041fa117c7ff] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:49:26:4926 error: [ec83ca29-c2cd-4c7e-8ecf-041fa117c7ff] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 12:49:32:4932 http: [a64d4b8d-b4f4-42a7-b7fc-7af8c632835c] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:49:32:4932 http: [2984dc61-0e18-497c-9f32-21d48c7f9880] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:49:32:4932 http: [dd9ecf6c-a7de-4f72-ba2f-39fca36668bc] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:49:32:4932 http: [a582f3d9-7cb2-4a95-ab01-966c456aad0c] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:50:32:5032 http: [07eb1023-a5fd-4cf3-8eb1-d7af4624b2d8] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:50:32:5032 info: Employee created {"empId":"EMP002","email":"mmuni6467@gmail.com"}
+2026-03-05 12:50:35:5035 info: Credentials email sent {"email":"mmuni6467@gmail.com","empId":"EMP002"}
+2026-03-05 12:51:49:5149 http: [b35734fe-97e0-4395-9778-6913a159411f] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:51:49:5149 http: [c5d9b203-658a-4f08-9a79-57268bd34d47] GET /api/auth/me {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:51:52:5152 http: [777733cc-cc9f-4e07-9e23-64355a9bc844] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:51:52:5152 info: User logged out
+2026-03-05 12:55:30:5530 http: [7df9e1ea-3f3f-43e9-8330-8f33420318b1] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 12:55:30:5530 info: User logged in successfully {"email":"mmuni6467@gmail.com","role":"EMPLOYEE"}
+2026-03-05 13:00:31:031 http: [eac965e5-b47b-4e38-863f-5d84e797c086] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 13:00:31:031 info: User logged out
+2026-03-05 13:01:37:137 http: [f5630946-6c1e-4f95-9f84-54436a9cccb4] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 13:01:37:137 info: Login attempt failed – wrong password {"email":"admin@hrms.com"}
+2026-03-05 13:01:37:137 warn: [f5630946-6c1e-4f95-9f84-54436a9cccb4] AUTH_INVALID_CREDENTIALS: Invalid credentials {"statusCode":401,"path":"/api/auth/login"}
+2026-03-05 13:01:37:137 http: [7517709f-56ad-4644-aaf6-7a27ebac6779] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 13:01:37:137 warn: [7517709f-56ad-4644-aaf6-7a27ebac6779] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 13:01:46:146 http: [66de1622-de2b-44d4-bea8-2528d82c8fcf] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 13:01:46:146 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-05 14:16:00:160 info: SMTP transporter initialised {"host":"smtp.gmail.com","port":587}
+2026-03-05 14:16:00:160 info: Database connection established
+2026-03-05 14:16:01:161 info: Admin user already exists, credentials updated from env.
+2026-03-05 14:16:01:161 info: Server running on http://localhost:5000
+2026-03-05 14:16:01:161 info: Swagger docs available at http://localhost:5000/api/docs
+2026-03-05 14:16:01:161 info: Environment: development
+2026-03-05 14:18:01:181 http: [c69ca54f-c6b0-43fc-9a6f-6dab8fd75680] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:01:181 info: User logged out
+2026-03-05 14:18:22:1822 http: [04a95980-5487-4a83-a7f4-32bf16e5af62] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:22:1822 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-05 14:18:31:1831 http: [9045eeea-9480-4507-9552-91c4d05de896] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:31:1831 error: [9045eeea-9480-4507-9552-91c4d05de896] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:31:1831 http: [27722de9-da48-4050-bbeb-d62ce850c920] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:31:1831 error: [27722de9-da48-4050-bbeb-d62ce850c920] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:32:1832 http: [95d0e8f5-7905-4064-a775-3ca5cf8148c5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:32:1832 error: [95d0e8f5-7905-4064-a775-3ca5cf8148c5] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:32:1832 http: [5ce16828-66c5-48e1-8545-386de9fd9d67] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:32:1832 error: [5ce16828-66c5-48e1-8545-386de9fd9d67] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:33:1833 http: [5d96a947-fb66-4afb-ada5-d490be1e2155] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:33:1833 error: [5d96a947-fb66-4afb-ada5-d490be1e2155] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:33:1833 http: [2a7bfbb6-0ebb-4c7f-a2ff-5b0beb62c3ad] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:33:1833 error: [2a7bfbb6-0ebb-4c7f-a2ff-5b0beb62c3ad] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:35:1835 http: [7f6f0583-6a2b-4aa2-bbc0-07c80a75a0dd] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:35:1835 error: [7f6f0583-6a2b-4aa2-bbc0-07c80a75a0dd] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:35:1835 http: [c7b21e10-2cc7-404e-8ab2-8947f3293a6b] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:35:1835 error: [c7b21e10-2cc7-404e-8ab2-8947f3293a6b] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:56:1856 http: [e7821b52-9441-46d7-b9c0-54e07a8ff33c] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:56:1856 error: [e7821b52-9441-46d7-b9c0-54e07a8ff33c] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:56:1856 http: [410cabbc-89a4-4467-bd9f-4b9092f0c239] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:56:1856 error: [410cabbc-89a4-4467-bd9f-4b9092f0c239] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:58:1858 http: [19a9aad3-ce55-42c2-87e5-3503a8c7ee61] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:58:1858 error: [19a9aad3-ce55-42c2-87e5-3503a8c7ee61] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:18:58:1858 http: [dc310afa-0cf6-44b2-9de8-efb4b2a4d5b5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:18:58:1858 error: [dc310afa-0cf6-44b2-9de8-efb4b2a4d5b5] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:35:2235 http: [08a29dd2-48ec-4956-954d-d0573fda0f23] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:35:2235 http: [9a8ae775-b168-4a5a-90dd-bfd578f3fd10] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:37:2237 http: [6a525440-b673-46f9-b3d6-b749d39cba72] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:37:2237 error: [6a525440-b673-46f9-b3d6-b749d39cba72] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:37:2237 http: [65e6baaa-83d5-4cf1-9f8f-3d5ddc4b0ec5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:37:2237 error: [65e6baaa-83d5-4cf1-9f8f-3d5ddc4b0ec5] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:39:2239 http: [42cdf556-0062-4655-8778-c439b1a3d95b] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:39:2239 http: [7c488f81-09b6-4be9-9d70-63688ba6cf5b] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:41:2241 http: [8d1fa891-1e05-4d1c-be52-23643a82c286] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:41:2241 error: [8d1fa891-1e05-4d1c-be52-23643a82c286] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:41:2241 http: [be4ea0c8-bd99-476d-b9cb-bf79534c8e1b] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:41:2241 error: [be4ea0c8-bd99-476d-b9cb-bf79534c8e1b] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:42:2242 http: [6171b7d4-04e4-472f-918c-699dfc0cf44b] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:42:2242 http: [84cea89e-44f8-4d46-8807-d7a420b364f8] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:47:2247 http: [9ed0be87-db54-4fb4-8b22-e12d63baf7c2] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:47:2247 error: [9ed0be87-db54-4fb4-8b22-e12d63baf7c2] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:47:2247 http: [af21d2c2-b3f7-4805-aa1b-d60d180e321a] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:47:2247 error: [af21d2c2-b3f7-4805-aa1b-d60d180e321a] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:22:49:2249 http: [fd3676d1-52ea-4e8f-bcf3-4793a710397b] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:22:49:2249 http: [9812b24d-3da9-4278-8d43-9f4348eba7ea] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:23:05:235 http: [890333b0-2fd5-45fb-ae63-09e8008cd276] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:23:05:235 error: [890333b0-2fd5-45fb-ae63-09e8008cd276] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:23:05:235 http: [b07695f7-f594-4fe3-994b-60364e253766] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:23:05:235 error: [b07695f7-f594-4fe3-994b-60364e253766] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:23:07:237 http: [1aeeafd5-b4c8-4a07-b1b4-c505376e4813] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:23:07:237 http: [ac57ff95-2205-4df3-91ae-5e9a89d6b39a] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:25:21:2521 http: [5910e2df-8253-43f5-9a08-7661efe36578] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:25:21:2521 http: [a3b26d3f-cc47-4f7c-a6ea-40eb67706668] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:29:08:298 http: [2f68847e-702f-47ad-b172-01596f2d6484] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:29:08:298 warn: [2f68847e-702f-47ad-b172-01596f2d6484] EMPLOYEE_DUPLICATE_EMAIL: An employee with this email already exists {"statusCode":409,"path":"/api/employees"}
+2026-03-05 14:29:24:2924 http: [316e8399-91eb-423a-ba1b-4a5623e8ec10] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:29:24:2924 warn: [316e8399-91eb-423a-ba1b-4a5623e8ec10] EMPLOYEE_DUPLICATE_EMAIL: An employee with this email already exists {"statusCode":409,"path":"/api/employees"}
+2026-03-05 14:31:46:3146 http: [e3beddcf-d717-4541-9235-90bac9f6ce25] POST /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:31:47:3147 info: Employee created {"empId":"EMP003","email":"viratjohn110@gmail.com"}
+2026-03-05 14:31:50:3150 info: Credentials email sent {"email":"viratjohn110@gmail.com","empId":"EMP003"}
+2026-03-05 14:32:36:3236 http: [41aa09ff-1cc2-448f-8f75-933ab02e6bb1] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:32:36:3236 http: [46db36f4-43da-4ad8-8c53-08b8f90a991a] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:33:3333 http: [a811ebf4-6e02-4fd1-88d3-ead789aa914f] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:33:3333 warn: [a811ebf4-6e02-4fd1-88d3-ead789aa914f] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:33:33:3333 http: [fc1b98df-5752-405f-be13-20465da69171] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:33:3333 warn: [fc1b98df-5752-405f-be13-20465da69171] AUTH_TOKEN_INVALID: Invalid or expired access token {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:33:33:3333 http: [525500c0-59ea-4a93-9295-07f88969420b] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:33:3333 http: [ab43fe70-237a-4b2b-8e35-fdc2463921a9] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:33:3333 error: [ab43fe70-237a-4b2b-8e35-fdc2463921a9] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:33:3333 http: [d4303559-67b0-420a-8563-a15c23fae994] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:33:3333 error: [d4303559-67b0-420a-8563-a15c23fae994] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:38:3338 http: [54984d6a-c5c8-4dbe-8b91-9161fa2260cf] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:38:3338 http: [20007c24-5393-4f39-86b3-732140c66b3b] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:40:3340 http: [91c4c8ff-7b46-4805-aa77-8178a11ca3ce] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:40:3340 error: [91c4c8ff-7b46-4805-aa77-8178a11ca3ce] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:40:3340 http: [aa9d518e-f8bb-42d0-8296-0a1df353e9a6] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:40:3340 error: [aa9d518e-f8bb-42d0-8296-0a1df353e9a6] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:41:3341 http: [e39a166d-7ed9-4e75-a379-d4207618f221] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:41:3341 error: [e39a166d-7ed9-4e75-a379-d4207618f221] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:41:3341 http: [c79e573a-30e0-4089-9122-6e9556b5501f] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:41:3341 error: [c79e573a-30e0-4089-9122-6e9556b5501f] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:42:3342 http: [09bffaec-7dad-4b47-865e-23c37c564000] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:42:3342 error: [09bffaec-7dad-4b47-865e-23c37c564000] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:42:3342 http: [70508408-6ab1-477b-b131-a55a3bd169fa] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:42:3342 error: [70508408-6ab1-477b-b131-a55a3bd169fa] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:44:3344 http: [349c50ea-a0e1-483e-8190-480db6f27731] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:44:3344 error: [349c50ea-a0e1-483e-8190-480db6f27731] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:44:3344 http: [3e50ea11-9b74-4ed8-a590-f10c60c0a8f3] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:44:3344 error: [3e50ea11-9b74-4ed8-a590-f10c60c0a8f3] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:33:46:3346 http: [f4e85a0b-9775-4ba8-9aa9-aa075411c69a] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:33:46:3346 http: [c31b4df5-c503-43b9-91bd-ad1f79baf233] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:34:3434 http: [c1d97714-048b-4911-8f6a-efed218783d2] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:34:3434 error: [c1d97714-048b-4911-8f6a-efed218783d2] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:34:3434 http: [eb4a5b36-552e-4a0c-a714-31dc309b09fa] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:34:3434 error: [eb4a5b36-552e-4a0c-a714-31dc309b09fa] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:35:3435 http: [eef626fc-0edc-4c55-a38d-e2d59cafcaa4] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:35:3435 error: [eef626fc-0edc-4c55-a38d-e2d59cafcaa4] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:35:3435 http: [50cabe52-2d4b-4e97-86c0-7bc2b55123b0] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:35:3435 error: [50cabe52-2d4b-4e97-86c0-7bc2b55123b0] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:36:3436 http: [1e303857-9355-48a5-a059-39e32bb33cb8] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:36:3436 error: [1e303857-9355-48a5-a059-39e32bb33cb8] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:36:3436 http: [069452a2-b6b3-47cd-a9b2-b72d8e8ee4f3] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:37:3437 error: [069452a2-b6b3-47cd-a9b2-b72d8e8ee4f3] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:38:3438 http: [a13c2e3a-96ab-419a-8e7e-28eae1c9aeb1] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:38:3438 error: [a13c2e3a-96ab-419a-8e7e-28eae1c9aeb1] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:38:3438 http: [61c3294f-bdbf-41d9-8bdf-8760959abd6d] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:38:3438 error: [61c3294f-bdbf-41d9-8bdf-8760959abd6d] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:40:3440 http: [d92dadd8-4037-4f6b-ac25-924991a77a3d] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:40:3440 error: [d92dadd8-4037-4f6b-ac25-924991a77a3d] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:40:3440 http: [aa4efe90-fffd-4abd-8528-09b6b963b6fd] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:40:3440 error: [aa4efe90-fffd-4abd-8528-09b6b963b6fd] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:41:3441 http: [95e7a2dd-f1c3-463d-ad6d-8bcd4178dbdc] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:41:3441 error: [95e7a2dd-f1c3-463d-ad6d-8bcd4178dbdc] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:41:3441 http: [37772a9a-7545-423e-b137-4cda63708b40] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:41:3441 error: [37772a9a-7545-423e-b137-4cda63708b40] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:42:3442 http: [22620d25-ca3d-4836-b636-11607352d8a3] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:42:3442 error: [22620d25-ca3d-4836-b636-11607352d8a3] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:42:3442 http: [495fddc1-ce9a-4929-87e4-6e37d79a31bf] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:42:3442 error: [495fddc1-ce9a-4929-87e4-6e37d79a31bf] Unhandled error: invalid input syntax for type uuid: "dropdown" {"path":"/api/employees/dropdown"}
+QueryFailedError: invalid input syntax for type uuid: "dropdown"
+    at PostgresQueryRunner.query (C:\Users\HP\Desktop\hrms\backend\node_modules\typeorm\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SelectQueryBuilder.loadRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3868:25)
+    at async SelectQueryBuilder.getRawMany (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1627:29)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:3530:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\HP\Desktop\hrms\backend\node_modules\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async EmployeeService.getEmployee (C:\Users\HP\Desktop\hrms\backend\src\services\employee.service.ts:169:21)
+    at async getById (C:\Users\HP\Desktop\hrms\backend\src\controllers\employee.controller.ts:33:20)
+2026-03-05 14:34:43:3443 http: [c3a5c3f1-e145-4c71-a0e5-fa1e35fc66f3] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:34:43:3443 http: [6d832667-1015-449f-8fce-29670b0a2341] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:35:00:350 http: [93a486b9-2e2a-4503-b972-936ca1ab03e8] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:35:00:350 info: User logged out
+2026-03-05 14:37:31:3731 http: [df8335b2-73b5-407f-9aee-e93057b68eb5] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:37:31:3731 info: Login attempt failed – wrong password {"email":"viratjohn110@gmail.com"}
+2026-03-05 14:37:31:3731 warn: [df8335b2-73b5-407f-9aee-e93057b68eb5] AUTH_INVALID_CREDENTIALS: Invalid credentials {"statusCode":401,"path":"/api/auth/login"}
+2026-03-05 14:37:31:3731 http: [a6648bf4-9cd9-4fd5-a06d-aa1d4baa6d6b] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:37:31:3731 warn: [a6648bf4-9cd9-4fd5-a06d-aa1d4baa6d6b] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:37:52:3752 http: [0d643ef0-4ef9-4389-a325-eca065678b84] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:37:53:3753 info: User logged in successfully {"email":"viratjohn110@gmail.com","role":"EMPLOYEE"}
+2026-03-05 14:38:02:382 http: [5d8ac556-aa91-43d3-a709-11ef8ba7eeb3] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:02:382 info: User logged out
+2026-03-05 14:38:09:389 http: [0769836c-9fcc-422b-9380-8650efe91ea5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:09:389 warn: [0769836c-9fcc-422b-9380-8650efe91ea5] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:38:09:389 http: [c131d23f-3581-44e6-90c6-2d288a0dfd4b] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:09:389 warn: [c131d23f-3581-44e6-90c6-2d288a0dfd4b] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:38:09:389 http: [f45b50da-9e31-4e09-b88a-fd7a6c26264a] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:09:389 warn: [f45b50da-9e31-4e09-b88a-fd7a6c26264a] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:38:10:3810 http: [5c020c8a-cb6f-4192-8400-2ed415443e69] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:10:3810 warn: [5c020c8a-cb6f-4192-8400-2ed415443e69] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:38:10:3810 http: [a4e664a2-5a61-4870-8783-bb7bc3582163] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:10:3810 warn: [a4e664a2-5a61-4870-8783-bb7bc3582163] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:38:10:3810 http: [0e45bc9e-46a4-450f-b802-a3c49d90068e] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:10:3810 warn: [0e45bc9e-46a4-450f-b802-a3c49d90068e] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:38:12:3812 http: [669f7f6e-9b27-442f-81ad-b18aaeec1b52] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:12:3812 warn: [669f7f6e-9b27-442f-81ad-b18aaeec1b52] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees"}
+2026-03-05 14:38:12:3812 http: [53fa922b-a3aa-489d-aee8-2d3a0f97573d] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:12:3812 warn: [53fa922b-a3aa-489d-aee8-2d3a0f97573d] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees"}
+2026-03-05 14:38:12:3812 http: [77c88298-2308-4763-8e29-a476909bf1ce] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:12:3812 warn: [77c88298-2308-4763-8e29-a476909bf1ce] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:38:35:3835 http: [bae80232-b04d-4259-ac89-666eb6ec22b5] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:35:3835 warn: [bae80232-b04d-4259-ac89-666eb6ec22b5] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:38:35:3835 http: [240c38ed-2498-476d-898f-6f4b8b09e476] GET /api/employees/dropdown {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:35:3835 warn: [240c38ed-2498-476d-898f-6f4b8b09e476] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees/dropdown"}
+2026-03-05 14:38:35:3835 http: [8e9fad78-0904-4ccb-a3c4-7a4d3274dcbe] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:35:3835 warn: [8e9fad78-0904-4ccb-a3c4-7a4d3274dcbe] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:38:37:3837 http: [c84cdeb7-ddba-4160-9133-e978f31a2c74] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:37:3837 warn: [c84cdeb7-ddba-4160-9133-e978f31a2c74] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees"}
+2026-03-05 14:38:37:3837 http: [ca3a9b1a-1f31-4f86-b38d-4db604dc11f0] GET /api/employees {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:37:3837 warn: [ca3a9b1a-1f31-4f86-b38d-4db604dc11f0] AUTH_TOKEN_MISSING: Access token is required {"statusCode":401,"path":"/api/employees"}
+2026-03-05 14:38:37:3837 http: [cbd2329a-a7a6-43a1-b26f-dde46018f798] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:38:37:3837 warn: [cbd2329a-a7a6-43a1-b26f-dde46018f798] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:40:03:403 http: [9d4e9b5e-5db4-403e-b5fe-47e63ffa3970] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:40:03:403 info: Login attempt failed – user not found {"email":"zoraaisd@gmail.com"}
+2026-03-05 14:40:03:403 warn: [9d4e9b5e-5db4-403e-b5fe-47e63ffa3970] AUTH_INVALID_CREDENTIALS: Invalid credentials {"statusCode":401,"path":"/api/auth/login"}
+2026-03-05 14:40:03:403 http: [d70dfe20-0fcb-4ea5-af5b-593014ac20d1] POST /api/auth/refresh {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:40:03:403 warn: [d70dfe20-0fcb-4ea5-af5b-593014ac20d1] AUTH_REFRESH_MISSING: Refresh token not found {"statusCode":401,"path":"/api/auth/refresh"}
+2026-03-05 14:47:35:4735 http: [5a15fbda-c095-4e26-bc9f-6be54f5401d9] POST /api/auth/login {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:47:35:4735 info: User logged in successfully {"email":"admin@hrms.com","role":"ADMIN"}
+2026-03-05 14:47:41:4741 http: [2eb8d74f-d99d-4ef9-920f-9725c7d4f3f1] POST /api/auth/logout {"ip":"::1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"}
+2026-03-05 14:47:41:4741 info: User logged out

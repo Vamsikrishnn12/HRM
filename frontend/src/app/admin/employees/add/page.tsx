@@ -16,26 +16,14 @@ import {
   Code,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
+import { employeeApi } from "@/api";
+import type { AddEmployeeFormState } from "@/types";
 
-interface FormState {
-  firstName: string;
-  lastName: string;
-  email: string;
-  department: string;
-  designation: string;
-  employmentType: string;
-  dateOfJoining: string;
-  reportingManager: string;
-  shiftSchedule: string;
-  allowLoginOnlyInsideOffice: boolean;
-}
-
-const initialState: FormState = {
+const initialState: AddEmployeeFormState = {
   firstName: "",
   lastName: "",
   email: "",
@@ -46,6 +34,9 @@ const initialState: FormState = {
   reportingManager: "",
   shiftSchedule: "",
   allowLoginOnlyInsideOffice: false,
+  officeLatitude: "",
+  officeLongitude: "",
+  officeRadiusMeters: "",
 };
 
 interface CreatedResult {
@@ -54,7 +45,7 @@ interface CreatedResult {
 }
 
 export default function AddEmployeePage() {
-  const [form, setForm] = useState<FormState>({ ...initialState });
+  const [form, setForm] = useState<AddEmployeeFormState>({ ...initialState });
   const [submitting, setSubmitting] = useState(false);
   const [created, setCreated] = useState<CreatedResult | null>(null);
   const router = useRouter();
@@ -65,9 +56,35 @@ export default function AddEmployeePage() {
       toast({ title: "Please fill all required fields", status: "warning", duration: 3000, isClosable: true });
       return;
     }
+
+    if (form.allowLoginOnlyInsideOffice && (!form.officeLatitude || !form.officeLongitude || !form.officeRadiusMeters)) {
+      toast({ title: "Please fill latitude, longitude, and radius for location-based login", status: "warning", duration: 3000, isClosable: true });
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const result = await api.post<{ empId: string; generatedPassword: string; profile: unknown }>("/employees", form);
+
+      const payload: Record<string, unknown> = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        department: form.department,
+        designation: form.designation,
+        employmentType: form.employmentType,
+        dateOfJoining: form.dateOfJoining,
+        reportingManager: form.reportingManager,
+        shiftSchedule: form.shiftSchedule,
+        allowLoginOnlyInsideOffice: form.allowLoginOnlyInsideOffice,
+      };
+
+      if (form.allowLoginOnlyInsideOffice) {
+        payload.officeLatitude = parseFloat(form.officeLatitude);
+        payload.officeLongitude = parseFloat(form.officeLongitude);
+        payload.officeRadiusMeters = parseInt(form.officeRadiusMeters, 10);
+      }
+
+      const result = await employeeApi.create(payload as any);
       setCreated({ empId: result.empId, generatedPassword: result.generatedPassword });
       toast({ title: "Employee created!", description: `Employee ID: ${result.empId}`, status: "success", duration: 5000, isClosable: true });
     } catch (err: any) {
@@ -158,16 +175,56 @@ export default function AddEmployeePage() {
               <option value="Rotational">Rotational</option>
             </StyledSelect>
           </Field>
-          <Box>
-            <Text fontSize="sm" fontWeight="600" color="text.heading" mb={2}>Login Access</Text>
-            <Checkbox isChecked={form.allowLoginOnlyInsideOffice} onChange={(e) => setForm((p) => ({ ...p, allowLoginOnlyInsideOffice: e.target.checked }))} colorScheme="purple">
-              Allow login only inside office
-            </Checkbox>
-            <Text mt={2} fontSize="xs" color="text.muted">
-              When enabled, employee login is restricted to office network/geofenced location.
-            </Text>
-          </Box>
         </SimpleGrid>
+
+        <Divider mb={5} />
+
+        <Text fontSize="lg" fontWeight="800" color="text.heading" mb={1}>Login Access</Text>
+        <Text fontSize="sm" color="text.muted" mb={4}>Configure how the employee can access the system.</Text>
+
+        <Box mb={4}>
+          <Checkbox
+            isChecked={form.allowLoginOnlyInsideOffice}
+            onChange={(e) => setForm((p) => ({ ...p, allowLoginOnlyInsideOffice: e.target.checked }))}
+            colorScheme="purple"
+          >
+            <Text fontSize="sm" fontWeight="600" color="text.heading">Allow login only inside office</Text>
+          </Checkbox>
+          <Text mt={1} fontSize="xs" color="text.muted" ml={6}>
+            When enabled, employee login is restricted to the specified office coordinates and radius.
+          </Text>
+        </Box>
+
+        {form.allowLoginOnlyInsideOffice && (
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
+            <Field label="Office Latitude" required>
+              <StyledInput
+                type="number"
+                step="any"
+                placeholder="e.g., 28.6139"
+                value={form.officeLatitude}
+                onChange={(e) => setForm((p) => ({ ...p, officeLatitude: e.target.value }))}
+              />
+            </Field>
+            <Field label="Office Longitude" required>
+              <StyledInput
+                type="number"
+                step="any"
+                placeholder="e.g., 77.2090"
+                value={form.officeLongitude}
+                onChange={(e) => setForm((p) => ({ ...p, officeLongitude: e.target.value }))}
+              />
+            </Field>
+            <Field label="Allowed Radius (meters)" required>
+              <StyledInput
+                type="number"
+                placeholder="e.g., 200"
+                value={form.officeRadiusMeters}
+                onChange={(e) => setForm((p) => ({ ...p, officeRadiusMeters: e.target.value }))}
+              />
+            </Field>
+          </SimpleGrid>
+        )}
 
         <Divider my={4} />
 
