@@ -2,7 +2,6 @@ import { AppDataSource } from '../config/database';
 import { env } from '../config/env';
 import { User, UserRole } from '../entities/User.entity';
 import { hashPassword } from '../utils/password';
-import { logger } from '../utils/logger';
 
 export const seedAdmin = async (): Promise<void> => {
   const userRepo = AppDataSource.getRepository(User);
@@ -18,7 +17,6 @@ export const seedAdmin = async (): Promise<void> => {
     existingAdmin.firstName = env.ADMIN_FIRST_NAME;
     existingAdmin.lastName = env.ADMIN_LAST_NAME;
     await userRepo.save(existingAdmin);
-    logger.info('Admin user already exists, credentials updated from env.');
     return;
   }
 
@@ -33,6 +31,4 @@ export const seedAdmin = async (): Promise<void> => {
   });
 
   await userRepo.save(admin);
-
-  logger.info(`Admin user seeded successfully: ${env.ADMIN_EMAIL}`);
 };

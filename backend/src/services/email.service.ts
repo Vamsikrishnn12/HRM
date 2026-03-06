@@ -2,7 +2,6 @@ import path from 'path';
 import fs from 'fs';
 import { env } from '../config/env';
 import { transporter } from '../config/mail';
-import { logger } from '../utils/logger';
 
 export class EmailService {
   private loadTemplate(
@@ -45,9 +44,9 @@ export class EmailService {
         subject,
         html,
       });
-      logger.info('Credentials email sent', { email, empId });
+      console.log('Credentials email sent', { email, empId });
     } else {
-      logger.info('SMTP not configured — credentials for new employee:', {
+      console.log('SMTP not configured — credentials for new employee:', {
         email,
         empId,
         password,

@@ -1,0 +1,66 @@
+import { Request, Response } from 'express';
+import { SettingsService } from '../services/settings.service';
+import {
+  updateSettingsSchema,
+  createHolidaySchema,
+  updateHolidaySchema,
+} from '../validators/settings.validator';
+import { ApiResponse } from '../utils/apiResponse';
+import { ApiError } from '../utils/apiError';
+
+const settingsService = new SettingsService();
+
+export class SettingsController {
+  static async getSettings(_req: Request, res: Response): Promise<void> {
+    const result = await settingsService.getSettings();
+    ApiResponse.success(res, 'Settings retrieved', result);
+  }
+
+  static async updateSettings(req: Request, res: Response): Promise<void> {
+    const parsed = updateSettingsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map(
+        (e) => `${e.path.join('.')}: ${e.message}`,
+      );
+      throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
+    }
+    const result = await settingsService.updateSettings(parsed.data);
+    ApiResponse.success(res, 'Settings updated successfully', result);
+  }
+
+  static async listHolidays(_req: Request, res: Response): Promise<void> {
+    const result = await settingsService.listHolidays();
+    ApiResponse.success(res, 'Holidays retrieved', result);
+  }
+
+  static async createHoliday(req: Request, res: Response): Promise<void> {
+    const parsed = createHolidaySchema.safeParse(req.body);
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map(
+        (e) => `${e.path.join('.')}: ${e.message}`,
+      );
+      throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
+    }
+    const result = await settingsService.createHoliday(parsed.data);
+    ApiResponse.created(res, 'Holiday created successfully', result);
+  }
+
+  static async updateHoliday(req: Request, res: Response): Promise<void> {
+    const id = req.params.id as string;
+    const parsed = updateHolidaySchema.safeParse(req.body);
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map(
+        (e) => `${e.path.join('.')}: ${e.message}`,
+      );
+      throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
+    }
+    const result = await settingsService.updateHoliday(id, parsed.data);
+    ApiResponse.success(res, 'Holiday updated successfully', result);
+  }
+
+  static async deleteHoliday(req: Request, res: Response): Promise<void> {
+    const id = req.params.id as string;
+    await settingsService.deleteHoliday(id);
+    ApiResponse.success(res, 'Holiday deleted successfully');
+  }
+}

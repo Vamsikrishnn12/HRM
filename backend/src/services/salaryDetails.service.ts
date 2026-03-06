@@ -1,7 +1,6 @@
 import { SalaryDetailsRepository } from '../repositories/salaryDetails.repository';
 import { EmployeeRepository } from '../repositories/employee.repository';
 import { ApiError } from '../utils/apiError';
-import { logger } from '../utils/logger';
 
 interface SalaryInput {
   ctc?: number;
@@ -76,7 +75,6 @@ export class SalaryDetailsService {
       uanNumber: input.uanNumber || null,
     });
 
-    logger.info('Salary details saved', { userId, recordId: record.id });
     return this.formatRecord(record);
   }
 
@@ -103,7 +101,6 @@ export class SalaryDetailsService {
       uanNumber: input.uanNumber || null,
     });
 
-    logger.info('Salary details updated', { id });
     return this.getById(id);
   }
 

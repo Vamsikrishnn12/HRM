@@ -1,7 +1,6 @@
 import { PersonalDetailsRepository } from '../repositories/personalDetails.repository';
 import { EmployeeRepository } from '../repositories/employee.repository';
 import { ApiError } from '../utils/apiError';
-import { logger } from '../utils/logger';
 
 interface PersonalDetailsInput {
   aadhaarNumber?: string;
@@ -99,7 +98,6 @@ export class PersonalDetailsService {
       reasonForLeaving: input.reasonForLeaving || null,
     });
 
-    logger.info('Personal details saved', { userId, recordId: record.id });
     return this.formatRecord(record);
   }
 
@@ -137,7 +135,6 @@ export class PersonalDetailsService {
       reasonForLeaving: input.reasonForLeaving || null,
     });
 
-    logger.info('Personal details updated', { id });
     return this.getById(id);
   }
 

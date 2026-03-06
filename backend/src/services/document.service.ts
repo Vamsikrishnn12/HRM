@@ -6,7 +6,6 @@ import { DocumentRepository } from '../repositories/document.repository';
 const UPLOAD_REL = 'uploads/documents';
 import { EmployeeRepository } from '../repositories/employee.repository';
 import { ApiError } from '../utils/apiError';
-import { logger } from '../utils/logger';
 
 export class DocumentService {
   private docRepo: DocumentRepository;
@@ -57,7 +56,6 @@ export class DocumentService {
       saved.push(this.formatRecord(record));
     }
 
-    logger.info('Documents uploaded', { userId, count: saved.length });
     return saved;
   }
 
@@ -72,7 +70,6 @@ export class DocumentService {
     try { if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); } catch { /* ignore */ }
 
     await this.docRepo.deleteById(id);
-    logger.info('Document deleted', { id, fileName: record.originalName });
   }
 
   private formatRecord(r: any) {

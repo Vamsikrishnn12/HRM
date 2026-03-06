@@ -52,6 +52,10 @@ const options: swaggerJsdoc.Options = {
         name: 'Auth',
         description: 'Authentication endpoints',
       },
+      {
+        name: 'Settings',
+        description: 'Organisation settings and holidays',
+      },
     ],
   },
   apis: ['./src/routes/*.ts'],

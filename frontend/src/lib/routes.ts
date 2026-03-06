@@ -31,7 +31,7 @@ export const adminRoutes: RouteItem[] = [
       { label: "Personal Details", href: "/admin/employees/personal", icon: UserCog },
       { label: "Salary & Banking", href: "/admin/employees/salary", icon: Banknote },
       { label: "Documents", href: "/admin/employees/documents", icon: FileText },
-      { label: "View Employee", href: "/admin/employees/view", icon: Eye },
+     
     ],
   },
   { label: "Attendance", href: "/admin/attendance", icon: CalendarCheck },

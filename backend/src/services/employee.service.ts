@@ -6,7 +6,6 @@ import { EmailService } from './email.service';
 import { hashPassword } from '../utils/password';
 import { ApiError } from '../utils/apiError';
 import { UserRole } from '../entities/User.entity';
-import { logger } from '../utils/logger';
 
 interface CreateEmployeeInput {
   firstName: string;
@@ -117,14 +116,8 @@ export class EmployeeService {
     this.emailService
       .sendCredentials(input.email, empId, generatedPassword, input.firstName)
       .catch((err) =>
-        logger.error('Failed to send credentials email', {
-          empId,
-          email: input.email,
-          error: (err as Error).message,
-        }),
+        console.error('Failed to send credentials email', (err as Error).message),
       );
-
-    logger.info('Employee created', { empId, email: input.email });
 
     return {
       empId,

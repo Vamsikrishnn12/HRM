@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/apiError';
-import { logger } from '../utils/logger';
 
 /**
  * Centralized error handling middleware.
@@ -12,14 +11,7 @@ export const errorMiddleware = (
   res: Response,
   _next: NextFunction,
 ): void => {
-  const requestId = req.requestId || 'unknown';
-
   if (err instanceof ApiError) {
-    logger.warn(`[${requestId}] ${err.errorCode}: ${err.message}`, {
-      statusCode: err.statusCode,
-      path: req.path,
-    });
-
     res.status(err.statusCode).json({
       success: false,
       message: err.message,
@@ -51,10 +43,7 @@ export const errorMiddleware = (
   }
 
   // Unknown errors
-  logger.error(`[${requestId}] Unhandled error: ${err.message}`, {
-    stack: err.stack,
-    path: req.path,
-  });
+  console.error(`Unhandled error: ${err.message}`, err.stack);
 
   res.status(500).json({
     success: false,

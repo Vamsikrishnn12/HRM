@@ -6,6 +6,8 @@ import { EmployeeProfile } from '../entities/EmployeeProfile.entity';
 import { PersonalDetails } from '../entities/PersonalDetails.entity';
 import { SalaryDetails } from '../entities/SalaryDetails.entity';
 import { EmployeeDocument } from '../entities/EmployeeDocument.entity';
+import { OrgSettings } from '../entities/OrgSettings.entity';
+import { Holiday } from '../entities/Holiday.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -23,6 +25,8 @@ export const AppDataSource = new DataSource({
     PersonalDetails,
     SalaryDetails,
     EmployeeDocument,
+    OrgSettings,
+    Holiday,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],

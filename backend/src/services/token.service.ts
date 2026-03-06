@@ -7,7 +7,6 @@ import {
   AccessTokenPayload,
 } from '../utils/jwt';
 import { ApiError } from '../utils/apiError';
-import { logger } from '../utils/logger';
 
 export class TokenService {
   private tokenRepo: TokenRepository;
@@ -59,7 +58,6 @@ export class TokenService {
 
     if (!storedToken || storedToken.isRevoked) {
       // Possible token reuse attack – revoke all tokens for this user
-      logger.warn('Possible refresh token reuse detected', { userId: payload.userId });
       await this.tokenRepo.revokeAllUserTokens(payload.userId);
       throw ApiError.unauthorized('Refresh token has been revoked', 'AUTH_REFRESH_REVOKED');
     }
