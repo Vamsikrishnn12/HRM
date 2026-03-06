@@ -21,6 +21,9 @@ export class PersonalDetails {
   @Column({ type: 'varchar', length: 12, nullable: true })
   aadhaarNumber: string | null;
 
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  panNumber: string | null;
+
   @Column({ type: 'varchar', length: 15, nullable: true })
   mobileNumber: string | null;
 
@@ -28,6 +31,9 @@ export class PersonalDetails {
   whatsappNumber: string | null;
 
   // Demographics
+  @Column({ type: 'varchar', length: 5, nullable: true })
+  bloodGroup: string | null;
+
   @Column({ type: 'date', nullable: true })
   dateOfBirth: string | null;
 
@@ -75,6 +81,16 @@ export class PersonalDetails {
   @Column({ type: 'varchar', length: 100, nullable: true })
   permanentCountry: string | null;
 
+  // Emergency Contact
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  emergencyContactNumber: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  emergencyContactPerson: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  emergencyContactRelationship: string | null;
+
   // Education
   @Column({ type: 'varchar', length: 50, nullable: true })
   highestQualification: string | null;
@@ -97,6 +113,9 @@ export class PersonalDetails {
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   reasonForLeaving: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  previousCompanyCTC: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -30,6 +30,7 @@ const COLUMN_ALIASES: Record<string, string> = {
   hra: 'hra',
   conveyance: 'conveyance',
   conveyanceallowance: 'conveyance',
+  conveyance_allowance: 'conveyance',
   specialallowance: 'specialAllowance',
   special_allowance: 'specialAllowance',
   allowances: 'allowances',
@@ -44,12 +45,23 @@ const COLUMN_ALIASES: Record<string, string> = {
   joiningbonus: 'joiningBonus',
   joining_bonus: 'joiningBonus',
   reimbursement: 'reimbursement',
+  reimbursements: 'reimbursement',
 
   // Deductions
   pf: 'pf',
   providentfund: 'pf',
   provident_fund: 'pf',
   epf: 'pf',
+  employeepf: 'employeePf',
+  employee_pf: 'employeePf',
+  pfemployee: 'employeePf',
+  pf_employee: 'employeePf',
+  employerpf: 'employerPf',
+  employer_pf: 'employerPf',
+  pfemployer: 'employerPf',
+  pf_employer: 'employerPf',
+  employercontribution: 'employerPf',
+  employer_contribution: 'employerPf',
   esi: 'esi',
   pt: 'pt',
   professionaltax: 'pt',
@@ -65,6 +77,7 @@ const COLUMN_ALIASES: Record<string, string> = {
   otherdeductions: 'otherDeductions',
   other_deductions: 'otherDeductions',
   penalty: 'penalty',
+  penalties: 'penalty',
 
   // Work info
   lopdays: 'lopDays',
@@ -93,9 +106,12 @@ const EARNING_FIELDS = new Set([
 
 // Deduction fields (canonical names)
 const DEDUCTION_FIELDS = new Set([
-  'pf', 'esi', 'pt', 'tds', 'lopDeduction', 'salaryAdvance',
+  'pf', 'employeePf', 'esi', 'pt', 'tds', 'lopDeduction', 'salaryAdvance',
   'otherDeductions', 'penalty',
 ]);
+
+// Employer PF is informational, not a deduction from employee salary
+const EMPLOYER_PF_FIELD = 'employerPf';
 
 export interface ParsedRow {
   rowNumber: number;
@@ -105,6 +121,7 @@ export interface ParsedRow {
   email?: string;
   earnings: PayrollComponent[];
   deductions: PayrollComponent[];
+  pfEmployerContribution?: number;
   gross?: number;
   netPay?: number;
   ctc?: number;
@@ -191,9 +208,16 @@ export function parsePayrollExcel(filePath: string): ParseResult {
     for (const field of DEDUCTION_FIELDS) {
       const val = numVal(mapped[field]);
       if (val !== null && val > 0) {
-        deductions.push({ name: toLabel(field), amount: val });
+        // Map both 'pf' and 'employeePf' to the same label "PF (Employee)"
+        const label = (field === 'pf' || field === 'employeePf') ? 'PF (Employee)' : toLabel(field);
+        // Avoid duplicate PF entries when both 'pf' and 'employeePf' columns present
+        if ((field === 'pf' || field === 'employeePf') && deductions.some(d => d.name === 'PF (Employee)')) continue;
+        deductions.push({ name: label, amount: val });
       }
     }
+
+    // Extract employer PF (informational — not deducted from salary)
+    const employerPfVal = numVal(mapped[EMPLOYER_PF_FIELD]);
 
     rows.push({
       rowNumber: rowNum,
@@ -203,6 +227,7 @@ export function parsePayrollExcel(filePath: string): ParseResult {
       email: email || undefined,
       earnings,
       deductions,
+      pfEmployerContribution: employerPfVal ?? undefined,
       gross: numVal(mapped.gross) ?? undefined,
       netPay: numVal(mapped.netPay) ?? undefined,
       ctc: numVal(mapped.ctc) ?? undefined,

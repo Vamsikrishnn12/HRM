@@ -66,8 +66,10 @@ export interface CreateEmployeeResult {
 
 export interface PersonalForm {
   aadhaarNumber: string;
+  panNumber: string;
   mobileNumber: string;
   whatsappNumber: string;
+  bloodGroup: string;
   dateOfBirth: string;
   gender: string;
   maritalStatus: string;
@@ -83,10 +85,14 @@ export interface PersonalForm {
   permanentState: string;
   permanentPincode: string;
   permanentCountry: string;
+  emergencyContactNumber: string;
+  emergencyContactPerson: string;
+  emergencyContactRelationship: string;
   totalExperienceYears: string;
   lastCompany: string;
   lastDesignation: string;
   reasonForLeaving: string;
+  previousCompanyCTC: string;
   highestQualification: string;
   institutionName: string;
   graduationYear: string;

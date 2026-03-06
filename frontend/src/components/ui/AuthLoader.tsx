@@ -6,7 +6,7 @@ import { keyframes } from "@emotion/react";
 import type { AuthStatus } from "@/context/AuthContext";
 
 const messages: Record<string, string[]> = {
-  idle: ["Starting up..."],
+  idle: ["Verifying your session..."],
   checking: [
     "Verifying your session...",
     "Checking authentication...",

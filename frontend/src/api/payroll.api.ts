@@ -27,9 +27,10 @@ export interface PayrollPreview {
   presentDays: number;
   leaveDays: number;
   lopDays: number;
-  pan: string;
   bankAccount: string;
   uan: string;
+  pfEmployeeContribution: number;
+  pfEmployerContribution: number;
 }
 
 export interface PayrollRecord {
@@ -161,8 +162,17 @@ export const payrollApi = {
 
   downloadTemplate: () => `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}${BASE}/template`,
 
+  downloadTemplateFile: () =>
+    api.downloadBlob(`${BASE}/template`, 'payroll_template.xlsx'),
+
   downloadPayslipUrl: (id: string) =>
     `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}${BASE}/records/${id}/download`,
+
+  downloadPayslip: (id: string) =>
+    api.downloadBlob(`${BASE}/records/${id}/download`, `payslip_${id}.pdf`),
+
+  downloadMyPayslipPdf: (id: string) =>
+    api.downloadBlob(`${BASE}/my-payslips/${id}/download`, `payslip_${id}.pdf`),
 
   // Employee
   myPayslips: (year?: number) => {

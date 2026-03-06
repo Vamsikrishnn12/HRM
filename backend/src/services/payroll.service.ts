@@ -14,6 +14,7 @@ import { PayrollRepository } from '../repositories/payroll.repository';
 import { generatePayslipPdf, PayslipData } from './pdf.service';
 import { parsePayrollExcel, ParsedRow } from './excel.service';
 import { EmailService } from './email.service';
+import { OrgSettings } from '../entities/OrgSettings.entity';
 import { ApiError } from '../utils/apiError';
 import { env } from '../config/env';
 import { transporter } from '../config/mail';
@@ -57,6 +58,26 @@ export class PayrollService {
       }
     }
 
+    // Auto-add LOP deduction if applicable
+    if (attendance.lopDays > 0) {
+      const basic = earnings.find((e) => e.name.toLowerCase() === 'basic');
+      if (basic && attendance.workingDays > 0) {
+        const perDaySalary = basic.amount / attendance.workingDays;
+        const lopDeduction = round2(perDaySalary * attendance.lopDays);
+        // Remove any existing LOP deduction and add computed one
+        const idx = deductions.findIndex((d) => d.name === 'LOP Deduction');
+        if (idx >= 0) deductions.splice(idx, 1);
+        deductions.push({ name: 'LOP Deduction', amount: lopDeduction });
+      }
+    }
+
+    // Auto-add PF Employee Contribution if applicable and not already in deductions
+    const pfEmployeeContribution = salary?.pfApplicable ? round2(Number(salary.pfEmployeeContribution) || 0) : 0;
+    const pfEmployerContribution = salary?.pfApplicable ? round2(Number(salary.pfEmployerContribution) || 0) : 0;
+    if (pfEmployeeContribution > 0 && !deductions.some((d) => d.name.toLowerCase().includes('pf'))) {
+      deductions.push({ name: 'PF (Employee)', amount: pfEmployeeContribution });
+    }
+
     const grossEarnings = earnings.reduce((s, e) => s + e.amount, 0);
     const totalDeductions = deductions.reduce((s, d) => s + d.amount, 0);
     const netPay = grossEarnings - totalDeductions;
@@ -77,9 +98,10 @@ export class PayrollService {
       totalDeductions: round2(totalDeductions),
       netPay: round2(netPay),
       ...attendance,
-      pan: salary?.panNumber || '',
       bankAccount: salary?.accountNumber || '',
       uan: salary?.uanNumber || '',
+      pfEmployeeContribution,
+      pfEmployerContribution,
     };
   }
 
@@ -123,9 +145,9 @@ export class PayrollService {
       designation: profile?.designation || '',
       department: profile?.department || '',
       dateOfJoining: profile?.dateOfJoining || '',
-      pan: salary?.panNumber || '',
       bankAccount: salary?.accountNumber || '',
       uan: salary?.uanNumber || '',
+      pfEmployerContribution: salary?.pfApplicable ? round2(Number(salary.pfEmployerContribution) || 0) : 0,
     };
 
     const record = existing
@@ -298,6 +320,36 @@ export class PayrollService {
     const earnings = this.mergeEarnings(row.earnings, salary);
     const deductions = this.mergeDeductions(row.deductions, salary);
 
+    // Determine effective LOP days (Excel override or system computed)
+    const effectiveLopDays = row.lopDays ?? attendance.lopDays;
+
+    // Auto-add LOP deduction if applicable (same logic as previewPayroll)
+    if (effectiveLopDays > 0) {
+      const basic = earnings.find((e) => e.name.toLowerCase() === 'basic');
+      const effectiveWorkingDays = row.workingDays ?? attendance.workingDays;
+      if (basic && effectiveWorkingDays > 0) {
+        const perDaySalary = basic.amount / effectiveWorkingDays;
+        const lopDeduction = round2(perDaySalary * effectiveLopDays);
+        const idx = deductions.findIndex((d) => d.name === 'LOP Deduction' || d.name === 'Lop Deduction');
+        if (idx >= 0) deductions.splice(idx, 1);
+        deductions.push({ name: 'LOP Deduction', amount: lopDeduction });
+      }
+    }
+
+    // Auto-add PF Employee Contribution if applicable and not already present
+    const pfEmployeeContribution = salary?.pfApplicable ? round2(Number(salary.pfEmployeeContribution) || 0) : 0;
+    if (pfEmployeeContribution > 0 && !deductions.some((d) => d.name.toLowerCase().includes('pf'))) {
+      deductions.push({ name: 'PF (Employee)', amount: pfEmployeeContribution });
+    }
+
+    // Determine employer PF: Excel value overrides system value
+    const pfEmployerContribution =
+      row.pfEmployerContribution != null
+        ? round2(row.pfEmployerContribution)
+        : salary?.pfApplicable
+          ? round2(Number(salary.pfEmployerContribution) || 0)
+          : 0;
+
     const grossEarnings = round2(earnings.reduce((s, e) => s + e.amount, 0));
     const totalDeductions = round2(deductions.reduce((s, d) => s + d.amount, 0));
     const netPay = round2(grossEarnings - totalDeductions);
@@ -309,9 +361,9 @@ export class PayrollService {
       designation: profile?.designation || '',
       department: profile?.department || '',
       dateOfJoining: profile?.dateOfJoining || '',
-      pan: salary?.panNumber || '',
       bankAccount: salary?.accountNumber || '',
       uan: salary?.uanNumber || '',
+      pfEmployerContribution,
     };
 
     // Check for existing
@@ -320,46 +372,30 @@ export class PayrollService {
       throw new Error(`Payroll already exists for ${user.empId || user.email} — ${month}/${year}`);
     }
 
+    const recordData = {
+      payrollRunId: runId,
+      employeeId: user.id,
+      month,
+      year,
+      earnings,
+      deductions,
+      grossEarnings,
+      totalDeductions,
+      netPay,
+      workingDays: row.workingDays ?? attendance.workingDays,
+      payableDays: row.payableDays ?? attendance.payableDays,
+      presentDays: row.presentDays ?? attendance.presentDays,
+      leaveDays: row.leaveDays ?? attendance.leaveDays,
+      lopDays: effectiveLopDays,
+      employeeSnapshot,
+      attendanceSnapshot: attendance,
+      source: PayrollSource.BULK_UPLOAD,
+      status: PayrollRecordStatus.GENERATED,
+    };
+
     const record = existing
-      ? await this.repo.saveRecord(
-          Object.assign(existing, {
-            payrollRunId: runId,
-            earnings,
-            deductions,
-            grossEarnings,
-            totalDeductions,
-            netPay,
-            workingDays: row.workingDays ?? attendance.workingDays,
-            payableDays: row.payableDays ?? attendance.payableDays,
-            presentDays: row.presentDays ?? attendance.presentDays,
-            leaveDays: row.leaveDays ?? attendance.leaveDays,
-            lopDays: row.lopDays ?? attendance.lopDays,
-            employeeSnapshot,
-            attendanceSnapshot: attendance,
-            source: PayrollSource.BULK_UPLOAD,
-            status: PayrollRecordStatus.GENERATED,
-          }),
-        )
-      : await this.repo.createRecord({
-          payrollRunId: runId,
-          employeeId: user.id,
-          month,
-          year,
-          earnings,
-          deductions,
-          grossEarnings,
-          totalDeductions,
-          netPay,
-          workingDays: row.workingDays ?? attendance.workingDays,
-          payableDays: row.payableDays ?? attendance.payableDays,
-          presentDays: row.presentDays ?? attendance.presentDays,
-          leaveDays: row.leaveDays ?? attendance.leaveDays,
-          lopDays: row.lopDays ?? attendance.lopDays,
-          employeeSnapshot,
-          attendanceSnapshot: attendance,
-          source: PayrollSource.BULK_UPLOAD,
-          status: PayrollRecordStatus.GENERATED,
-        });
+      ? await this.repo.saveRecord(Object.assign(existing, recordData))
+      : await this.repo.createRecord(recordData);
 
     // Generate PDF
     await this.generateAndAttachPdf(record, employeeSnapshot);
@@ -371,15 +407,28 @@ export class PayrollService {
     record: PayrollRecord,
     snapshot: Record<string, unknown>,
   ) {
+    // Get company details from OrgSettings
+    let companyName = 'HRMS';
+    let companyAddress = '';
+    try {
+      const orgRepo = AppDataSource.getRepository(OrgSettings);
+      const org = await orgRepo.findOne({ where: {} });
+      if (org) {
+        companyName = org.companyName || 'HRMS';
+        companyAddress = org.companyAddress || '';
+      }
+    } catch {
+      // use defaults
+    }
+
     const data: PayslipData = {
-      companyName: 'HRMS',
-      companyAddress: '',
+      companyName,
+      companyAddress,
       employeeName: String(snapshot.employeeName || ''),
       employeeCode: String(snapshot.employeeCode || ''),
       designation: String(snapshot.designation || ''),
       department: String(snapshot.department || ''),
       dateOfJoining: String(snapshot.dateOfJoining || ''),
-      pan: String(snapshot.pan || ''),
       bankAccount: String(snapshot.bankAccount || ''),
       uan: String(snapshot.uan || ''),
       month: record.month,
@@ -394,18 +443,8 @@ export class PayrollService {
       grossEarnings: Number(record.grossEarnings),
       totalDeductions: Number(record.totalDeductions),
       netPay: Number(record.netPay),
+      pfEmployerContribution: Number(snapshot.pfEmployerContribution) || 0,
     };
-
-    // Try to get org settings for company name
-    try {
-      const settingsRepo = AppDataSource.getRepository('org_settings');
-      const org = await settingsRepo.findOne({ where: { key: 'companyName' } });
-      if (org) data.companyName = (org as any).value;
-      const addr = await settingsRepo.findOne({ where: { key: 'companyAddress' } });
-      if (addr) data.companyAddress = (addr as any).value;
-    } catch {
-      // OrgSettings might not have these keys — use defaults
-    }
 
     const fileName = `payslip_${String(snapshot.employeeCode || record.employeeId).replace(/[^a-zA-Z0-9]/g, '_')}_${record.month}_${record.year}.pdf`;
     const result = await generatePayslipPdf(data, fileName);
@@ -445,12 +484,20 @@ export class PayrollService {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const periodStr = `${monthNames[record.month - 1]} ${record.year}`;
 
+    // Get company name for email
+    let companyName = 'HRMS';
+    try {
+      const orgRepo = AppDataSource.getRepository(OrgSettings);
+      const org = await orgRepo.findOne({ where: {} });
+      if (org?.companyName) companyName = org.companyName;
+    } catch { /* use default */ }
+
     if (transporter && env.SMTP_FROM) {
       await transporter.sendMail({
         from: `"${env.SMTP_FROM_NAME}" <${env.SMTP_FROM}>`,
         to: email,
         subject: `Your Payslip for ${periodStr}`,
-        html: buildPayslipEmailHtml(empName, periodStr),
+        html: buildPayslipEmailHtml(empName, periodStr, Number(record.netPay), companyName),
         attachments: [{ filename: doc.fileName, path: doc.filePath }],
       });
 
@@ -547,12 +594,23 @@ export class PayrollService {
   generateExcelTemplate(): Buffer {
     const wb = XLSX.utils.book_new();
     const headers = [
+      // Identity
       'Employee ID', 'Employee Name', 'Email',
-      'Basic', 'HRA', 'Allowances', 'Special Allowance', 'Bonus', 'Incentive', 'Arrears', 'Other Earnings',
-      'PF', 'ESI', 'PT', 'TDS', 'LOP Deduction', 'Salary Advance', 'Other Deductions',
+      // Earnings
+      'Basic', 'HRA', 'Conveyance', 'Special Allowance', 'Allowances',
+      'Bonus', 'Incentive', 'Retention Bonus', 'Joining Bonus',
+      'Arrears', 'Reimbursement', 'Other Earnings',
+      // Deductions
+      'Employee PF', 'Employer PF', 'ESI', 'Professional Tax', 'TDS',
+      'LOP Deduction', 'Salary Advance', 'Penalty', 'Other Deductions',
+      // Attendance
       'Working Days', 'Payable Days', 'Present Days', 'Leave Days', 'LOP Days',
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers]);
+
+    // Set column widths for readability
+    ws['!cols'] = headers.map((h) => ({ wch: Math.max(h.length + 2, 14) }));
+
     XLSX.utils.book_append_sheet(wb, ws, 'Payroll');
     return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
   }
@@ -712,19 +770,25 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function buildPayslipEmailHtml(empName: string, period: string): string {
+function buildPayslipEmailHtml(empName: string, period: string, netPay?: number, companyName?: string): string {
+  const company = companyName || 'HRMS';
+  const netPayStr = netPay ? `₹${Number(netPay).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '';
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head><body style="font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;margin:0;padding:0;">
 <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);">
-  <div style="background:#4F46E5;padding:24px 28px;"><h1 style="margin:0;color:#fff;font-size:20px;">HRMS</h1></div>
+  <div style="background:#4F46E5;padding:24px 28px;"><h1 style="margin:0;color:#fff;font-size:20px;">${company}</h1></div>
   <div style="padding:28px;">
     <p style="margin:0 0 16px;color:#1a1a2e;font-size:15px;">Hello <strong>${empName}</strong>,</p>
     <p style="margin:0 0 16px;color:#475569;font-size:14px;">Your payslip for <strong>${period}</strong> is attached to this email.</p>
+    ${netPayStr ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 16px;text-align:center;">
+      <p style="margin:0 0 4px;font-size:12px;color:#166534;text-transform:uppercase;letter-spacing:0.5px;">Net Pay</p>
+      <p style="margin:0;font-size:24px;font-weight:800;color:#166534;">${netPayStr}</p>
+    </div>` : ''}
     <p style="margin:0 0 16px;color:#475569;font-size:14px;">You can also view and download your payslips from the HRMS portal.</p>
     <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;">This is an automated message. Please do not reply.</p>
   </div>
   <div style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;">
-    <p style="margin:0;font-size:11px;color:#94a3b8;">&copy; ${new Date().getFullYear()} HRMS. All rights reserved.</p>
+    <p style="margin:0;font-size:11px;color:#94a3b8;">&copy; ${new Date().getFullYear()} ${company}. All rights reserved.</p>
   </div>
 </div>
 </body></html>`;

@@ -4,8 +4,10 @@ import { ApiError } from '../utils/apiError';
 
 interface PersonalDetailsInput {
   aadhaarNumber?: string;
+  panNumber?: string;
   mobileNumber?: string;
   whatsappNumber?: string;
+  bloodGroup?: string;
   dateOfBirth?: string;
   gender?: string;
   maritalStatus?: string;
@@ -21,6 +23,9 @@ interface PersonalDetailsInput {
   permanentState?: string;
   permanentPincode?: string;
   permanentCountry?: string;
+  emergencyContactNumber?: string;
+  emergencyContactPerson?: string;
+  emergencyContactRelationship?: string;
   highestQualification?: string;
   institutionName?: string;
   graduationYear?: string;
@@ -28,6 +33,7 @@ interface PersonalDetailsInput {
   lastCompany?: string;
   lastDesignation?: string;
   reasonForLeaving?: string;
+  previousCompanyCTC?: string;
 }
 
 export class PersonalDetailsService {
@@ -72,8 +78,10 @@ export class PersonalDetailsService {
 
     const record = await this.personalRepo.upsertByUserId(userId, {
       aadhaarNumber: input.aadhaarNumber || null,
+      panNumber: input.panNumber || null,
       mobileNumber: input.mobileNumber || null,
       whatsappNumber: input.whatsappNumber || null,
+      bloodGroup: input.bloodGroup || null,
       dateOfBirth: input.dateOfBirth || null,
       gender: input.gender || null,
       maritalStatus: input.maritalStatus || null,
@@ -89,6 +97,9 @@ export class PersonalDetailsService {
       permanentState: input.permanentState || null,
       permanentPincode: input.permanentPincode || null,
       permanentCountry: input.permanentCountry || null,
+      emergencyContactNumber: input.emergencyContactNumber || null,
+      emergencyContactPerson: input.emergencyContactPerson || null,
+      emergencyContactRelationship: input.emergencyContactRelationship || null,
       highestQualification: input.highestQualification || null,
       institutionName: input.institutionName || null,
       graduationYear: input.graduationYear || null,
@@ -96,6 +107,7 @@ export class PersonalDetailsService {
       lastCompany: input.lastCompany || null,
       lastDesignation: input.lastDesignation || null,
       reasonForLeaving: input.reasonForLeaving || null,
+      previousCompanyCTC: input.previousCompanyCTC || null,
     });
 
     return this.formatRecord(record);
@@ -109,8 +121,10 @@ export class PersonalDetailsService {
 
     await this.personalRepo.update(id, {
       aadhaarNumber: input.aadhaarNumber || null,
+      panNumber: input.panNumber || null,
       mobileNumber: input.mobileNumber || null,
       whatsappNumber: input.whatsappNumber || null,
+      bloodGroup: input.bloodGroup || null,
       dateOfBirth: input.dateOfBirth || null,
       gender: input.gender || null,
       maritalStatus: input.maritalStatus || null,
@@ -126,6 +140,9 @@ export class PersonalDetailsService {
       permanentState: input.permanentState || null,
       permanentPincode: input.permanentPincode || null,
       permanentCountry: input.permanentCountry || null,
+      emergencyContactNumber: input.emergencyContactNumber || null,
+      emergencyContactPerson: input.emergencyContactPerson || null,
+      emergencyContactRelationship: input.emergencyContactRelationship || null,
       highestQualification: input.highestQualification || null,
       institutionName: input.institutionName || null,
       graduationYear: input.graduationYear || null,
@@ -133,6 +150,7 @@ export class PersonalDetailsService {
       lastCompany: input.lastCompany || null,
       lastDesignation: input.lastDesignation || null,
       reasonForLeaving: input.reasonForLeaving || null,
+      previousCompanyCTC: input.previousCompanyCTC || null,
     });
 
     return this.getById(id);
@@ -143,8 +161,10 @@ export class PersonalDetailsService {
       id: r.id,
       userId: r.userId,
       aadhaarNumber: r.aadhaarNumber || '',
+      panNumber: r.panNumber || '',
       mobileNumber: r.mobileNumber || '',
       whatsappNumber: r.whatsappNumber || '',
+      bloodGroup: r.bloodGroup || '',
       dateOfBirth: r.dateOfBirth || '',
       gender: r.gender || '',
       maritalStatus: r.maritalStatus || '',
@@ -160,6 +180,9 @@ export class PersonalDetailsService {
       permanentState: r.permanentState || '',
       permanentPincode: r.permanentPincode || '',
       permanentCountry: r.permanentCountry || '',
+      emergencyContactNumber: r.emergencyContactNumber || '',
+      emergencyContactPerson: r.emergencyContactPerson || '',
+      emergencyContactRelationship: r.emergencyContactRelationship || '',
       highestQualification: r.highestQualification || '',
       institutionName: r.institutionName || '',
       graduationYear: r.graduationYear || '',
@@ -167,6 +190,7 @@ export class PersonalDetailsService {
       lastCompany: r.lastCompany || '',
       lastDesignation: r.lastDesignation || '',
       reasonForLeaving: r.reasonForLeaving || '',
+      previousCompanyCTC: r.previousCompanyCTC || '',
       employeeName: r.user ? `${r.user.firstName} ${r.user.lastName}` : '',
       empId: r.user?.empId || '',
       email: r.user?.email || '',

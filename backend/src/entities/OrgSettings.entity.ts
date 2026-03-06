@@ -17,6 +17,13 @@ export class OrgSettings {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // ── Company Info ──
+  @Column({ type: 'varchar', length: 200, default: 'HRMS' })
+  companyName: string;
+
+  @Column({ type: 'text', nullable: true })
+  companyAddress: string | null;
+
   // ── Office Timings ──
   @Column({ type: 'time', default: '09:00' })
   workStartTime: string;

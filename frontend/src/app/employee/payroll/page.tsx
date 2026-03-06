@@ -1,20 +1,40 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Box, SimpleGrid, Flex, Text, Spinner } from "@chakra-ui/react";
-import { Wallet, Download, FileText, Calendar } from "lucide-react";
+import {
+  Box,
+  SimpleGrid,
+  Flex,
+  Text,
+  Spinner,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  Divider,
+  useDisclosure,
+  Tooltip,
+  useToast,
+} from "@chakra-ui/react";
+import { Wallet, Download, FileText, Calendar, Eye, TrendingUp, TrendingDown } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { StyledSelect } from "@/components/ui/FormHelpers";
-import { PrimaryButton } from "@/components/ui/Buttons";
+import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { payrollApi, type PayrollRecordType } from "@/api";
-import { getAccessToken } from "@/lib/api";
 
 const MONTHS = [
   "Jan","Feb","Mar","Apr","May","Jun",
   "Jul","Aug","Sep","Oct","Nov","Dec",
+];
+
+const FULL_MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
 ];
 
 const currentYear = new Date().getFullYear();
@@ -23,6 +43,10 @@ export default function EmployeePayrollPage() {
   const [year, setYear] = useState(currentYear);
   const [records, setRecords] = useState<PayrollRecordType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<PayrollRecordType | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
 
   useEffect(() => {
     setLoading(true);
@@ -33,13 +57,20 @@ export default function EmployeePayrollPage() {
       .finally(() => setLoading(false));
   }, [year]);
 
-  const handleDownload = (id: string) => {
-    const url = payrollApi.myPayslipDownloadUrl(id);
-    const token = getAccessToken();
-    const a = document.createElement("a");
-    a.href = `${url}?token=${token}`;
-    a.target = "_blank";
-    a.click();
+  const handleDownload = async (id: string) => {
+    setDownloadingId(id);
+    try {
+      await payrollApi.downloadMyPayslipPdf(id);
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleView = (record: PayrollRecordType) => {
+    setSelected(record);
+    onOpen();
   };
 
   const columns = useMemo<Column<PayrollRecordType>[]>(
@@ -59,15 +90,26 @@ export default function EmployeePayrollPage() {
         ),
       },
       {
+        key: "workingDays" as any,
+        header: "Paid Days",
+        render: (row) => (
+          <Text fontSize="sm" fontWeight="500">
+            {row.payableDays} <Text as="span" fontSize="xs" color="text.muted">/ {row.workingDays}</Text>
+          </Text>
+        ),
+      },
+      {
         key: "grossEarnings",
         header: "Gross",
-        render: (row) => <Text fontSize="sm">₹{row.grossEarnings.toLocaleString("en-IN")}</Text>,
+        render: (row) => (
+          <Text fontSize="sm" color="#0D7C47" fontWeight="600">₹{row.grossEarnings.toLocaleString("en-IN")}</Text>
+        ),
       },
       {
         key: "totalDeductions",
         header: "Deductions",
         render: (row) => (
-          <Text fontSize="sm" color="#C41E3A">
+          <Text fontSize="sm" color="#C41E3A" fontWeight="600">
             -₹{row.totalDeductions.toLocaleString("en-IN")}
           </Text>
         ),
@@ -89,19 +131,41 @@ export default function EmployeePayrollPage() {
       {
         key: "actions" as any,
         header: "",
-        width: "100px",
-        render: (row) =>
-          row.hasPayslip ? (
-            <PrimaryButton size="xs" leftIcon={<Download size={12} />} onClick={() => handleDownload(row.id)}>
-              Download
-            </PrimaryButton>
-          ) : null,
+        width: "140px",
+        render: (row) => (
+          <Flex gap={1}>
+            <Tooltip label="View payslip details" hasArrow>
+              <Box>
+                <SecondaryButton size="xs" leftIcon={<Eye size={12} />} onClick={() => handleView(row)}>
+                  View
+                </SecondaryButton>
+              </Box>
+            </Tooltip>
+            {row.hasPayslip && (
+              <Tooltip label="Download payslip PDF" hasArrow>
+                <Box>
+                  <PrimaryButton
+                    size="xs"
+                    leftIcon={<Download size={12} />}
+                    onClick={() => handleDownload(row.id)}
+                    isLoading={downloadingId === row.id}
+                    loadingText="..."
+                  >
+                    PDF
+                  </PrimaryButton>
+                </Box>
+              </Tooltip>
+            )}
+          </Flex>
+        ),
       },
     ],
     [],
   );
 
   const totalPaid = records.reduce((s, r) => s + r.netPay, 0);
+  const totalGross = records.reduce((s, r) => s + r.grossEarnings, 0);
+  const totalDeductions = records.reduce((s, r) => s + r.totalDeductions, 0);
 
   return (
     <Box>
@@ -117,7 +181,7 @@ export default function EmployeePayrollPage() {
       </Flex>
 
       {/* Summary */}
-      <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4} mb={6}>
+      <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4} mb={6}>
         <Box bg="white" borderRadius="xl" p={5} border="1px solid" borderColor="surface.border" shadow="card">
           <Flex justify="space-between" align="center">
             <Box>
@@ -132,21 +196,30 @@ export default function EmployeePayrollPage() {
         <Box bg="white" borderRadius="xl" p={5} border="1px solid" borderColor="surface.border" shadow="card">
           <Flex justify="space-between" align="center">
             <Box>
-              <Text fontSize="sm" color="text.muted" fontWeight="500">Total Received</Text>
-              <Text fontSize="xl" fontWeight="700" color="text.heading" mt={1}>₹{totalPaid.toLocaleString("en-IN")}</Text>
+              <Text fontSize="sm" color="text.muted" fontWeight="500">Total Earnings</Text>
+              <Text fontSize="xl" fontWeight="700" color="#0D7C47" mt={1}>₹{totalGross.toLocaleString("en-IN")}</Text>
             </Box>
             <Flex w={10} h={10} borderRadius="lg" bg="#E6F9F0" align="center" justify="center">
-              <Wallet size={20} color="#0D7C47" />
+              <TrendingUp size={20} color="#0D7C47" />
             </Flex>
           </Flex>
         </Box>
         <Box bg="white" borderRadius="xl" p={5} border="1px solid" borderColor="surface.border" shadow="card">
           <Flex justify="space-between" align="center">
             <Box>
-              <Text fontSize="sm" color="text.muted" fontWeight="500">Latest Net Pay</Text>
-              <Text fontSize="xl" fontWeight="700" color="text.heading" mt={1}>
-                {records.length > 0 ? `₹${records[0].netPay.toLocaleString("en-IN")}` : "—"}
-              </Text>
+              <Text fontSize="sm" color="text.muted" fontWeight="500">Total Deductions</Text>
+              <Text fontSize="xl" fontWeight="700" color="#C41E3A" mt={1}>₹{totalDeductions.toLocaleString("en-IN")}</Text>
+            </Box>
+            <Flex w={10} h={10} borderRadius="lg" bg="#FEF2F2" align="center" justify="center">
+              <TrendingDown size={20} color="#C41E3A" />
+            </Flex>
+          </Flex>
+        </Box>
+        <Box bg="white" borderRadius="xl" p={5} border="1px solid" borderColor="surface.border" shadow="card">
+          <Flex justify="space-between" align="center">
+            <Box>
+              <Text fontSize="sm" color="text.muted" fontWeight="500">Net Received</Text>
+              <Text fontSize="xl" fontWeight="700" color="text.heading" mt={1}>₹{totalPaid.toLocaleString("en-IN")}</Text>
             </Box>
             <Flex w={10} h={10} borderRadius="lg" bg="#FFF4E5" align="center" justify="center">
               <Wallet size={20} color="#B25E09" />
@@ -172,6 +245,90 @@ export default function EmployeePayrollPage() {
           )}
         </Box>
       </SectionCard>
+
+      {/* Payslip Detail Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader fontSize="md" fontWeight="700">
+            Payslip — {selected ? `${FULL_MONTHS[selected.month - 1]} ${selected.year}` : ""}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {selected && (
+              <Box>
+                {/* Attendance */}
+                <SimpleGrid columns={5} spacing={2} mb={4}>
+                  {[
+                    { label: "Working", value: selected.workingDays },
+                    { label: "Present", value: selected.presentDays },
+                    { label: "Leave", value: selected.leaveDays },
+                    { label: "LOP", value: selected.lopDays },
+                    { label: "Paid", value: selected.payableDays },
+                  ].map((a) => (
+                    <Box key={a.label} textAlign="center" p={2} bg="surface.bg" borderRadius="md">
+                      <Text fontSize="lg" fontWeight="700" color="text.heading">{a.value}</Text>
+                      <Text fontSize="xs" color="text.muted">{a.label}</Text>
+                    </Box>
+                  ))}
+                </SimpleGrid>
+
+                <Divider mb={4} />
+
+                {/* Earnings */}
+                <Text fontSize="sm" fontWeight="700" color="#0D7C47" mb={2}>Earnings</Text>
+                {(selected.earnings || []).map((e, i) => (
+                  <Flex key={i} justify="space-between" py={1}>
+                    <Text fontSize="sm" color="text.muted">{e.name}</Text>
+                    <Text fontSize="sm" fontWeight="600">₹{e.amount.toLocaleString("en-IN")}</Text>
+                  </Flex>
+                ))}
+                <Flex justify="space-between" py={1} mt={1} borderTop="1px solid" borderColor="green.200">
+                  <Text fontSize="sm" fontWeight="700" color="#0D7C47">Gross Earnings</Text>
+                  <Text fontSize="sm" fontWeight="700" color="#0D7C47">₹{selected.grossEarnings.toLocaleString("en-IN")}</Text>
+                </Flex>
+
+                <Divider my={3} />
+
+                {/* Deductions */}
+                <Text fontSize="sm" fontWeight="700" color="#C41E3A" mb={2}>Deductions</Text>
+                {(selected.deductions || []).map((d, i) => (
+                  <Flex key={i} justify="space-between" py={1}>
+                    <Text fontSize="sm" color="text.muted">{d.name}</Text>
+                    <Text fontSize="sm" fontWeight="600">₹{d.amount.toLocaleString("en-IN")}</Text>
+                  </Flex>
+                ))}
+                <Flex justify="space-between" py={1} mt={1} borderTop="1px solid" borderColor="red.200">
+                  <Text fontSize="sm" fontWeight="700" color="#C41E3A">Total Deductions</Text>
+                  <Text fontSize="sm" fontWeight="700" color="#C41E3A">₹{selected.totalDeductions.toLocaleString("en-IN")}</Text>
+                </Flex>
+
+                <Divider my={3} />
+
+                {/* Net Pay */}
+                <Flex justify="space-between" p={3} bg="purple.50" borderRadius="lg">
+                  <Text fontSize="md" fontWeight="700" color="brand.600">Net Pay</Text>
+                  <Text fontSize="lg" fontWeight="800" color="brand.600">₹{selected.netPay.toLocaleString("en-IN")}</Text>
+                </Flex>
+
+                {selected.hasPayslip && (
+                  <PrimaryButton
+                    mt={4}
+                    size="sm"
+                    leftIcon={<Download size={14} />}
+                    onClick={() => handleDownload(selected.id)}
+                    isLoading={downloadingId === selected.id}
+                    loadingText="Downloading..."
+                    w="full"
+                  >
+                    Download Payslip PDF
+                  </PrimaryButton>
+                )}
+              </Box>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

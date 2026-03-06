@@ -2,8 +2,10 @@ import { z } from 'zod';
 
 export const savePersonalSchema = z.object({
   aadhaarNumber: z.string().max(12).optional().default(''),
+  panNumber: z.string().max(10).optional().default(''),
   mobileNumber: z.string().max(15).optional().default(''),
   whatsappNumber: z.string().max(15).optional().default(''),
+  bloodGroup: z.string().max(5).optional().default(''),
   dateOfBirth: z.string().optional().default(''),
   gender: z.string().max(10).optional().default(''),
   maritalStatus: z.string().max(20).optional().default(''),
@@ -19,6 +21,9 @@ export const savePersonalSchema = z.object({
   permanentState: z.string().max(100).optional().default(''),
   permanentPincode: z.string().max(10).optional().default(''),
   permanentCountry: z.string().max(100).optional().default(''),
+  emergencyContactNumber: z.string().max(15).optional().default(''),
+  emergencyContactPerson: z.string().max(100).optional().default(''),
+  emergencyContactRelationship: z.string().max(50).optional().default(''),
   highestQualification: z.string().max(50).optional().default(''),
   institutionName: z.string().max(200).optional().default(''),
   graduationYear: z.string().max(10).optional().default(''),
@@ -26,4 +31,5 @@ export const savePersonalSchema = z.object({
   lastCompany: z.string().max(200).optional().default(''),
   lastDesignation: z.string().max(200).optional().default(''),
   reasonForLeaving: z.string().max(500).optional().default(''),
+  previousCompanyCTC: z.string().max(20).optional().default(''),
 });

@@ -2,6 +2,8 @@ import { SettingsRepository } from '../repositories/settings.repository';
 import { ApiError } from '../utils/apiError';
 
 interface UpdateSettingsInput {
+  companyName?: string;
+  companyAddress?: string | null;
   workStartTime?: string;
   workEndTime?: string;
   lateGraceMinutes?: number;
@@ -92,6 +94,8 @@ export class SettingsService {
   private formatSettings(s: any) {
     return {
       id: s.id,
+      companyName: s.companyName || 'HRMS',
+      companyAddress: s.companyAddress || '',
       workStartTime: s.workStartTime,
       workEndTime: s.workEndTime,
       lateGraceMinutes: s.lateGraceMinutes,

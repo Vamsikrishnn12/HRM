@@ -17,6 +17,7 @@ import {
   Badge,
   Spinner,
   Input,
+  Tooltip,
 } from "@chakra-ui/react";
 import {
   DollarSign,
@@ -47,7 +48,6 @@ import {
   type PayrollSummary,
   type ImportJobStatusType,
 } from "@/api";
-import { getAccessToken } from "@/lib/api";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -96,6 +96,9 @@ export default function PayrollPage() {
     ],
     [summary],
   );
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [emailingId, setEmailingId] = useState<string | null>(null);
 
   const columns = useMemo<Column<PayrollRecordType>[]>(
     () => [
@@ -148,22 +151,28 @@ export default function PayrollPage() {
         render: (row) => (
           <Flex gap={1}>
             {row.hasPayslip && (
-              <IconButton
-                aria-label="Download"
-                icon={<Download size={14} />}
-                size="xs"
-                variant="ghost"
-                onClick={() => handleDownload(row.id)}
-              />
+              <Tooltip label="Download Payslip" hasArrow>
+                <IconButton
+                  aria-label="Download payslip"
+                  icon={downloadingId === row.id ? <Spinner size="xs" /> : <Download size={14} />}
+                  size="xs"
+                  variant="ghost"
+                  isDisabled={downloadingId === row.id}
+                  onClick={() => handleDownload(row.id)}
+                />
+              </Tooltip>
             )}
             {(row.status === "GENERATED" || row.status === "EMAILED") && (
-              <IconButton
-                aria-label="Email"
-                icon={<Mail size={14} />}
-                size="xs"
-                variant="ghost"
-                onClick={() => handleEmail(row.id)}
-              />
+              <Tooltip label="Send Payslip via Email" hasArrow>
+                <IconButton
+                  aria-label="Email payslip"
+                  icon={emailingId === row.id ? <Spinner size="xs" /> : <Mail size={14} />}
+                  size="xs"
+                  variant="ghost"
+                  isDisabled={emailingId === row.id}
+                  onClick={() => handleEmail(row.id)}
+                />
+              </Tooltip>
             )}
           </Flex>
         ),
@@ -172,22 +181,27 @@ export default function PayrollPage() {
     [],
   );
 
-  const handleDownload = (id: string) => {
-    const token = getAccessToken();
-    const url = payrollApi.downloadPayslipUrl(id);
-    const a = document.createElement("a");
-    a.href = `${url}?token=${token}`;
-    a.target = "_blank";
-    a.click();
+  const handleDownload = async (id: string) => {
+    setDownloadingId(id);
+    try {
+      await payrollApi.downloadPayslip(id);
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const handleEmail = async (id: string) => {
+    setEmailingId(id);
     try {
       await payrollApi.emailPayslip(id);
       toast({ title: "Payslip emailed", status: "success", duration: 2500, isClosable: true });
       fetchData();
     } catch (err: any) {
       toast({ title: "Email failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+    } finally {
+      setEmailingId(null);
     }
   };
 
@@ -343,22 +357,43 @@ function ManualPayrollTab({
       {preview && (
         <Box>
           {/* Employee info */}
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={5} p={4} bg="surface.bg" borderRadius="lg">
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5} p={4} bg="surface.bg" borderRadius="lg">
             <Box>
               <Text fontSize="xs" color="text.muted">Employee</Text>
               <Text fontSize="sm" fontWeight="600">{preview.employeeName} ({preview.employeeCode})</Text>
             </Box>
             <Box>
-              <Text fontSize="xs" color="text.muted">Department</Text>
-              <Text fontSize="sm" fontWeight="600">{preview.department || "—"}</Text>
-            </Box>
-            <Box>
-              <Text fontSize="xs" color="text.muted">Attendance</Text>
-              <Text fontSize="sm" fontWeight="600">
-                Working: {preview.workingDays} | Present: {preview.presentDays} | LOP: {preview.lopDays}
-              </Text>
+              <Text fontSize="xs" color="text.muted">Department / Designation</Text>
+              <Text fontSize="sm" fontWeight="600">{preview.department || "—"} / {preview.designation || "—"}</Text>
             </Box>
           </SimpleGrid>
+
+          {/* Attendance Breakdown */}
+          <SimpleGrid columns={{ base: 2, sm: 3, md: 5 }} spacing={3} mb={5}>
+            {[
+              { label: "Working Days", value: preview.workingDays, color: "#475569" },
+              { label: "Present Days", value: preview.presentDays, color: "#0D7C47" },
+              { label: "Leave Days", value: preview.leaveDays, color: "#2563EB" },
+              { label: "LOP Days", value: preview.lopDays, color: "#C41E3A" },
+              { label: "Paid Days", value: preview.payableDays, color: "#8B5CF6" },
+            ].map((item) => (
+              <Box key={item.label} p={3} bg="white" borderRadius="lg" border="1px solid" borderColor="surface.border" textAlign="center">
+                <Text fontSize="xl" fontWeight="700" color={item.color}>{item.value}</Text>
+                <Text fontSize="xs" color="text.muted" fontWeight="500">{item.label}</Text>
+              </Box>
+            ))}
+          </SimpleGrid>
+
+          {/* PF Info */}
+          {(preview.pfEmployeeContribution > 0 || preview.pfEmployerContribution > 0) && (
+            <Box p={3} mb={5} borderRadius="lg" border="1px dashed" borderColor="blue.200" bg="blue.50">
+              <Text fontSize="xs" fontWeight="700" color="blue.700" mb={1}>Provident Fund</Text>
+              <Flex gap={6}>
+                <Text fontSize="sm" color="blue.700">Employee PF: <strong>₹{preview.pfEmployeeContribution.toLocaleString("en-IN")}</strong></Text>
+                <Text fontSize="sm" color="blue.700">Employer PF: <strong>₹{preview.pfEmployerContribution.toLocaleString("en-IN")}</strong> <Text as="span" fontSize="xs" color="blue.500">(informational)</Text></Text>
+              </Flex>
+            </Box>
+          )}
 
           {/* Earnings */}
           <Text fontSize="sm" fontWeight="700" color="text.heading" mb={2}>Earnings</Text>
@@ -461,10 +496,14 @@ function BulkUploadTab({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [jobStatus, setJobStatus] = useState<ImportJobStatusType | null>(null);
+  const [view, setView] = useState<"upload" | "processing" | "results">("upload");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const toast = useToast();
+
+  const isFinished = jobStatus && ["COMPLETED", "FAILED", "PARTIAL_SUCCESS"].includes(jobStatus.status);
 
   useEffect(() => {
     return () => {
@@ -475,6 +514,7 @@ function BulkUploadTab({
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
+    setView("processing");
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -491,14 +531,8 @@ function BulkUploadTab({
           if (status.status === "COMPLETED" || status.status === "FAILED" || status.status === "PARTIAL_SUCCESS") {
             if (pollRef.current) clearInterval(pollRef.current);
             pollRef.current = null;
+            setView("results");
             onComplete();
-            toast({
-              title: status.status === "COMPLETED" ? "Import completed" : status.status === "FAILED" ? "Import failed" : "Import partially completed",
-              description: `${status.successRows} succeeded, ${status.failedRows} failed out of ${status.totalRows}`,
-              status: status.status === "COMPLETED" ? "success" : status.status === "FAILED" ? "error" : "warning",
-              duration: 5000,
-              isClosable: true,
-            });
           }
         } catch {
           // continue polling
@@ -506,24 +540,178 @@ function BulkUploadTab({
       }, 2000);
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+      setView("upload");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDownloadTemplate = () => {
-    const url = payrollApi.downloadTemplate();
-    const token = getAccessToken();
-    window.open(`${url}?token=${token}`, "_blank");
+  const handleDownloadTemplate = async () => {
+    setDownloadingTemplate(true);
+    try {
+      await payrollApi.downloadTemplateFile();
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+    } finally {
+      setDownloadingTemplate(false);
+    }
   };
 
+  const handleBack = () => {
+    setView("upload");
+    setJobStatus(null);
+    setFile(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  // ─── Results View ───
+  if (view === "results" && jobStatus) {
+    const isSuccess = jobStatus.status === "COMPLETED";
+    const isPartial = jobStatus.status === "PARTIAL_SUCCESS";
+    const isFailed = jobStatus.status === "FAILED";
+    const successPct = jobStatus.totalRows > 0 ? Math.round((jobStatus.successRows / jobStatus.totalRows) * 100) : 0;
+
+    return (
+      <SectionCard title="Import Results">
+        {/* Status banner */}
+        <Box
+          p={5}
+          borderRadius="xl"
+          mb={5}
+          bg={isSuccess ? "#E6F9F0" : isFailed ? "#FEE2E2" : "#FFF7ED"}
+          border="1px solid"
+          borderColor={isSuccess ? "#86EFAC" : isFailed ? "#FCA5A5" : "#FED7AA"}
+        >
+          <Flex align="center" gap={3} mb={3}>
+            <Flex
+              w={10}
+              h={10}
+              borderRadius="full"
+              bg={isSuccess ? "#0D7C47" : isFailed ? "#C41E3A" : "#B25E09"}
+              align="center"
+              justify="center"
+              flexShrink={0}
+            >
+              {isSuccess ? (
+                <TrendingUp size={20} color="white" />
+              ) : isFailed ? (
+                <AlertCircle size={20} color="white" />
+              ) : (
+                <AlertCircle size={20} color="white" />
+              )}
+            </Flex>
+            <Box>
+              <Text fontWeight="700" fontSize="md" color={isSuccess ? "#065F46" : isFailed ? "#991B1B" : "#92400E"}>
+                {isSuccess ? "Import Completed Successfully" : isFailed ? "Import Failed" : "Import Partially Completed"}
+              </Text>
+              <Text fontSize="sm" color={isSuccess ? "#047857" : isFailed ? "#B91C1C" : "#B45309"}>
+                {jobStatus.successRows} of {jobStatus.totalRows} records processed successfully ({successPct}%)
+              </Text>
+            </Box>
+          </Flex>
+          <Progress
+            value={successPct}
+            colorScheme={isSuccess ? "green" : isFailed ? "red" : "orange"}
+            borderRadius="full"
+            size="sm"
+          />
+        </Box>
+
+        {/* Stats cards */}
+        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} mb={5}>
+          {[
+            { label: "Total Rows", value: jobStatus.totalRows, color: "#475569", bg: "#F1F5F9" },
+            { label: "Processed", value: jobStatus.processedRows, color: "#2563EB", bg: "#EFF6FF" },
+            { label: "Successful", value: jobStatus.successRows, color: "#0D7C47", bg: "#E6F9F0" },
+            { label: "Failed", value: jobStatus.failedRows, color: "#C41E3A", bg: "#FEE2E2" },
+          ].map((s) => (
+            <Box key={s.label} p={4} borderRadius="xl" bg={s.bg} textAlign="center">
+              <Text fontSize="2xl" fontWeight="800" color={s.color}>{s.value}</Text>
+              <Text fontSize="xs" fontWeight="600" color={s.color} opacity={0.8}>{s.label}</Text>
+            </Box>
+          ))}
+        </SimpleGrid>
+
+        {/* File info */}
+        <Box p={3} bg="surface.bg" borderRadius="lg" mb={5}>
+          <Flex gap={3} align="center">
+            <FileSpreadsheet size={16} color="#8B5CF6" />
+            <Box flex={1}>
+              <Text fontSize="sm" fontWeight="600" color="text.heading">{jobStatus.originalFileName || file?.name || "Uploaded file"}</Text>
+              <Text fontSize="xs" color="text.muted">
+                {MONTHS[month - 1]} {year} &middot; {isFinished ? "Completed" : "Processing"}
+              </Text>
+            </Box>
+            <Badge
+              colorScheme={isSuccess ? "green" : isFailed ? "red" : isPartial ? "orange" : "yellow"}
+              borderRadius="full"
+              px={3}
+              py={1}
+              fontSize="xs"
+            >
+              {jobStatus.status.replace(/_/g, " ")}
+            </Badge>
+          </Flex>
+        </Box>
+
+        {/* Error details */}
+        {jobStatus.errorSummary.length > 0 && (
+          <Box
+            mb={5}
+            borderRadius="xl"
+            border="1px solid"
+            borderColor="#FCA5A5"
+            overflow="hidden"
+          >
+            <Flex
+              px={4}
+              py={3}
+              bg="#FEE2E2"
+              align="center"
+              gap={2}
+            >
+              <AlertCircle size={14} color="#C41E3A" />
+              <Text fontSize="sm" fontWeight="700" color="#991B1B">
+                {jobStatus.errorSummary.length} Error{jobStatus.errorSummary.length > 1 ? "s" : ""}
+              </Text>
+            </Flex>
+            <Box maxH="200px" overflowY="auto" p={4}>
+              {jobStatus.errorSummary.map((err, i) => (
+                <Flex key={i} gap={2} py={1.5} borderBottom={i < jobStatus.errorSummary.length - 1 ? "1px solid" : "none"} borderColor="gray.100">
+                  <Badge colorScheme="gray" fontSize="2xs" borderRadius="full" px={2} flexShrink={0}>
+                    Row {err.row}
+                  </Badge>
+                  <Text fontSize="xs" color="text.muted">
+                    {err.employeeId && <Text as="span" fontWeight="600" color="text.body">{err.employeeId}: </Text>}
+                    {err.message}
+                  </Text>
+                </Flex>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Back button */}
+        <SecondaryButton size="sm" onClick={handleBack} leftIcon={<Upload size={14} />}>
+          Upload Another File
+        </SecondaryButton>
+      </SectionCard>
+    );
+  }
+
+  // ─── Upload / Processing View ───
   return (
     <SectionCard title="Bulk Payroll Upload">
       <Flex gap={3} mb={5}>
-        <SecondaryButton size="sm" leftIcon={<FileSpreadsheet size={16} />} onClick={handleDownloadTemplate}>
+        <SecondaryButton size="sm" leftIcon={<FileSpreadsheet size={16} />} onClick={handleDownloadTemplate} isLoading={downloadingTemplate} loadingText="Downloading...">
           Download Template
         </SecondaryButton>
       </Flex>
+
+      <Text fontSize="xs" color="text.muted" mb={3}>
+        Template includes: Employee ID/Name/Email, all earning components (Basic, HRA, Conveyance, Special Allowance, Bonus, Incentive, etc.),
+        deduction components (Employee PF, Employer PF, ESI, Professional Tax, TDS, etc.), and attendance fields. Fill only the columns you need — missing fields auto-fill from the system.
+      </Text>
 
       <Box
         border="2px dashed"
@@ -531,12 +719,13 @@ function BulkUploadTab({
         borderRadius="xl"
         p={8}
         textAlign="center"
-        cursor="pointer"
-        onClick={() => inputRef.current?.click()}
+        cursor={view === "processing" ? "default" : "pointer"}
+        onClick={() => view !== "processing" && inputRef.current?.click()}
         bg={file ? "purple.50" : "surface.bg"}
         mb={4}
         transition="all 0.15s"
-        _hover={{ borderColor: "brand.400" }}
+        _hover={view !== "processing" ? { borderColor: "brand.400" } : {}}
+        opacity={view === "processing" ? 0.6 : 1}
       >
         <Input
           ref={inputRef}
@@ -544,6 +733,7 @@ function BulkUploadTab({
           accept=".xlsx,.xls"
           display="none"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
+          disabled={view === "processing"}
         />
         <Upload size={32} color="#8B5CF6" style={{ margin: "0 auto 8px" }} />
         {file ? (
@@ -553,17 +743,19 @@ function BulkUploadTab({
         )}
       </Box>
 
-      <PrimaryButton size="sm" onClick={handleUpload} isLoading={uploading} isDisabled={!file}>
+      <PrimaryButton size="sm" onClick={handleUpload} isLoading={uploading} isDisabled={!file || view === "processing"}>
         Start Import
       </PrimaryButton>
 
-      {jobStatus && (
+      {/* Processing progress */}
+      {view === "processing" && jobStatus && (
         <Box mt={5} p={4} borderRadius="lg" border="1px solid" borderColor="surface.border">
           <Flex justify="space-between" mb={2}>
-            <Text fontSize="sm" fontWeight="600">Import Progress</Text>
-            <Badge colorScheme={jobStatus.status === "COMPLETED" ? "green" : jobStatus.status === "FAILED" ? "red" : "yellow"}>
-              {jobStatus.status}
-            </Badge>
+            <Flex align="center" gap={2}>
+              <Spinner size="xs" color="brand.500" />
+              <Text fontSize="sm" fontWeight="600">Processing Import...</Text>
+            </Flex>
+            <Badge colorScheme="yellow">{jobStatus.status}</Badge>
           </Flex>
           <Progress
             value={jobStatus.progressPercentage}
@@ -571,27 +763,15 @@ function BulkUploadTab({
             borderRadius="full"
             size="sm"
             mb={2}
+            hasStripe
+            isAnimated
           />
-          <SimpleGrid columns={4} spacing={3}>
+          <SimpleGrid columns={{ base: 2, sm: 4 }} spacing={3}>
             <Box><Text fontSize="xs" color="text.muted">Total</Text><Text fontSize="sm" fontWeight="600">{jobStatus.totalRows}</Text></Box>
             <Box><Text fontSize="xs" color="text.muted">Processed</Text><Text fontSize="sm" fontWeight="600">{jobStatus.processedRows}</Text></Box>
             <Box><Text fontSize="xs" color="text.muted">Success</Text><Text fontSize="sm" fontWeight="600" color="#0D7C47">{jobStatus.successRows}</Text></Box>
             <Box><Text fontSize="xs" color="text.muted">Failed</Text><Text fontSize="sm" fontWeight="600" color="#C41E3A">{jobStatus.failedRows}</Text></Box>
           </SimpleGrid>
-
-          {jobStatus.errorSummary.length > 0 && (
-            <Box mt={3}>
-              <Text fontSize="xs" fontWeight="600" color="#C41E3A" mb={1}>Errors:</Text>
-              <Box maxH="150px" overflowY="auto" fontSize="xs" color="text.muted">
-                {jobStatus.errorSummary.slice(0, 20).map((err, i) => (
-                  <Text key={i}>Row {err.row}: {err.message}</Text>
-                ))}
-                {jobStatus.errorSummary.length > 20 && (
-                  <Text fontWeight="600">...and {jobStatus.errorSummary.length - 20} more</Text>
-                )}
-              </Box>
-            </Box>
-          )}
         </Box>
       )}
     </SectionCard>

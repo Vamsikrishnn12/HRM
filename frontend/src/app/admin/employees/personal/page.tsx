@@ -35,8 +35,10 @@ import type { PersonalForm, PersonalDetailsRow } from "@/types";
 
 const emptyForm: PersonalForm = {
   aadhaarNumber: "",
+  panNumber: "",
   mobileNumber: "",
   whatsappNumber: "",
+  bloodGroup: "",
   dateOfBirth: "",
   gender: "",
   maritalStatus: "",
@@ -52,10 +54,14 @@ const emptyForm: PersonalForm = {
   permanentState: "",
   permanentPincode: "",
   permanentCountry: "",
+  emergencyContactNumber: "",
+  emergencyContactPerson: "",
+  emergencyContactRelationship: "",
   totalExperienceYears: "",
   lastCompany: "",
   lastDesignation: "",
   reasonForLeaving: "",
+  previousCompanyCTC: "",
   highestQualification: "",
   institutionName: "",
   graduationYear: "",
@@ -91,15 +97,23 @@ function ViewModal({
         <ModalBody py={5}>
           <Text fontWeight="700" mb={2} color="text.heading">Identity</Text>
           <InfoRow label="Aadhaar" value={record.aadhaarNumber} />
+          <InfoRow label="PAN Number" value={record.panNumber} />
           <InfoRow label="Mobile" value={record.mobileNumber} />
           <InfoRow label="WhatsApp" value={record.whatsappNumber} />
 
           <Divider my={4} />
           <Text fontWeight="700" mb={2} color="text.heading">Demographics</Text>
+          <InfoRow label="Blood Group" value={record.bloodGroup} />
           <InfoRow label="Date of Birth" value={record.dateOfBirth} />
           <InfoRow label="Gender" value={record.gender} />
           <InfoRow label="Marital Status" value={record.maritalStatus} />
           <InfoRow label="Nationality" value={record.nationality} />
+
+          <Divider my={4} />
+          <Text fontWeight="700" mb={2} color="text.heading">Emergency Contact</Text>
+          <InfoRow label="Contact Person" value={record.emergencyContactPerson} />
+          <InfoRow label="Contact Number" value={record.emergencyContactNumber} />
+          <InfoRow label="Relationship" value={record.emergencyContactRelationship} />
 
           <Divider my={4} />
           <Text fontWeight="700" mb={2} color="text.heading">Current Address</Text>
@@ -132,8 +146,9 @@ function ViewModal({
               <Divider my={4} />
               <Text fontWeight="700" mb={2} color="text.heading">Experience</Text>
               <InfoRow label="Total Experience" value={`${record.totalExperienceYears} years`} />
-              <InfoRow label="Last Company" value={record.lastCompany} />
-              <InfoRow label="Last Designation" value={record.lastDesignation} />
+              <InfoRow label="Previous Company" value={record.lastCompany} />
+              <InfoRow label="Previous Designation" value={record.lastDesignation} />
+              <InfoRow label="Previous Company CTC" value={record.previousCompanyCTC} />
               <InfoRow label="Reason for Leaving" value={record.reasonForLeaving} />
             </>
           )}
@@ -160,8 +175,10 @@ function PersonalForm_({
     editRecord
       ? {
           aadhaarNumber: editRecord.aadhaarNumber,
+          panNumber: editRecord.panNumber,
           mobileNumber: editRecord.mobileNumber,
           whatsappNumber: editRecord.whatsappNumber,
+          bloodGroup: editRecord.bloodGroup,
           dateOfBirth: editRecord.dateOfBirth,
           gender: editRecord.gender,
           maritalStatus: editRecord.maritalStatus,
@@ -177,10 +194,14 @@ function PersonalForm_({
           permanentState: editRecord.permanentState,
           permanentPincode: editRecord.permanentPincode,
           permanentCountry: editRecord.permanentCountry,
+          emergencyContactNumber: editRecord.emergencyContactNumber,
+          emergencyContactPerson: editRecord.emergencyContactPerson,
+          emergencyContactRelationship: editRecord.emergencyContactRelationship,
           totalExperienceYears: editRecord.totalExperienceYears,
           lastCompany: editRecord.lastCompany,
           lastDesignation: editRecord.lastDesignation,
           reasonForLeaving: editRecord.reasonForLeaving,
+          previousCompanyCTC: editRecord.previousCompanyCTC,
           highestQualification: editRecord.highestQualification,
           institutionName: editRecord.institutionName,
           graduationYear: editRecord.graduationYear,
@@ -233,6 +254,9 @@ function PersonalForm_({
           <Field label="Aadhaar Number">
             <StyledInput inputMode="numeric" placeholder="12-digit Aadhaar" value={form.aadhaarNumber} onChange={(e) => setForm((p) => ({ ...p, aadhaarNumber: e.target.value.replace(/\D/g, "").slice(0, 12) }))} />
           </Field>
+          <Field label="PAN Number">
+            <StyledInput placeholder="e.g., ABCDE1234F" maxLength={10} value={form.panNumber} onChange={(e) => setForm((p) => ({ ...p, panNumber: e.target.value.toUpperCase().slice(0, 10) }))} />
+          </Field>
           <Field label="Mobile Number">
             <StyledInput inputMode="numeric" placeholder="Mobile number" value={form.mobileNumber} onChange={(e) => setForm((p) => ({ ...p, mobileNumber: e.target.value.replace(/\D/g, "").slice(0, 15) }))} />
           </Field>
@@ -240,10 +264,36 @@ function PersonalForm_({
             <StyledInput inputMode="numeric" placeholder="WhatsApp number" value={form.whatsappNumber} onChange={(e) => setForm((p) => ({ ...p, whatsappNumber: e.target.value.replace(/\D/g, "").slice(0, 15) }))} />
           </Field>
         </SimpleGrid>
+        <Checkbox
+          isChecked={form.whatsappNumber !== "" && form.whatsappNumber === form.mobileNumber}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setForm((p) => ({ ...p, whatsappNumber: p.mobileNumber }));
+            } else {
+              setForm((p) => ({ ...p, whatsappNumber: "" }));
+            }
+          }}
+          colorScheme="purple"
+          mb={4}
+        >
+          <Text fontSize="sm">WhatsApp same as Mobile Number</Text>
+        </Checkbox>
 
         <Divider my={5} />
         <Text fontWeight="800" color="text.heading" mb={3}>Demographics</Text>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4} mb={5}>
+          <Field label="Blood Group">
+            <StyledSelect placeholder="Select" value={form.bloodGroup} onChange={(e) => setForm((p) => ({ ...p, bloodGroup: e.target.value }))}>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </StyledSelect>
+          </Field>
           <Field label="Date of Birth">
             <StyledInput type="date" value={form.dateOfBirth} onChange={(e) => setForm((p) => ({ ...p, dateOfBirth: e.target.value }))} />
           </Field>
@@ -316,6 +366,28 @@ function PersonalForm_({
             </SimpleGrid>
           </>
         )}
+
+        <Divider my={5} />
+        <Text fontWeight="800" color="text.heading" mb={3}>Emergency Contact</Text>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+          <Field label="Contact Person">
+            <StyledInput placeholder="Contact person name" value={form.emergencyContactPerson} onChange={(e) => setForm((p) => ({ ...p, emergencyContactPerson: e.target.value }))} />
+          </Field>
+          <Field label="Contact Number">
+            <StyledInput inputMode="numeric" placeholder="Contact number" value={form.emergencyContactNumber} onChange={(e) => setForm((p) => ({ ...p, emergencyContactNumber: e.target.value.replace(/\D/g, "").slice(0, 15) }))} />
+          </Field>
+          <Field label="Relationship">
+            <StyledSelect placeholder="Select" value={form.emergencyContactRelationship} onChange={(e) => setForm((p) => ({ ...p, emergencyContactRelationship: e.target.value }))}>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+              <option value="Spouse">Spouse</option>
+              <option value="Brother">Brother</option>
+              <option value="Sister">Sister</option>
+              <option value="Friend">Friend</option>
+              <option value="Other">Other</option>
+            </StyledSelect>
+          </Field>
+        </SimpleGrid>
       </SectionCard>
 
       <SectionCard mb={4}>
@@ -323,9 +395,23 @@ function PersonalForm_({
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} mb={5}>
           <Field label="Highest Qualification">
             <StyledSelect placeholder="Select" value={form.highestQualification} onChange={(e) => setForm((p) => ({ ...p, highestQualification: e.target.value }))}>
+              <option value="M.E">M.E</option>
+              <option value="M.Tech">M.Tech</option>
+              <option value="M.Sc">M.Sc</option>
+              <option value="M.Com">M.Com</option>
+              <option value="MBA">MBA</option>
+              <option value="MCA">MCA</option>
+              <option value="B.E">B.E</option>
+              <option value="B.Tech">B.Tech</option>
+              <option value="B.Sc">B.Sc</option>
+              <option value="B.Com">B.Com</option>
+              <option value="BBA">BBA</option>
+              <option value="BCA">BCA</option>
               <option value="Diploma">Diploma</option>
-              <option value="UG">UG</option>
-              <option value="PG">PG</option>
+              <option value="ITI">ITI</option>
+              <option value="12th">12th</option>
+              <option value="10th">10th</option>
+              <option value="Other">Other</option>
             </StyledSelect>
           </Field>
           <Field label="Institution Name">
@@ -338,18 +424,31 @@ function PersonalForm_({
 
         <Divider my={5} />
         <Text fontWeight="800" color="text.heading" mb={3}>Previous Employment</Text>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
           <Field label="Total Experience (Years)">
             <StyledInput value={form.totalExperienceYears} onChange={(e) => setForm((p) => ({ ...p, totalExperienceYears: e.target.value }))} />
           </Field>
-          <Field label="Last Company">
+          <Field label="Previous Company">
             <StyledInput value={form.lastCompany} onChange={(e) => setForm((p) => ({ ...p, lastCompany: e.target.value }))} />
           </Field>
-          <Field label="Last Designation">
+          <Field label="Previous Designation">
             <StyledInput value={form.lastDesignation} onChange={(e) => setForm((p) => ({ ...p, lastDesignation: e.target.value }))} />
           </Field>
+          <Field label="Previous Company CTC">
+            <StyledInput placeholder="e.g., 5,00,000" value={form.previousCompanyCTC} onChange={(e) => setForm((p) => ({ ...p, previousCompanyCTC: e.target.value }))} />
+          </Field>
           <Field label="Reason for Leaving">
-            <StyledInput value={form.reasonForLeaving} onChange={(e) => setForm((p) => ({ ...p, reasonForLeaving: e.target.value }))} />
+            <StyledSelect placeholder="Select" value={form.reasonForLeaving} onChange={(e) => setForm((p) => ({ ...p, reasonForLeaving: e.target.value }))}>
+              <option value="Personal">Personal</option>
+              <option value="Career Growth">Career Growth</option>
+              <option value="Better Opportunity">Better Opportunity</option>
+              <option value="Higher Education">Higher Education</option>
+              <option value="Relocation">Relocation</option>
+              <option value="Health Issues">Health Issues</option>
+              <option value="Company Closure">Company Closure</option>
+              <option value="Contract Ended">Contract Ended</option>
+              <option value="Other">Other</option>
+            </StyledSelect>
           </Field>
         </SimpleGrid>
       </SectionCard>

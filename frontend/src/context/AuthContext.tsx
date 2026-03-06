@@ -35,7 +35,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authStatus, setAuthStatus] = useState<AuthStatus>("idle");
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
   const router = useRouter();
   const toast = useToast();
 
@@ -59,10 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // We have a stored session — validate it
-      setAuthStatus("checking");
-
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 1000);
+      const timeout = setTimeout(() => controller.abort(), 4000);
 
       try {
         await fetch(

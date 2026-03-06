@@ -89,29 +89,29 @@ function ViewModal({
           <InfoRow label="CTC" value={formatCurrency(record.ctc)} />
 
           {/* Earnings */}
-          <Text fontWeight="600" fontSize="sm" mt={4} mb={1} color="green.600">Earnings</Text>
+          <Text fontWeight="700" fontSize="sm" mt={4} mb={1} color="text.heading">Earnings</Text>
           {(record.earnings ?? []).map((e, i) => (
             <InfoRow key={i} label={e.name} value={formatCurrency(e.amount)} />
           ))}
-          <Flex justify="space-between" py={1.5} bg="green.50" px={2} borderRadius="md" mt={1}>
-            <Text fontSize="sm" fontWeight="700" color="green.700">Total Earnings</Text>
-            <Text fontSize="sm" fontWeight="700" color="green.700">{formatCurrency(record.totalEarnings)}</Text>
+          <Flex justify="space-between" py={1.5} bg="surface.bg" px={2} borderRadius="md" mt={1}>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">Total Earnings</Text>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">{formatCurrency(record.totalEarnings)}</Text>
           </Flex>
 
           {/* Deductions */}
-          <Text fontWeight="600" fontSize="sm" mt={4} mb={1} color="red.500">Deductions</Text>
+          <Text fontWeight="700" fontSize="sm" mt={4} mb={1} color="text.heading">Deductions</Text>
           {(record.deductions ?? []).map((d, i) => (
             <InfoRow key={i} label={d.name} value={formatCurrency(d.amount)} />
           ))}
-          <Flex justify="space-between" py={1.5} bg="red.50" px={2} borderRadius="md" mt={1}>
-            <Text fontSize="sm" fontWeight="700" color="red.600">Total Deductions</Text>
-            <Text fontSize="sm" fontWeight="700" color="red.600">{formatCurrency(record.totalDeductions)}</Text>
+          <Flex justify="space-between" py={1.5} bg="surface.bg" px={2} borderRadius="md" mt={1}>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">Total Deductions</Text>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">{formatCurrency(record.totalDeductions)}</Text>
           </Flex>
 
           {/* Net */}
-          <Flex justify="space-between" py={2} bg="brand.50" px={2} borderRadius="md" mt={2}>
-            <Text fontSize="sm" fontWeight="800" color="brand.700">Net Pay</Text>
-            <Text fontSize="sm" fontWeight="800" color="brand.700">{formatCurrency(record.netPay)}</Text>
+          <Flex justify="space-between" py={2} bg="surface.bg" px={2} borderRadius="md" mt={2}>
+            <Text fontSize="sm" fontWeight="800" color="text.heading">Net Pay</Text>
+            <Text fontSize="sm" fontWeight="800" color="text.heading">{formatCurrency(record.netPay)}</Text>
           </Flex>
 
           {/* PF & Tax */}
@@ -252,29 +252,34 @@ function SalaryForm_({
         </SectionCard>
       )}
 
-      {/* ─── CTC ─── */}
+      {/* ─── Salary Structure ─── */}
       <SectionCard mb={4}>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+        <Text fontWeight="800" color="text.heading" mb={3}>Salary Structure</Text>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5}>
           <Field label="CTC (Annual)">
             <StyledInput placeholder="e.g., 600000" value={form.ctc} onChange={(e) => setForm((p) => ({ ...p, ctc: e.target.value }))} />
           </Field>
         </SimpleGrid>
-      </SectionCard>
 
-      {/* ─── Earnings ─── */}
-      <SectionCard mb={4}>
+        <Divider my={5} />
+
+        {/* Earnings */}
         <Flex justify="space-between" align="center" mb={3}>
-          <Text fontWeight="800" color="green.600">Earnings</Text>
+          <Text fontWeight="800" color="text.heading">Earnings</Text>
           <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addEarning}>Add Earning</SecondaryButton>
         </Flex>
+        {form.earnings.length > 0 && (
+          <SimpleGrid columns={2} spacing={3} mb={1} display={{ base: "none", md: "grid" }}>
+            <Text fontSize="xs" fontWeight="600" color="text.muted">Component Name</Text>
+            <Text fontSize="xs" fontWeight="600" color="text.muted">Amount (₹)</Text>
+          </SimpleGrid>
+        )}
         {form.earnings.map((e, i) => (
-          <Flex key={i} gap={3} mb={2} align="flex-end">
+          <Flex key={i} gap={3} mb={2} align="center">
             <Box flex={1}>
-              {i === 0 && <Text fontSize="xs" fontWeight="600" color="text.muted" mb={1}>Component Name</Text>}
               <StyledInput placeholder="e.g., Basic" value={e.name} onChange={(ev) => updateEarning(i, "name", ev.target.value)} />
             </Box>
             <Box flex={1}>
-              {i === 0 && <Text fontSize="xs" fontWeight="600" color="text.muted" mb={1}>Amount (₹)</Text>}
               <StyledInput placeholder="0" value={e.amount} onChange={(ev) => updateEarning(i, "amount", ev.target.value)} />
             </Box>
             <IconButton
@@ -282,8 +287,8 @@ function SalaryForm_({
               icon={<Trash2 size={14} />}
               size="sm"
               variant="ghost"
-              color="red.400"
-              _hover={{ bg: "red.50" }}
+              color="text.muted"
+              _hover={{ color: "red.500", bg: "red.50" }}
               onClick={() => removeEarning(i)}
             />
           </Flex>
@@ -291,25 +296,29 @@ function SalaryForm_({
         {form.earnings.length === 0 && (
           <Text fontSize="sm" color="text.muted" py={2}>No earnings added. Click &quot;Add Earning&quot; to add a component.</Text>
         )}
-        <Flex justify="flex-end" mt={2} px={1}>
-          <Text fontSize="sm" fontWeight="700" color="green.600">Total Earnings: {formatCurrency(totalEarnings)}</Text>
+        <Flex justify="flex-end" mt={2}>
+          <Text fontSize="sm" fontWeight="700" color="text.heading">Total Earnings: {formatCurrency(totalEarnings)}</Text>
         </Flex>
-      </SectionCard>
 
-      {/* ─── Deductions ─── */}
-      <SectionCard mb={4}>
+        <Divider my={5} />
+
+        {/* Deductions */}
         <Flex justify="space-between" align="center" mb={3}>
-          <Text fontWeight="800" color="red.500">Deductions</Text>
+          <Text fontWeight="800" color="text.heading">Deductions</Text>
           <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addDeduction}>Add Deduction</SecondaryButton>
         </Flex>
+        {form.deductions.length > 0 && (
+          <SimpleGrid columns={2} spacing={3} mb={1} display={{ base: "none", md: "grid" }}>
+            <Text fontSize="xs" fontWeight="600" color="text.muted">Component Name</Text>
+            <Text fontSize="xs" fontWeight="600" color="text.muted">Amount (₹)</Text>
+          </SimpleGrid>
+        )}
         {form.deductions.map((d, i) => (
-          <Flex key={i} gap={3} mb={2} align="flex-end">
+          <Flex key={i} gap={3} mb={2} align="center">
             <Box flex={1}>
-              {i === 0 && <Text fontSize="xs" fontWeight="600" color="text.muted" mb={1}>Component Name</Text>}
               <StyledInput placeholder="e.g., Professional Tax" value={d.name} onChange={(ev) => updateDeduction(i, "name", ev.target.value)} />
             </Box>
             <Box flex={1}>
-              {i === 0 && <Text fontSize="xs" fontWeight="600" color="text.muted" mb={1}>Amount (₹)</Text>}
               <StyledInput placeholder="0" value={d.amount} onChange={(ev) => updateDeduction(i, "amount", ev.target.value)} />
             </Box>
             <IconButton
@@ -317,8 +326,8 @@ function SalaryForm_({
               icon={<Trash2 size={14} />}
               size="sm"
               variant="ghost"
-              color="red.400"
-              _hover={{ bg: "red.50" }}
+              color="text.muted"
+              _hover={{ color: "red.500", bg: "red.50" }}
               onClick={() => removeDeduction(i)}
             />
           </Flex>
@@ -326,27 +335,27 @@ function SalaryForm_({
         {form.deductions.length === 0 && (
           <Text fontSize="sm" color="text.muted" py={2}>No deductions added. Click &quot;Add Deduction&quot; to add a component.</Text>
         )}
-        <Flex justify="flex-end" mt={2} px={1}>
-          <Text fontSize="sm" fontWeight="700" color="red.500">Total Deductions: {formatCurrency(totalDeductions)}</Text>
+        <Flex justify="flex-end" mt={2}>
+          <Text fontSize="sm" fontWeight="700" color="text.heading">Total Deductions: {formatCurrency(totalDeductions)}</Text>
         </Flex>
-      </SectionCard>
 
-      {/* ─── Summary Bar ─── */}
-      <SectionCard mb={4} bg="brand.50">
-        <Flex justify="space-between" wrap="wrap" gap={4}>
-          <Box textAlign="center">
+        <Divider my={5} />
+
+        {/* Summary */}
+        <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4} p={4} bg="surface.bg" borderRadius="lg">
+          <Box>
             <Text fontSize="xs" color="text.muted" fontWeight="600">Total Earnings</Text>
-            <Text fontSize="lg" fontWeight="800" color="green.600">{formatCurrency(totalEarnings)}</Text>
+            <Text fontSize="lg" fontWeight="800" color="text.heading">{formatCurrency(totalEarnings)}</Text>
           </Box>
-          <Box textAlign="center">
+          <Box>
             <Text fontSize="xs" color="text.muted" fontWeight="600">Total Deductions</Text>
-            <Text fontSize="lg" fontWeight="800" color="red.500">{formatCurrency(totalDeductions)}</Text>
+            <Text fontSize="lg" fontWeight="800" color="text.heading">{formatCurrency(totalDeductions)}</Text>
           </Box>
-          <Box textAlign="center">
+          <Box>
             <Text fontSize="xs" color="text.muted" fontWeight="600">Net Pay</Text>
-            <Text fontSize="lg" fontWeight="800" color="brand.700">{formatCurrency(netPay)}</Text>
+            <Text fontSize="lg" fontWeight="800" color="text.heading">{formatCurrency(netPay)}</Text>
           </Box>
-        </Flex>
+        </SimpleGrid>
       </SectionCard>
 
       {/* ─── PF & Tax ─── */}
@@ -405,14 +414,12 @@ function SalaryForm_({
       </SectionCard>
 
       {/* ─── Actions ─── */}
-      <SectionCard>
-        <Flex justify="flex-end" gap={3}>
-          <SecondaryButton size="sm" onClick={onCancel}>Cancel</SecondaryButton>
-          <PrimaryButton size="sm" onClick={handleSave} isLoading={saving}>
-            {mode === "edit" ? "Update Details" : "Save Details"}
-          </PrimaryButton>
-        </Flex>
-      </SectionCard>
+      <Flex justify="flex-end" gap={3}>
+        <SecondaryButton size="sm" onClick={onCancel}>Cancel</SecondaryButton>
+        <PrimaryButton size="sm" onClick={handleSave} isLoading={saving}>
+          {mode === "edit" ? "Update Details" : "Save Details"}
+        </PrimaryButton>
+      </Flex>
     </Box>
   );
 }

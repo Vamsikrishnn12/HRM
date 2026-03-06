@@ -165,4 +165,38 @@ export const api = {
       method: "POST",
       body: formData,
     }),
+
+  downloadBlob: async (endpoint: string, fallbackFileName = 'download') => {
+    const token = getAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new ApiError(body?.message || 'Download failed', body?.errorCode || 'DOWNLOAD_ERROR', res.status);
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition');
+    let fileName = fallbackFileName;
+    if (disposition) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match?.[1]) fileName = match[1];
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };
