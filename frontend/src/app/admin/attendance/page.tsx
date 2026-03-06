@@ -1,53 +1,273 @@
 "use client";
 
-import { useMemo } from "react";
-import { Box, Flex, Input, Text } from "@chakra-ui/react";
-import { Calendar } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import {
+  Box,
+  Flex,
+  Text,
+  Input,
+  Select,
+  InputGroup,
+  InputLeftElement,
+  SimpleGrid,
+  Spinner,
+  Badge,
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  ModalFooter,
+  FormControl,
+  FormLabel,
+  Textarea,
+  useDisclosure,
+  useToast,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton,
+} from "@chakra-ui/react";
+import { Calendar, Search, MoreVertical, CheckCircle, XCircle, Clock, MapPin } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
-import DataTable, { type Column } from "@/components/ui/DataTable";
-import StatusBadge from "@/components/ui/StatusBadge";
-import { recentAttendance, type AttendanceRecord } from "@/lib/mockData";
+import {
+  attendanceApi,
+  type AdminAttendanceRecord,
+  type AdminAttendanceResponse,
+  type AttendanceStatusType,
+} from "@/api/attendance.api";
 
-export default function AttendancePage() {
-  const columns = useMemo<Column<AttendanceRecord>[]>(
-    () => [
-      { key: "id", header: "Emp ID", width: "90px" },
-      {
-        key: "name",
-        header: "Employee",
-        render: (row) => (
-          <Box>
-            <Text fontWeight="600" color="text.heading" fontSize="sm">
-              {row.name}
-            </Text>
-            <Text fontSize="xs" color="text.muted">
-              {row.department}
-            </Text>
-          </Box>
-        ),
-      },
-      { key: "date", header: "Date", width: "90px" },
-      { key: "checkIn", header: "Check In", width: "90px" },
-      { key: "checkOut", header: "Check Out", width: "90px" },
-      {
-        key: "status",
-        header: "Status",
-        render: (row) => <StatusBadge status={row.status} />,
-      },
-    ],
-    []
-  );
+const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }> = {
+  PRESENT: { bg: "#E6F9F0", color: "#0D7C47" },
+  LATE: { bg: "#FFF8E1", color: "#B7791F" },
+  ABSENT: { bg: "#FEE7E7", color: "#C41E3A" },
+  HALF_DAY: { bg: "#FFF8E1", color: "#B7791F" },
+  LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
+  HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
+  WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
+};
+
+function formatTime(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+function formatMinutes(mins: number): string {
+  if (mins <= 0) return "—";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m}m`;
+}
+
+export default function AdminAttendancePage() {
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [data, setData] = useState<AdminAttendanceResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Override modal state
+  const [selectedRecord, setSelectedRecord] = useState<AdminAttendanceRecord | null>(null);
+  const [overrideStatus, setOverrideStatus] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideLoading, setOverrideLoading] = useState(false);
+
+  // Manual entry modal
+  const {
+    isOpen: isManualOpen,
+    onOpen: onManualOpen,
+    onClose: onManualClose,
+  } = useDisclosure();
+  const [manualCheckIn, setManualCheckIn] = useState("");
+  const [manualCheckOut, setManualCheckOut] = useState("");
+  const [manualStatus, setManualStatus] = useState("");
+  const [manualReason, setManualReason] = useState("");
+  const [manualLoading, setManualLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await attendanceApi.getAdminAttendance(date, statusFilter || undefined, search || undefined);
+      setData(result);
+    } catch {
+      toast({
+        title: "Failed to load attendance data",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [date, statusFilter, search, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleOverride = async () => {
+    if (!selectedRecord || !overrideStatus || !overrideReason) return;
+    setOverrideLoading(true);
+    try {
+      await attendanceApi.overrideStatus(selectedRecord.id, {
+        status: overrideStatus,
+        reason: overrideReason,
+      });
+      toast({
+        title: "Status overridden successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      onClose();
+      setOverrideStatus("");
+      setOverrideReason("");
+      setSelectedRecord(null);
+      await fetchData();
+    } catch (err: any) {
+      toast({
+        title: "Failed to override status",
+        description: err?.message || "Something went wrong",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setOverrideLoading(false);
+    }
+  };
+
+  const handleManualEntry = async () => {
+    if (!selectedRecord) return;
+    setManualLoading(true);
+    try {
+      const payload: Record<string, string> = {};
+      if (manualCheckIn) payload.firstCheckInAt = new Date(`${date}T${manualCheckIn}`).toISOString();
+      if (manualCheckOut) payload.lastCheckOutAt = new Date(`${date}T${manualCheckOut}`).toISOString();
+      if (manualStatus) payload.status = manualStatus;
+      if (manualReason) payload.reason = manualReason;
+
+      await attendanceApi.manualEntry(selectedRecord.id, payload);
+      toast({
+        title: "Manual entry saved successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      onManualClose();
+      setManualCheckIn("");
+      setManualCheckOut("");
+      setManualStatus("");
+      setManualReason("");
+      setSelectedRecord(null);
+      await fetchData();
+    } catch (err: any) {
+      toast({
+        title: "Failed to save manual entry",
+        description: err?.message || "Something went wrong",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setManualLoading(false);
+    }
+  };
+
+  const openOverrideModal = (record: AdminAttendanceRecord) => {
+    setSelectedRecord(record);
+    setOverrideStatus("");
+    setOverrideReason("");
+    onOpen();
+  };
+
+  const openManualModal = (record: AdminAttendanceRecord) => {
+    setSelectedRecord(record);
+    setManualCheckIn("");
+    setManualCheckOut("");
+    setManualStatus("");
+    setManualReason("");
+    onManualOpen();
+  };
+
+  const summary = data?.summary ?? {
+    PRESENT: 0,
+    LATE: 0,
+    ABSENT: 0,
+    HALF_DAY: 0,
+    LEAVE: 0,
+    HOLIDAY: 0,
+    WEEK_OFF: 0,
+  };
 
   return (
     <Box>
       <PageHeader
-        title="Attendance"
-        subtitle="Track daily attendance records"
+        title="Attendance Management"
+        subtitle="Track and manage employee attendance records"
       />
 
-      <SectionCard noPadding>
-        <Flex gap={3} p={5} pb={0} align="center">
+      {/* Summary Cards */}
+      <SimpleGrid columns={{ base: 2, md: 3, lg: 7 }} spacing={3} mb={6}>
+        {(
+          [
+            { key: "PRESENT", label: "Present", icon: <CheckCircle size={16} /> },
+            { key: "LATE", label: "Late", icon: <Clock size={16} /> },
+            { key: "ABSENT", label: "Absent", icon: <XCircle size={16} /> },
+            { key: "HALF_DAY", label: "Half Day", icon: <Clock size={16} /> },
+            { key: "LEAVE", label: "Leave", icon: <Calendar size={16} /> },
+            { key: "HOLIDAY", label: "Holiday", icon: <Calendar size={16} /> },
+            { key: "WEEK_OFF", label: "Week Off", icon: <Calendar size={16} /> },
+          ] as const
+        ).map(({ key, label, icon }) => {
+          const sc = STATUS_COLORS[key];
+          return (
+            <Box
+              key={key}
+              bg="white"
+              borderRadius="xl"
+              p={4}
+              border="1px solid"
+              borderColor="surface.border"
+              shadow="card"
+            >
+              <Flex align="center" gap={1.5} mb={1} color={sc.color}>
+                {icon}
+                <Text fontSize="xs" fontWeight="600" textTransform="uppercase">
+                  {label}
+                </Text>
+              </Flex>
+              <Text fontSize="xl" fontWeight="700" color="text.heading">
+                {summary[key] ?? 0}
+              </Text>
+            </Box>
+          );
+        })}
+      </SimpleGrid>
+
+      {/* Filters */}
+      <SectionCard noPadding mb={6}>
+        <Flex gap={3} p={5} align="center" flexWrap="wrap">
           <Flex align="center" gap={2}>
             <Calendar size={16} color="#516079" />
             <Text fontSize="sm" color="text.muted" fontWeight="500">
@@ -56,7 +276,8 @@ export default function AttendancePage() {
           </Flex>
           <Input
             type="date"
-            defaultValue="2026-03-02"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
             maxW="180px"
             size="sm"
             borderRadius="lg"
@@ -65,15 +286,313 @@ export default function AttendancePage() {
             borderColor="surface.border"
             fontSize="sm"
           />
+
+          <Select
+            size="sm"
+            maxW="160px"
+            borderRadius="lg"
+            bg="surface.bg"
+            border="1px solid"
+            borderColor="surface.border"
+            fontSize="sm"
+            placeholder="All Statuses"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="PRESENT">Present</option>
+            <option value="LATE">Late</option>
+            <option value="ABSENT">Absent</option>
+            <option value="HALF_DAY">Half Day</option>
+            <option value="LEAVE">Leave</option>
+            <option value="HOLIDAY">Holiday</option>
+            <option value="WEEK_OFF">Week Off</option>
+          </Select>
+
+          <InputGroup maxW="250px" size="sm">
+            <InputLeftElement pointerEvents="none">
+              <Search size={14} color="#516079" />
+            </InputLeftElement>
+            <Input
+              placeholder="Search employee..."
+              borderRadius="lg"
+              bg="surface.bg"
+              border="1px solid"
+              borderColor="surface.border"
+              fontSize="sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </InputGroup>
         </Flex>
-        <Box p={5} pt={4}>
-          <DataTable<AttendanceRecord>
-            columns={columns}
-            data={recentAttendance}
-            keyField="id"
-          />
+
+        {/* Table */}
+        <Box p={5} pt={0} overflowX="auto">
+          {loading ? (
+            <Flex justify="center" py={10}>
+              <Spinner size="lg" color="brand.400" />
+            </Flex>
+          ) : (
+            <Table variant="simple" size="sm">
+              <Thead>
+                <Tr>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Employee</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="80px">Code</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="90px">Check-in</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="90px">Check-out</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="80px">Hours</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="90px">Status</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="70px">Late</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="150px">EOD Note</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="50px">Loc.</Th>
+                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="50px">Actions</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {(data?.records ?? []).length === 0 ? (
+                  <Tr>
+                    <Td colSpan={10} textAlign="center" py={8}>
+                      <Text color="text.muted" fontSize="sm">No attendance records found for this date</Text>
+                    </Td>
+                  </Tr>
+                ) : (
+                  (data?.records ?? []).map((rec) => {
+                    const sc = STATUS_COLORS[rec.status];
+                    return (
+                      <Tr key={rec.id} _hover={{ bg: "surface.bg" }}>
+                        <Td borderColor="surface.border">
+                          <Text fontWeight="600" color="text.heading" fontSize="sm">
+                            {rec.employeeName ?? "—"}
+                          </Text>
+                        </Td>
+                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
+                          {rec.employeeCode ?? "—"}
+                        </Td>
+                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
+                          {formatTime(rec.firstCheckInAt)}
+                        </Td>
+                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
+                          {formatTime(rec.lastCheckOutAt)}
+                        </Td>
+                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
+                          {formatMinutes(rec.totalWorkMinutes)}
+                        </Td>
+                        <Td borderColor="surface.border">
+                          <Badge
+                            px={2}
+                            py={0.5}
+                            borderRadius="full"
+                            bg={sc.bg}
+                            color={sc.color}
+                            fontSize="xs"
+                            fontWeight="600"
+                          >
+                            {rec.status.replace("_", " ")}
+                          </Badge>
+                          {rec.isManualOverride && (
+                            <Text fontSize="9px" color="text.muted" mt={0.5}>
+                              Overridden
+                            </Text>
+                          )}
+                        </Td>
+                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
+                          {rec.lateMinutes > 0 ? (
+                            <Badge px={2} py={0.5} borderRadius="full" bg="#FEE7E7" color="#C41E3A" fontSize="xs">
+                              {rec.lateMinutes}m
+                            </Badge>
+                          ) : (
+                            "—"
+                          )}
+                        </Td>
+                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
+                          <Text fontSize="xs" color="text.muted" noOfLines={2} title={rec.eodDescription ?? ""}>
+                            {rec.eodDescription || "—"}
+                          </Text>
+                        </Td>
+                        <Td borderColor="surface.border" textAlign="center">
+                          {rec.locationValidated ? (
+                            <MapPin size={14} color="#0D7C47" />
+                          ) : (
+                            <Text fontSize="xs" color="text.muted">—</Text>
+                          )}
+                        </Td>
+                        <Td borderColor="surface.border">
+                          <Menu>
+                            <MenuButton
+                              as={IconButton}
+                              icon={<MoreVertical size={14} />}
+                              variant="ghost"
+                              size="xs"
+                              color="text.muted"
+                            />
+                            <MenuList minW="180px" borderRadius="xl" shadow="lg" border="1px solid" borderColor="surface.border" py={1}>
+                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("PRESENT"); setOverrideReason(""); onOpen(); }}>
+                                Mark Present
+                              </MenuItem>
+                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("LEAVE"); setOverrideReason(""); onOpen(); }}>
+                                Mark Leave
+                              </MenuItem>
+                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("HALF_DAY"); setOverrideReason(""); onOpen(); }}>
+                                Mark Half Day
+                              </MenuItem>
+                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("ABSENT"); setOverrideReason(""); onOpen(); }}>
+                                Mark Absent
+                              </MenuItem>
+                              <MenuItem fontSize="sm" onClick={() => openManualModal(rec)}>
+                                Manual Entry
+                              </MenuItem>
+                              <MenuItem fontSize="sm" onClick={() => openOverrideModal(rec)}>
+                                Override with Reason
+                              </MenuItem>
+                            </MenuList>
+                          </Menu>
+                        </Td>
+                      </Tr>
+                    );
+                  })
+                )}
+              </Tbody>
+            </Table>
+          )}
         </Box>
       </SectionCard>
+
+      {/* Override Status Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md" fontWeight="600">
+            Override Attendance Status
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={4}>
+            <Text fontSize="sm" color="text.muted" mb={4}>
+              {selectedRecord?.employeeName} &mdash; {date}
+            </Text>
+            <FormControl mb={4}>
+              <FormLabel fontSize="sm" fontWeight="500">Status</FormLabel>
+              <Select
+                size="sm"
+                borderRadius="lg"
+                value={overrideStatus}
+                onChange={(e) => setOverrideStatus(e.target.value)}
+              >
+                <option value="">Select status</option>
+                <option value="PRESENT">Present</option>
+                <option value="LATE">Late</option>
+                <option value="ABSENT">Absent</option>
+                <option value="HALF_DAY">Half Day</option>
+                <option value="LEAVE">Leave</option>
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm" fontWeight="500">Reason</FormLabel>
+              <Textarea
+                size="sm"
+                borderRadius="lg"
+                rows={3}
+                placeholder="Provide a reason for override..."
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter gap={2}>
+            <Button size="sm" variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              bgGradient="linear(to-r, brand.400, brand.700)"
+              color="white"
+              _hover={{ bgGradient: "linear(to-r, brand.500, brand.800)" }}
+              isLoading={overrideLoading}
+              isDisabled={!overrideStatus || !overrideReason}
+              onClick={handleOverride}
+            >
+              Save Override
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Manual Entry Modal */}
+      <Modal isOpen={isManualOpen} onClose={onManualClose} isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md" fontWeight="600">
+            Manual Attendance Entry
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={4}>
+            <Text fontSize="sm" color="text.muted" mb={4}>
+              {selectedRecord?.employeeName} &mdash; {date}
+            </Text>
+            <SimpleGrid columns={2} spacing={3} mb={4}>
+              <FormControl>
+                <FormLabel fontSize="sm" fontWeight="500">Check-in Time</FormLabel>
+                <Input
+                  type="time"
+                  size="sm"
+                  borderRadius="lg"
+                  value={manualCheckIn}
+                  onChange={(e) => setManualCheckIn(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm" fontWeight="500">Check-out Time</FormLabel>
+                <Input
+                  type="time"
+                  size="sm"
+                  borderRadius="lg"
+                  value={manualCheckOut}
+                  onChange={(e) => setManualCheckOut(e.target.value)}
+                />
+              </FormControl>
+            </SimpleGrid>
+            <FormControl mb={4}>
+              <FormLabel fontSize="sm" fontWeight="500">Status</FormLabel>
+              <Select
+                size="sm"
+                borderRadius="lg"
+                placeholder="Select status (optional)"
+                value={manualStatus}
+                onChange={(e) => setManualStatus(e.target.value)}
+              >
+                <option value="PRESENT">Present</option>
+                <option value="LATE">Late</option>
+                <option value="HALF_DAY">Half Day</option>
+                <option value="LEAVE">Leave</option>
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontSize="sm" fontWeight="500">Reason</FormLabel>
+              <Textarea
+                size="sm"
+                borderRadius="lg"
+                rows={3}
+                placeholder="Reason for manual entry..."
+                value={manualReason}
+                onChange={(e) => setManualReason(e.target.value)}
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter gap={2}>
+            <Button size="sm" variant="ghost" onClick={onManualClose}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              bgGradient="linear(to-r, brand.400, brand.700)"
+              color="white"
+              _hover={{ bgGradient: "linear(to-r, brand.500, brand.800)" }}
+              isLoading={manualLoading}
+              onClick={handleManualEntry}
+            >
+              Save Entry
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

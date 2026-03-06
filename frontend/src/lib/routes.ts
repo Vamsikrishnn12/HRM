@@ -10,6 +10,7 @@ import {
   CalendarOff,
   Wallet,
   Settings,
+  UserCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -38,5 +39,13 @@ export const adminRoutes: RouteItem[] = [
   { label: "Leave", href: "/admin/leave", icon: CalendarOff },
   { label: "Payroll", href: "/admin/payroll", icon: Wallet },
   { label: "Settings", href: "/admin/settings", icon: Settings },
+];
+
+export const employeeRoutes: RouteItem[] = [
+  { label: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard },
+  { label: "Attendance", href: "/employee/attendance", icon: CalendarCheck },
+  { label: "Leave", href: "/employee/leave", icon: CalendarOff },
+  { label: "Payroll", href: "/employee/payroll", icon: Wallet },
+  { label: "Profile", href: "/employee/profile", icon: UserCircle },
 ];
 

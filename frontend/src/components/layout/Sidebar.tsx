@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
-import { adminRoutes, type RouteItem } from "@/lib/routes";
+import { adminRoutes, employeeRoutes, type RouteItem } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebar } from "@/context/SidebarContext";
 
@@ -150,8 +150,10 @@ function NavGroup({
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { collapsed, toggleCollapse } = useSidebar();
+
+  const routes = user?.role === "employee" ? employeeRoutes : adminRoutes;
 
   return (
     <Box
@@ -229,7 +231,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <VStack as="nav" spacing={1} px={2} flex={1} align="stretch">
-        {adminRoutes.map((route: RouteItem) =>
+        {routes.map((route: RouteItem) =>
           route.children ? (
             <NavGroup key={route.href} route={route} pathname={pathname} collapsed={collapsed} />
           ) : (

@@ -8,6 +8,8 @@ import { SalaryDetails } from '../entities/SalaryDetails.entity';
 import { EmployeeDocument } from '../entities/EmployeeDocument.entity';
 import { OrgSettings } from '../entities/OrgSettings.entity';
 import { Holiday } from '../entities/Holiday.entity';
+import { Attendance } from '../entities/Attendance.entity';
+import { AttendancePunch } from '../entities/AttendancePunch.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -27,6 +29,8 @@ export const AppDataSource = new DataSource({
     EmployeeDocument,
     OrgSettings,
     Holiday,
+    Attendance,
+    AttendancePunch,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
