@@ -21,8 +21,9 @@ import {
   useDisclosure,
   Badge,
 } from "@chakra-ui/react";
-import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff } from "lucide-react";
+import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield } from "lucide-react";
 import { settingsApi } from "@/api";
+import { leaveApi, type LeavePolicyData, type LeaveSlabData } from "@/api/leave.api";
 import type { OrgSettings, Holiday } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
@@ -67,13 +68,26 @@ export default function SettingsPage() {
   const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  // ── Leave Policy ──
+  const [policyForm, setPolicyForm] = useState({
+    probationPeriodMonths: 6,
+    probationLeaveAllowed: false,
+    allowHalfDayLeave: true,
+    allowPermissionHours: true,
+    maxPermissionHoursPerMonth: 2,
+  });
+  const [slabs, setSlabs] = useState<{ minYearsOfService: number; maxYearsOfService: number | null; casualLeavePerYear: number; sickLeavePerYear: number; earnedLeavePerYear: number }[]>([
+    { minYearsOfService: 0, maxYearsOfService: 2, casualLeavePerYear: 6, sickLeavePerYear: 6, earnedLeavePerYear: 0 },
+  ]);
+
   // ── Load data ──
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [s, h] = await Promise.all([
+      const [s, h, lp] = await Promise.all([
         settingsApi.get(),
         settingsApi.listHolidays(),
+        leaveApi.getPolicy().catch(() => null),
       ]);
       setSettings(s);
       setTimingsForm({
@@ -93,6 +107,27 @@ export default function SettingsPage() {
         officeRadiusMeters: s.officeRadiusMeters != null ? String(s.officeRadiusMeters) : "",
       });
       setHolidays(h.data);
+      if (lp) {
+        const pol = lp.policy;
+        if (pol) {
+          setPolicyForm({
+            probationPeriodMonths: pol.probationPeriodMonths ?? 6,
+            probationLeaveAllowed: pol.probationLeaveAllowed ?? false,
+            allowHalfDayLeave: pol.allowHalfDayLeave ?? true,
+            allowPermissionHours: pol.allowPermissionHours ?? true,
+            maxPermissionHoursPerMonth: pol.maxPermissionHoursPerMonth ?? 2,
+          });
+        }
+        if (lp.slabs && lp.slabs.length > 0) {
+          setSlabs(lp.slabs.map((sl: LeaveSlabData) => ({
+            minYearsOfService: sl.minYearsOfService,
+            maxYearsOfService: sl.maxYearsOfService,
+            casualLeavePerYear: sl.casualLeavePerYear,
+            sickLeavePerYear: sl.sickLeavePerYear,
+            earnedLeavePerYear: sl.earnedLeavePerYear,
+          })));
+        }
+      }
     } catch {
       toast({ title: "Failed to load settings", status: "error", duration: 3000, isClosable: true, position: "top-right" });
     } finally {
@@ -184,6 +219,28 @@ export default function SettingsPage() {
       ? selectedDays.filter((d) => d !== day)
       : [...selectedDays, day];
     setWeekOffForm((f) => ({ ...f, weekOffDays: next.join(",") }));
+  };
+
+  // ── Leave Policy helpers ──
+  const addSlab = () => {
+    setSlabs((prev) => [...prev, { minYearsOfService: 0, maxYearsOfService: null, casualLeavePerYear: 0, sickLeavePerYear: 0, earnedLeavePerYear: 0 }]);
+  };
+  const removeSlab = (idx: number) => {
+    setSlabs((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const updateSlab = (idx: number, field: string, value: number | null) => {
+    setSlabs((prev) => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
+  };
+  const handleSaveLeavePolicy = async () => {
+    try {
+      setSaving("leavePolicy");
+      await leaveApi.updatePolicy({ ...policyForm, slabs });
+      toast({ title: "Leave policy updated", status: "success", duration: 2000, isClosable: true, position: "top-right" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Failed to save leave policy", status: "error", duration: 3000, isClosable: true, position: "top-right" });
+    } finally {
+      setSaving(null);
+    }
   };
 
   if (loading) {
@@ -460,6 +517,147 @@ export default function SettingsPage() {
           </Flex>
         </SectionCard>
       </SimpleGrid>
+
+      {/* ── Leave Policy ── */}
+      <Box mt={4}>
+        <SectionCard
+          title="Leave Policy"
+          actions={
+            <Flex align="center" gap={1.5} color="brand.400">
+              <Shield size={15} />
+              <Text fontSize="xs" fontWeight="600">Leave Rules</Text>
+            </Flex>
+          }
+        >
+          <Flex direction="column" gap={5}>
+            {/* General Settings */}
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+              <Field label="Probation Period (months)">
+                <StyledInput
+                  type="number"
+                  value={policyForm.probationPeriodMonths}
+                  onChange={(e) => setPolicyForm((f) => ({ ...f, probationPeriodMonths: parseInt(e.target.value) || 0 }))}
+                  maxW="140px"
+                />
+              </Field>
+              <Field label="Max Permission Hrs/Month">
+                <StyledInput
+                  type="number"
+                  value={policyForm.maxPermissionHoursPerMonth}
+                  onChange={(e) => setPolicyForm((f) => ({ ...f, maxPermissionHoursPerMonth: parseFloat(e.target.value) || 0 }))}
+                  maxW="140px"
+                />
+              </Field>
+            </SimpleGrid>
+
+            {/* Toggles */}
+            <Flex gap={4} flexWrap="wrap">
+              {([
+                ["probationLeaveAllowed", "Allow Leave During Probation"],
+                ["allowHalfDayLeave", "Allow Half-Day Leave"],
+                ["allowPermissionHours", "Allow Permission Hours"],
+              ] as const).map(([key, label]) => (
+                <Box
+                  key={key}
+                  as="button"
+                  type="button"
+                  px={4}
+                  py={2}
+                  borderRadius="lg"
+                  fontSize="sm"
+                  fontWeight="600"
+                  border="1px solid"
+                  borderColor={policyForm[key] ? "green.400" : "surface.border"}
+                  bg={policyForm[key] ? "green.50" : "white"}
+                  color={policyForm[key] ? "green.700" : "text.muted"}
+                  _hover={{ borderColor: "green.300" }}
+                  transition="all 0.15s"
+                  onClick={() => setPolicyForm((f) => ({ ...f, [key]: !f[key] }))}
+                >
+                  {policyForm[key] ? "✓ " : ""}{label}
+                </Box>
+              ))}
+            </Flex>
+
+            {/* Slabs */}
+            <Box>
+              <Flex justify="space-between" align="center" mb={3}>
+                <Text fontSize="sm" fontWeight="700" color="text.heading">Service Year Slabs</Text>
+                <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addSlab}>
+                  Add Slab
+                </SecondaryButton>
+              </Flex>
+              <Flex direction="column" gap={3}>
+                {slabs.map((slab, idx) => (
+                  <Flex key={idx} bg="surface.bg" borderRadius="lg" p={3} gap={3} align="flex-end" flexWrap="wrap">
+                    <Box>
+                      <Text fontSize="xs" color="text.muted" mb={1}>Min Years</Text>
+                      <StyledInput
+                        type="number" size="sm" w="80px"
+                        value={slab.minYearsOfService}
+                        onChange={(e) => updateSlab(idx, "minYearsOfService", parseInt(e.target.value) || 0)}
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="text.muted" mb={1}>Max Years</Text>
+                      <StyledInput
+                        type="number" size="sm" w="80px"
+                        placeholder="∞"
+                        value={slab.maxYearsOfService ?? ""}
+                        onChange={(e) => updateSlab(idx, "maxYearsOfService", e.target.value ? parseInt(e.target.value) : null)}
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="text.muted" mb={1}>CL/Year</Text>
+                      <StyledInput
+                        type="number" size="sm" w="80px"
+                        value={slab.casualLeavePerYear}
+                        onChange={(e) => updateSlab(idx, "casualLeavePerYear", parseInt(e.target.value) || 0)}
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="text.muted" mb={1}>SL/Year</Text>
+                      <StyledInput
+                        type="number" size="sm" w="80px"
+                        value={slab.sickLeavePerYear}
+                        onChange={(e) => updateSlab(idx, "sickLeavePerYear", parseInt(e.target.value) || 0)}
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="text.muted" mb={1}>EL/Year</Text>
+                      <StyledInput
+                        type="number" size="sm" w="80px"
+                        value={slab.earnedLeavePerYear}
+                        onChange={(e) => updateSlab(idx, "earnedLeavePerYear", parseInt(e.target.value) || 0)}
+                      />
+                    </Box>
+                    {slabs.length > 1 && (
+                      <IconButton
+                        aria-label="Remove slab"
+                        icon={<Trash2 size={14} />}
+                        size="sm"
+                        variant="ghost"
+                        color="red.400"
+                        _hover={{ bg: "red.50" }}
+                        onClick={() => removeSlab(idx)}
+                      />
+                    )}
+                  </Flex>
+                ))}
+              </Flex>
+            </Box>
+
+            <PrimaryButton
+              size="sm"
+              alignSelf="flex-start"
+              onClick={handleSaveLeavePolicy}
+              isLoading={saving === "leavePolicy"}
+            >
+              Save Leave Policy
+            </PrimaryButton>
+          </Flex>
+        </SectionCard>
+      </Box>
 
       {/* ── Holiday Modal ── */}
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">

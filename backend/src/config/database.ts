@@ -10,6 +10,9 @@ import { OrgSettings } from '../entities/OrgSettings.entity';
 import { Holiday } from '../entities/Holiday.entity';
 import { Attendance } from '../entities/Attendance.entity';
 import { AttendancePunch } from '../entities/AttendancePunch.entity';
+import { LeavePolicy } from '../entities/LeavePolicy.entity';
+import { LeavePolicySlab } from '../entities/LeavePolicySlab.entity';
+import { LeaveRequest } from '../entities/LeaveRequest.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -31,6 +34,9 @@ export const AppDataSource = new DataSource({
     Holiday,
     Attendance,
     AttendancePunch,
+    LeavePolicy,
+    LeavePolicySlab,
+    LeaveRequest,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],

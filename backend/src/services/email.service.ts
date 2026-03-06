@@ -53,4 +53,25 @@ export class EmailService {
       });
     }
   }
+
+  async sendGenericEmail(
+    to: string,
+    subject: string,
+    templateName: string,
+    variables: Record<string, string>,
+  ): Promise<void> {
+    const html = this.loadTemplate(templateName, variables);
+
+    if (transporter && env.SMTP_FROM) {
+      await transporter.sendMail({
+        from: `"${env.SMTP_FROM_NAME}" <${env.SMTP_FROM}>`,
+        to,
+        subject,
+        html,
+      });
+      console.log(`Email sent: ${subject}`, { to });
+    } else {
+      console.log(`SMTP not configured — ${subject}:`, { to, variables });
+    }
+  }
 }
