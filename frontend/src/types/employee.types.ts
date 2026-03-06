@@ -102,20 +102,28 @@ export interface PersonalDetailsRow extends PersonalForm {
   updatedAt: string;
 }
 
+export interface SalaryComponentForm {
+  name: string;
+  amount: string;
+}
+
+export interface SalaryComponentRow {
+  name: string;
+  amount: number;
+}
+
 export interface SalaryForm {
   ctc: string;
-  basic: string;
-  hra: string;
-  allowances: string;
+  earnings: SalaryComponentForm[];
+  deductions: SalaryComponentForm[];
   pfApplicable: boolean;
   pfEmployeeContribution: string;
   pfEmployerContribution: string;
   taxRegime: string;
+  bankName: string;
   accountNumber: string;
   ifscCode: string;
-  bankName: string;
   branchName: string;
-  panNumber: string;
   uanNumber: string;
 }
 
@@ -126,6 +134,11 @@ export interface SalaryDetailsRow {
   basic: number;
   hra: number;
   allowances: number;
+  earnings: SalaryComponentRow[];
+  deductions: SalaryComponentRow[];
+  totalEarnings: number;
+  totalDeductions: number;
+  netPay: number;
   pfApplicable: boolean;
   pfEmployeeContribution: number;
   pfEmployerContribution: number;

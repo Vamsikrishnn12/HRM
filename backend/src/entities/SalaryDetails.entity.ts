@@ -9,6 +9,12 @@ import {
 } from 'typeorm';
 import { User } from './User.entity';
 
+export interface SalaryComponent {
+  name: string;
+  amount: number;
+  category?: string;
+}
+
 @Entity('salary_details')
 export class SalaryDetails {
   @PrimaryGeneratedColumn('uuid')
@@ -17,10 +23,11 @@ export class SalaryDetails {
   @Column({ type: 'uuid', unique: true })
   userId: string;
 
-  // Salary Structure
+  // ─── Fixed fields ───
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   ctc: number;
 
+  // Legacy fixed fields — kept for backward compat, new data goes in earnings/deductions jsonb
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   basic: number;
 
@@ -42,7 +49,14 @@ export class SalaryDetails {
   @Column({ type: 'varchar', length: 10, default: 'New' })
   taxRegime: string;
 
-  // Banking Information
+  // ─── Dynamic components ───
+  @Column({ type: 'jsonb', default: [] })
+  earnings: SalaryComponent[];
+
+  @Column({ type: 'jsonb', default: [] })
+  deductions: SalaryComponent[];
+
+  // ─── Banking Information ───
   @Column({ type: 'varchar', length: 30, nullable: true })
   accountNumber: string | null;
 

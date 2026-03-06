@@ -23,7 +23,11 @@ type StatusType =
   | "HALF_DAY"
   | "LEAVE"
   | "HOLIDAY"
-  | "WEEK_OFF";
+  | "WEEK_OFF"
+  | "DRAFT"
+  | "GENERATED"
+  | "EMAILED"
+  | "FAILED";
 
 const variantMap: Record<StatusType, string> = {
   Present: "success",
@@ -47,6 +51,10 @@ const variantMap: Record<StatusType, string> = {
   LEAVE: "info",
   HOLIDAY: "success",
   WEEK_OFF: "info",
+  DRAFT: "warning",
+  GENERATED: "success",
+  EMAILED: "info",
+  FAILED: "danger",
 };
 
 interface StatusBadgeProps {

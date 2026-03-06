@@ -13,6 +13,10 @@ import { AttendancePunch } from '../entities/AttendancePunch.entity';
 import { LeavePolicy } from '../entities/LeavePolicy.entity';
 import { LeavePolicySlab } from '../entities/LeavePolicySlab.entity';
 import { LeaveRequest } from '../entities/LeaveRequest.entity';
+import { PayrollRun } from '../entities/PayrollRun.entity';
+import { PayrollRecord } from '../entities/PayrollRecord.entity';
+import { PayslipDocument } from '../entities/PayslipDocument.entity';
+import { PayrollImportJob } from '../entities/PayrollImportJob.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -37,6 +41,10 @@ export const AppDataSource = new DataSource({
     LeavePolicy,
     LeavePolicySlab,
     LeaveRequest,
+    PayrollRun,
+    PayrollRecord,
+    PayslipDocument,
+    PayrollImportJob,
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
