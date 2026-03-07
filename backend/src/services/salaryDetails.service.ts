@@ -49,9 +49,7 @@ export class SalaryDetailsService {
 
   async getByUserId(userId: string) {
     const record = await this.salaryRepo.findByUserId(userId);
-    if (!record) {
-      throw ApiError.notFound('Salary details not found', 'SALARY_NOT_FOUND');
-    }
+    if (!record) return null;
     return this.formatRecord(record);
   }
 

@@ -1,7 +1,9 @@
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, In } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Attendance, AttendanceStatus } from '../entities/Attendance.entity';
 import { AttendancePunch, PunchType } from '../entities/AttendancePunch.entity';
+import { User, UserRole } from '../entities/User.entity';
+import { LeaveRequest, LeaveStatus, RequestMode } from '../entities/LeaveRequest.entity';
 
 export class AttendanceRepository {
   private attendanceRepo: Repository<Attendance>;
@@ -128,5 +130,58 @@ export class AttendanceRepository {
       },
       order: { time: 'ASC' },
     });
+  }
+
+  // ── Active employees ──
+
+  async findAllActiveEmployees(): Promise<User[]> {
+    const userRepo = AppDataSource.getRepository(User);
+    return userRepo.find({
+      where: { role: UserRole.EMPLOYEE, isActive: true },
+      order: { firstName: 'ASC' },
+    });
+  }
+
+  // ── Approved leaves for a date ──
+
+  async findApprovedLeavesForDate(date: string): Promise<LeaveRequest[]> {
+    return AppDataSource.getRepository(LeaveRequest)
+      .createQueryBuilder('lr')
+      .where('lr.status = :status', { status: LeaveStatus.APPROVED })
+      .andWhere(
+        `(
+          (lr.requestMode = :fullDay AND lr.startDate <= :date AND lr.endDate >= :date)
+          OR
+          (lr.requestMode != :fullDay AND lr.date = :date)
+        )`,
+        { fullDay: RequestMode.FULL_DAY, date },
+      )
+      .getMany();
+  }
+
+  // ── Bulk attendance map for a date ──
+
+  async findAttendanceMapByDate(date: string): Promise<Map<string, Attendance>> {
+    const records = await this.attendanceRepo.find({
+      where: { date },
+      relations: ['employee'],
+    });
+    const map = new Map<string, Attendance>();
+    for (const r of records) {
+      map.set(r.employeeId, r);
+    }
+    return map;
+  }
+
+  // ── Upsert attendance for an employee+date ──
+
+  async upsertAttendance(employeeId: string, date: string, data: Partial<Attendance>): Promise<Attendance> {
+    let record = await this.findByEmployeeAndDate(employeeId, date);
+    if (record) {
+      Object.assign(record, data);
+      return this.attendanceRepo.save(record);
+    }
+    const created = this.attendanceRepo.create({ employeeId, date, ...data });
+    return this.attendanceRepo.save(created);
   }
 }

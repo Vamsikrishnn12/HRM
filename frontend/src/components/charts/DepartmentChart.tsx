@@ -10,10 +10,14 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { departmentData } from "@/lib/mockData";
+import type { DepartmentData } from "@/types";
 
-export default function DepartmentChart() {
-  const data = useMemo(() => departmentData, []);
+interface DepartmentChartProps {
+  data?: DepartmentData[];
+}
+
+export default function DepartmentChart({ data: rawData }: DepartmentChartProps) {
+  const data = useMemo(() => rawData ?? [], [rawData]);
 
   return (
     <ResponsiveContainer width="100%" height={280}>

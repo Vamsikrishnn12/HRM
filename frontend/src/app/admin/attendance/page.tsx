@@ -37,7 +37,7 @@ import {
   MenuItem,
   IconButton,
 } from "@chakra-ui/react";
-import { Calendar, Search, MoreVertical, CheckCircle, XCircle, Clock, MapPin } from "lucide-react";
+import { Calendar, Search, MoreVertical, CheckCircle, XCircle, Clock, MapPin, RotateCcw } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import {
@@ -55,6 +55,8 @@ const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }>
   LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
   HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
   WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
+  NOT_STARTED: { bg: "#F8F8FC", color: "#516079" },
+  MISSED_CHECK_IN: { bg: "#FEE7E7", color: "#C41E3A" },
 };
 
 function formatTime(dateStr: string | null): string {
@@ -98,6 +100,7 @@ export default function AdminAttendancePage() {
   const [manualStatus, setManualStatus] = useState("");
   const [manualReason, setManualReason] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
+  const [reEnableLoading, setReEnableLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -125,7 +128,8 @@ export default function AdminAttendancePage() {
     if (!selectedRecord || !overrideStatus || !overrideReason) return;
     setOverrideLoading(true);
     try {
-      await attendanceApi.overrideStatus(selectedRecord.id, {
+      await attendanceApi.overrideStatus(selectedRecord.employeeId, {
+        date,
         status: overrideStatus,
         reason: overrideReason,
       });
@@ -159,13 +163,13 @@ export default function AdminAttendancePage() {
     if (!selectedRecord) return;
     setManualLoading(true);
     try {
-      const payload: Record<string, string> = {};
+      const payload: { date: string; firstCheckInAt?: string; lastCheckOutAt?: string; status?: string; reason?: string } = { date };
       if (manualCheckIn) payload.firstCheckInAt = new Date(`${date}T${manualCheckIn}`).toISOString();
       if (manualCheckOut) payload.lastCheckOutAt = new Date(`${date}T${manualCheckOut}`).toISOString();
       if (manualStatus) payload.status = manualStatus;
       if (manualReason) payload.reason = manualReason;
 
-      await attendanceApi.manualEntry(selectedRecord.id, payload);
+      await attendanceApi.manualEntry(selectedRecord.employeeId, payload);
       toast({
         title: "Manual entry saved successfully",
         status: "success",
@@ -210,6 +214,33 @@ export default function AdminAttendancePage() {
     onManualOpen();
   };
 
+  const handleReEnableStartWork = async (record: AdminAttendanceRecord) => {
+    setReEnableLoading(true);
+    try {
+      await attendanceApi.reEnableStartWork(record.employeeId);
+      toast({
+        title: "Start work re-enabled",
+        description: `${record.employeeName} can now start work`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right",
+      });
+      await fetchData();
+    } catch (err: any) {
+      toast({
+        title: "Failed to re-enable start work",
+        description: err?.message || "Something went wrong",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setReEnableLoading(false);
+    }
+  };
+
   const summary = data?.summary ?? {
     PRESENT: 0,
     LATE: 0,
@@ -218,6 +249,8 @@ export default function AdminAttendancePage() {
     LEAVE: 0,
     HOLIDAY: 0,
     WEEK_OFF: 0,
+    NOT_STARTED: 0,
+    MISSED_CHECK_IN: 0,
   };
 
   return (
@@ -228,7 +261,7 @@ export default function AdminAttendancePage() {
       />
 
       {/* Summary Cards */}
-      <SimpleGrid columns={{ base: 2, md: 3, lg: 7 }} spacing={3} mb={6}>
+      <SimpleGrid columns={{ base: 2, md: 3, lg: 9 }} spacing={3} mb={6}>
         {(
           [
             { key: "PRESENT", label: "Present", icon: <CheckCircle size={16} /> },
@@ -238,6 +271,8 @@ export default function AdminAttendancePage() {
             { key: "LEAVE", label: "Leave", icon: <Calendar size={16} /> },
             { key: "HOLIDAY", label: "Holiday", icon: <Calendar size={16} /> },
             { key: "WEEK_OFF", label: "Week Off", icon: <Calendar size={16} /> },
+            { key: "NOT_STARTED", label: "Not Started", icon: <Clock size={16} /> },
+            { key: "MISSED_CHECK_IN", label: "Missed", icon: <XCircle size={16} /> },
           ] as const
         ).map(({ key, label, icon }) => {
           const sc = STATUS_COLORS[key];
@@ -306,6 +341,8 @@ export default function AdminAttendancePage() {
             <option value="LEAVE">Leave</option>
             <option value="HOLIDAY">Holiday</option>
             <option value="WEEK_OFF">Week Off</option>
+            <option value="NOT_STARTED">Not Started</option>
+            <option value="MISSED_CHECK_IN">Missed Check-in</option>
           </Select>
 
           <InputGroup maxW="250px" size="sm">
@@ -356,9 +393,9 @@ export default function AdminAttendancePage() {
                   </Tr>
                 ) : (
                   (data?.records ?? []).map((rec) => {
-                    const sc = STATUS_COLORS[rec.status];
+                    const sc = STATUS_COLORS[rec.status] ?? { bg: "#F8F8FC", color: "#516079" };
                     return (
-                      <Tr key={rec.id} _hover={{ bg: "surface.bg" }}>
+                      <Tr key={rec.employeeId} _hover={{ bg: "surface.bg" }}>
                         <Td borderColor="surface.border">
                           <Text fontWeight="600" color="text.heading" fontSize="sm">
                             {rec.employeeName ?? "—"}
@@ -392,6 +429,11 @@ export default function AdminAttendancePage() {
                             <Text fontSize="9px" color="text.muted" mt={0.5}>
                               Overridden
                             </Text>
+                          )}
+                          {rec.overrideActive && (
+                            <Badge px={1.5} py={0.5} borderRadius="full" bg="#E8EAF6" color="#3949AB" fontSize="9px" mt={0.5}>
+                              Override Active
+                            </Badge>
                           )}
                         </Td>
                         <Td fontSize="sm" color="text.body" borderColor="surface.border">
@@ -443,6 +485,16 @@ export default function AdminAttendancePage() {
                               <MenuItem fontSize="sm" onClick={() => openOverrideModal(rec)}>
                                 Override with Reason
                               </MenuItem>
+                              {(rec.status === "MISSED_CHECK_IN" || rec.status === "NOT_STARTED") && !rec.overrideActive && (
+                                <MenuItem
+                                  fontSize="sm"
+                                  icon={<RotateCcw size={14} />}
+                                  isDisabled={reEnableLoading}
+                                  onClick={() => handleReEnableStartWork(rec)}
+                                >
+                                  Re-enable Start Work
+                                </MenuItem>
+                              )}
                             </MenuList>
                           </Menu>
                         </Td>
@@ -482,6 +534,8 @@ export default function AdminAttendancePage() {
                 <option value="ABSENT">Absent</option>
                 <option value="HALF_DAY">Half Day</option>
                 <option value="LEAVE">Leave</option>
+                <option value="NOT_STARTED">Not Started</option>
+                <option value="MISSED_CHECK_IN">Missed Check-in</option>
               </Select>
             </FormControl>
             <FormControl>

@@ -40,61 +40,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const toast = useToast();
 
   /**
-   * On mount: quickly check localStorage. Only call /auth/me if we have
-   * both a token AND stored user (i.e. returning session).
-   * Use AbortController with a 4s timeout so the app never hangs.
+   * On mount: trust localStorage immediately so the UI never blocks.
+   * Validate the session with /auth/me in the background; if it fails
+   * the interceptor / refresh logic will handle it on the next API call.
    */
   useEffect(() => {
-    const rehydrate = async () => {
-      const token = getAccessToken();
-      const stored = localStorage.getItem(USER_STORAGE_KEY);
+    const token = getAccessToken();
+    const stored = localStorage.getItem(USER_STORAGE_KEY);
 
-      // No stored session → immediately mark unauthenticated, no API call
-      if (!token || !stored) {
-        clearAccessToken();
-        localStorage.removeItem(USER_STORAGE_KEY);
-        setAuthStatus("unauthenticated");
-        setIsLoading(false);
-        return;
-      }
+    // No stored session → immediately mark unauthenticated, no API call
+    if (!token || !stored) {
+      clearAccessToken();
+      localStorage.removeItem(USER_STORAGE_KEY);
+      setAuthStatus("unauthenticated");
+      setIsLoading(false);
+      return;
+    }
 
-      // We have a stored session — validate it
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+    // Trust the stored user right away so routing can proceed instantly
+    try {
+      const parsed: User = JSON.parse(stored);
+      setUser(parsed);
+      setAuthStatus("authenticated");
+    } catch {
+      clearAccessToken();
+      localStorage.removeItem(USER_STORAGE_KEY);
+      setAuthStatus("unauthenticated");
+    }
+    setIsLoading(false);
 
-      try {
-        await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/me`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
-        clearTimeout(timeout);
+    // Background validation — if it fails, the next API call will
+    // trigger the refresh flow or dispatch auth:expired.
+    const controller = new AbortController();
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/me`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        signal: controller.signal,
+      },
+    ).catch(() => {
+      // Silently ignore — the interceptor handles 401s
+    });
 
-        const parsed: User = JSON.parse(stored);
-        setUser(parsed);
-        setAuthStatus("authenticated");
-      } catch {
-        clearTimeout(timeout);
-        // Session invalid or backend unreachable — still try to use stored user
-        // if token exists (will refresh on next API call)
-        try {
-          const parsed: User = JSON.parse(stored);
-          setUser(parsed);
-          setAuthStatus("authenticated");
-        } catch {
-          clearAccessToken();
-          localStorage.removeItem(USER_STORAGE_KEY);
-          setAuthStatus("unauthenticated");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    rehydrate();
+    return () => controller.abort();
   }, []);
 
   // Listen for auth:expired events from the API layer (401 + refresh failed)

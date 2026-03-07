@@ -48,7 +48,7 @@ export const personalDetailsApi = {
     api.get<PersonalDetailsRow>(`/personal-details/${id}`),
 
   getByUserId: (userId: string) =>
-    api.get<PersonalDetailsRow>(`/personal-details/user/${userId}`),
+    api.get<PersonalDetailsRow | null>(`/personal-details/user/${userId}`),
 
   save: (userId: string, data: PersonalForm) =>
     api.put<PersonalDetailsRow>(`/personal-details/user/${userId}`, data),
@@ -65,7 +65,7 @@ export const salaryDetailsApi = {
     api.get<SalaryDetailsRow>(`/salary-details/${id}`),
 
   getByUserId: (userId: string) =>
-    api.get<SalaryDetailsRow>(`/salary-details/user/${userId}`),
+    api.get<SalaryDetailsRow | null>(`/salary-details/user/${userId}`),
 
   save: (userId: string, data: Record<string, unknown>) =>
     api.put<SalaryDetailsRow>(`/salary-details/user/${userId}`, data),

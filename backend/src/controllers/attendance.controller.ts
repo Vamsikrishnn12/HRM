@@ -6,6 +6,9 @@ import {
   endWorkSchema,
   overrideStatusSchema,
   manualEntrySchema,
+  reEnableStartWorkSchema,
+  adminOverrideByEmployeeSchema,
+  adminManualEntryByEmployeeSchema,
 } from '../validators/attendance.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
@@ -70,8 +73,8 @@ export class AttendanceController {
   }
 
   static async overrideStatus(req: Request, res: Response): Promise<void> {
-    const attendanceId = req.params.attendanceId as string;
-    const parsed = overrideStatusSchema.safeParse(req.body);
+    const employeeId = req.params.employeeId as string;
+    const parsed = adminOverrideByEmployeeSchema.safeParse(req.body);
     if (!parsed.success) {
       const messages = parsed.error.issues.map(
         (e) => `${e.path.join('.')}: ${e.message}`,
@@ -79,7 +82,8 @@ export class AttendanceController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await attendanceService.overrideStatus(
-      attendanceId,
+      employeeId,
+      parsed.data.date,
       parsed.data.status as AttendanceStatus,
       parsed.data.reason,
     );
@@ -87,18 +91,35 @@ export class AttendanceController {
   }
 
   static async manualEntry(req: Request, res: Response): Promise<void> {
-    const attendanceId = req.params.attendanceId as string;
-    const parsed = manualEntrySchema.safeParse(req.body);
+    const employeeId = req.params.employeeId as string;
+    const parsed = adminManualEntryByEmployeeSchema.safeParse(req.body);
     if (!parsed.success) {
       const messages = parsed.error.issues.map(
         (e) => `${e.path.join('.')}: ${e.message}`,
       );
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
-    const result = await attendanceService.manualEntry(attendanceId, {
+    const result = await attendanceService.manualEntry(employeeId, parsed.data.date, {
       ...parsed.data,
       status: parsed.data.status as AttendanceStatus | undefined,
     });
     ApiResponse.success(res, 'Attendance updated manually', result);
+  }
+
+  static async reEnableStartWork(req: Request, res: Response): Promise<void> {
+    const employeeId = req.params.employeeId as string;
+    const parsed = reEnableStartWorkSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map(
+        (e) => `${e.path.join('.')}: ${e.message}`,
+      );
+      throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
+    }
+    const result = await attendanceService.reEnableStartWork(
+      employeeId,
+      req.user!.userId,
+      parsed.data,
+    );
+    ApiResponse.success(res, 'Start work override enabled successfully', result);
   }
 }

@@ -46,6 +46,7 @@ export interface PayslipData {
 
   // Attendance
   workingDays: number;
+  eligibleWorkingDays: number;
   payableDays: number;
   presentDays: number;
   leaveDays: number;
@@ -181,16 +182,6 @@ function buildPayslipHtml(data: PayslipData): string {
   .emp-label { color: #777; font-weight: 500; }
   .emp-value { font-weight: 600; color: #222; }
 
-  /* ── Net Pay Highlight ── */
-  .net-highlight { border: 1px solid #ccc; border-top: 2px solid #444; margin-top: 0; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; background: #f7f7f7; }
-  .net-main { }
-  .net-label { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-  .net-amount { font-size: 22px; font-weight: 800; color: #1a1a2e; margin-top: 2px; }
-  .net-stats { display: flex; gap: 24px; }
-  .net-stat { text-align: center; }
-  .net-stat-val { font-size: 14px; font-weight: 700; color: #222; }
-  .net-stat-lbl { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.3px; }
-
   /* ── Salary Table ── */
   .salary-section { margin-top: 16px; }
   .salary-table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; }
@@ -256,21 +247,10 @@ function buildPayslipHtml(data: PayslipData): string {
     </div>
   </div>
 
-  <!-- Net Pay Highlight -->
-  <div class="net-highlight">
-    <div class="net-main">
-      <div class="net-label">Net Pay for ${MONTH_NAMES[data.month - 1]} ${data.year}</div>
-      <div class="net-amount">&#8377; ${fmt(data.netPay)}</div>
-    </div>
-    <div class="net-stats">
-      <div class="net-stat"><div class="net-stat-val">${data.payableDays}</div><div class="net-stat-lbl">Paid Days</div></div>
-      <div class="net-stat"><div class="net-stat-val">${data.lopDays}</div><div class="net-stat-lbl">LOP Days</div></div>
-    </div>
-  </div>
-
   <!-- Attendance -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);border:1px solid #ccc;border-top:none;font-size:9.5px;text-align:center;">
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);border:1px solid #ccc;border-top:2px solid #444;font-size:9.5px;text-align:center;">
     <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Working Days</span><br><strong>${data.workingDays}</strong></div>
+    <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Eligible Days</span><br><strong>${data.eligibleWorkingDays}</strong></div>
     <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Present Days</span><br><strong>${data.presentDays}</strong></div>
     <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Leave Days</span><br><strong>${data.leaveDays}</strong></div>
     <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Paid Days</span><br><strong>${data.payableDays}</strong></div>

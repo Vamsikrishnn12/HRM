@@ -34,6 +34,9 @@ export class OrgSettings {
   @Column({ type: 'int', default: 15 })
   lateGraceMinutes: number;
 
+  @Column({ type: 'int', default: 10 })
+  checkInWindowMinutes: number;
+
   @Column({ type: 'int', default: 240 })
   halfDayMinMinutes: number;
 

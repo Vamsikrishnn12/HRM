@@ -18,6 +18,8 @@ export enum AttendanceStatus {
   LEAVE = 'LEAVE',
   HOLIDAY = 'HOLIDAY',
   WEEK_OFF = 'WEEK_OFF',
+  NOT_STARTED = 'NOT_STARTED',
+  MISSED_CHECK_IN = 'MISSED_CHECK_IN',
 }
 
 @Entity('attendance')
@@ -70,6 +72,18 @@ export class Attendance {
 
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   checkOutLongitude: number | null;
+
+  @Column({ type: 'boolean', default: false })
+  startWorkOverrideEnabled: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  overrideValidUntil: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  overrideSetBy: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  overrideSetAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

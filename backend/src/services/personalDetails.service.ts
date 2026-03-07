@@ -63,9 +63,7 @@ export class PersonalDetailsService {
 
   async getByUserId(userId: string) {
     const record = await this.personalRepo.findByUserId(userId);
-    if (!record) {
-      throw ApiError.notFound('Personal details not found', 'PERSONAL_NOT_FOUND');
-    }
+    if (!record) return null;
     return this.formatRecord(record);
   }
 

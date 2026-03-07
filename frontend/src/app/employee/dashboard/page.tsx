@@ -40,6 +40,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SectionCard from "@/components/ui/SectionCard";
+import UpcomingBirthdaysWidget from "@/components/ui/UpcomingBirthdaysWidget";
+import UpcomingHolidaysWidget from "@/components/ui/UpcomingHolidaysWidget";
 import {
   attendanceApi,
   type TodayAttendanceResponse,
@@ -63,6 +65,8 @@ const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }>
   LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
   HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
   WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
+  NOT_STARTED: { bg: "#F8F8FC", color: "#516079" },
+  MISSED_CHECK_IN: { bg: "#FEE7E7", color: "#C41E3A" },
 };
 
 function formatTime(dateStr: string | null): string {
@@ -220,6 +224,8 @@ export default function EmployeeDashboard() {
   const hasCheckedIn = !!att?.firstCheckInAt;
   const hasCheckedOut = !!att?.lastCheckOutAt;
   const isNonWorkDay = todayData?.dayType === "HOLIDAY" || todayData?.dayType === "WEEK_OFF";
+  const reasonCode = todayData?.reasonCode;
+  const reasonMessage = todayData?.reasonMessage;
 
   return (
     <Box>
@@ -294,24 +300,36 @@ export default function EmployeeDashboard() {
                 {todayData?.dayType === "HOLIDAY" ? "Holiday" : "Week Off"}
               </Badge>
             )}
-            {!isNonWorkDay && !todayData?.canStartWork && !todayData?.isTooLate && !hasCheckedIn && (
+            {!isNonWorkDay && reasonCode === "BEFORE_START_TIME" && (
               <Flex align="center" gap={1.5} mt={1}>
                 <AlertCircle size={14} color="#B7791F" />
                 <Text fontSize="xs" color="yellow.700">
-                  Work can be started after{" "}
-                  {todayData?.workStartTime ? formatTime12h(todayData.workStartTime) : "—"}
+                  {reasonMessage}
                 </Text>
               </Flex>
+            )}
+            {!isNonWorkDay && reasonCode === "OVERRIDE_ACTIVE" && !hasCheckedIn && (
+              <Flex align="center" gap={1.5} mt={1}>
+                <AlertCircle size={14} color="#3949AB" />
+                <Text fontSize="xs" color="blue.600">
+                  {reasonMessage}
+                </Text>
+              </Flex>
+            )}
+            {!isNonWorkDay && reasonCode === "ON_LEAVE" && (
+              <Badge px={3} py={1} borderRadius="full" bg="#E8EAF6" color="#3949AB" fontSize="xs" fontWeight="600">
+                On Leave
+              </Badge>
             )}
           </Box>
 
           {!isNonWorkDay && (
             <Box>
-              {todayData?.isTooLate && !hasCheckedIn ? (
+              {reasonCode === "WINDOW_EXPIRED" && !hasCheckedIn ? (
                 <Alert status="error" borderRadius="xl" variant="subtle">
                   <AlertIcon />
                   <Text fontSize="sm" fontWeight="500">
-                    You are late and marked as absent. Please contact your admin for regularization.
+                    {reasonMessage || "Check-in window has expired. Please contact your admin for regularization."}
                   </Text>
                 </Alert>
               ) : !hasCheckedIn ? (
@@ -376,9 +394,13 @@ export default function EmployeeDashboard() {
               ? todayData?.dayType === "HOLIDAY"
                 ? "Holiday"
                 : "Week Off"
-              : att?.status?.replace("_", " ") ?? "Not Marked"
+              : todayData?.todayStatus?.replace("_", " ") ?? "Not Marked"
           }
-          statusColor={att?.status ? STATUS_COLORS[att.status] : undefined}
+          statusColor={
+            todayData?.todayStatus
+              ? STATUS_COLORS[todayData.todayStatus as AttendanceStatusType]
+              : undefined
+          }
           icon={<CalendarCheck size={18} />}
         />
         <SummaryCard
@@ -466,6 +488,12 @@ export default function EmployeeDashboard() {
           </Table>
         </Box>
       </SectionCard>
+
+      {/* Birthdays & Holidays Widgets */}
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mt={6}>
+        <UpcomingBirthdaysWidget />
+        <UpcomingHolidaysWidget />
+      </SimpleGrid>
 
       {/* EOD Confirmation Modal */}
       <Modal isOpen={isEodOpen} onClose={onEodClose} isCentered size="md">

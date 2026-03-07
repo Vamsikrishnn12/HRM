@@ -15,6 +15,7 @@ import {
   InputGroup,
   InputLeftElement,
   Badge,
+  Spinner,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -142,42 +143,85 @@ function ViewModal({
 
 /* ── Salary Form ────────────────────────────────────────────────── */
 function SalaryForm_({
-  mode,
-  editRecord,
   onDone,
   onCancel,
+  initialUserId,
 }: {
-  mode: "add" | "edit";
-  editRecord?: SalaryDetailsRow | null;
   onDone: () => void;
   onCancel: () => void;
+  initialUserId?: string;
 }) {
-  const [selectedUserId, setSelectedUserId] = useState(editRecord?.userId || "");
-  const [form, setForm] = useState<SalaryForm>(() => {
-    if (!editRecord) return { ...emptyForm, earnings: emptyForm.earnings.map((e) => ({ ...e })), deductions: [] };
-    return {
-      ctc: editRecord.ctc?.toString() || "",
-      earnings: (editRecord.earnings ?? []).length > 0
-        ? editRecord.earnings.map((e) => ({ name: e.name, amount: e.amount.toString() }))
-        : [
-            { name: "Basic", amount: (editRecord.basic || 0).toString() },
-            { name: "HRA", amount: (editRecord.hra || 0).toString() },
-            { name: "Allowances", amount: (editRecord.allowances || 0).toString() },
-          ].filter((e) => parseFloat(e.amount) > 0),
-      deductions: (editRecord.deductions ?? []).map((d) => ({ name: d.name, amount: d.amount.toString() })),
-      pfApplicable: editRecord.pfApplicable ?? true,
-      pfEmployeeContribution: editRecord.pfEmployeeContribution?.toString() || "",
-      pfEmployerContribution: editRecord.pfEmployerContribution?.toString() || "",
-      taxRegime: editRecord.taxRegime || "New",
-      bankName: editRecord.bankName || "",
-      accountNumber: editRecord.accountNumber || "",
-      ifscCode: editRecord.ifscCode || "",
-      branchName: editRecord.branchName || "",
-      uanNumber: editRecord.uanNumber || "",
-    };
-  });
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId || "");
+  const [existingRecordId, setExistingRecordId] = useState<string | null>(null);
+  const [form, setForm] = useState<SalaryForm>(() => ({
+    ...emptyForm,
+    earnings: emptyForm.earnings.map((e) => ({ ...e })),
+    deductions: [],
+  }));
   const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const toast = useToast();
+
+  const isEditMode = !!existingRecordId;
+
+  const resetForm = useCallback(() => {
+    setForm({
+      ...emptyForm,
+      earnings: emptyForm.earnings.map((e) => ({ ...e })),
+      deductions: [],
+    });
+    setExistingRecordId(null);
+  }, []);
+
+  const populateForm = useCallback((record: SalaryDetailsRow) => {
+    setExistingRecordId(record.id);
+    setForm({
+      ctc: record.ctc?.toString() || "",
+      earnings: (record.earnings ?? []).length > 0
+        ? record.earnings.map((e) => ({ name: e.name, amount: e.amount.toString() }))
+        : [
+            { name: "Basic", amount: (record.basic || 0).toString() },
+            { name: "HRA", amount: (record.hra || 0).toString() },
+            { name: "Allowances", amount: (record.allowances || 0).toString() },
+          ].filter((e) => parseFloat(e.amount) > 0),
+      deductions: (record.deductions ?? []).map((d) => ({ name: d.name, amount: d.amount.toString() })),
+      pfApplicable: record.pfApplicable ?? true,
+      pfEmployeeContribution: record.pfEmployeeContribution?.toString() || "",
+      pfEmployerContribution: record.pfEmployerContribution?.toString() || "",
+      taxRegime: record.taxRegime || "New",
+      bankName: record.bankName || "",
+      accountNumber: record.accountNumber || "",
+      ifscCode: record.ifscCode || "",
+      branchName: record.branchName || "",
+      uanNumber: record.uanNumber || "",
+    });
+  }, []);
+
+  // Fetch existing data when employee changes
+  useEffect(() => {
+    if (!selectedUserId) {
+      resetForm();
+      return;
+    }
+    let cancelled = false;
+    const fetchData = async () => {
+      setFetching(true);
+      resetForm();
+      try {
+        const data = await salaryDetailsApi.getByUserId(selectedUserId);
+        if (cancelled) return;
+        if (data) {
+          populateForm(data);
+        }
+      } catch {
+        // No existing data — keep empty form
+      } finally {
+        if (!cancelled) setFetching(false);
+      }
+    };
+    fetchData();
+    return () => { cancelled = true; };
+  }, [selectedUserId, resetForm, populateForm]);
 
   /* ── Earnings helpers ── */
   const addEarning = () => setForm((p) => ({ ...p, earnings: [...p.earnings, { ...emptyEarning }] }));
@@ -216,19 +260,14 @@ function SalaryForm_({
   });
 
   const handleSave = async () => {
-    const userId = mode === "edit" ? editRecord!.userId : selectedUserId;
-    if (!userId) {
+    if (!selectedUserId) {
       toast({ title: "Please select an employee", status: "warning", duration: 3000, isClosable: true });
       return;
     }
     try {
       setSaving(true);
-      if (mode === "edit" && editRecord) {
-        await salaryDetailsApi.update(editRecord.id, buildPayload());
-      } else {
-        await salaryDetailsApi.save(userId, buildPayload());
-      }
-      toast({ title: `Salary details ${mode === "edit" ? "updated" : "saved"}`, status: "success", duration: 3000, isClosable: true });
+      await salaryDetailsApi.save(selectedUserId, buildPayload());
+      toast({ title: `Salary details ${isEditMode ? "updated" : "saved"}`, status: "success", duration: 3000, isClosable: true });
       onDone();
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Failed to save", status: "error", duration: 4000, isClosable: true });
@@ -241,16 +280,26 @@ function SalaryForm_({
     <Box>
       <Flex justify="space-between" align="center" mb={4}>
         <Text fontSize="lg" fontWeight="700" color="text.heading">
-          {mode === "edit" ? `Edit Salary — ${editRecord?.employeeName}` : "Add Salary & Banking"}
+          {isEditMode ? "Edit Salary & Banking" : "Add Salary & Banking"}
         </Text>
         <SecondaryButton size="sm" onClick={onCancel}>Back to List</SecondaryButton>
       </Flex>
 
-      {mode === "add" && (
-        <SectionCard mb={4}>
-          <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} />
-        </SectionCard>
-      )}
+      <SectionCard mb={4}>
+        <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} />
+        {fetching && (
+          <Flex align="center" gap={2} mt={-3} mb={2}>
+            <Spinner size="sm" color="brand.400" />
+            <Text fontSize="sm" color="text.muted">Loading employee data...</Text>
+          </Flex>
+        )}
+        {selectedUserId && !fetching && isEditMode && (
+          <Badge colorScheme="green" fontSize="xs" mt={-3} mb={2}>Existing record found — editing</Badge>
+        )}
+        {selectedUserId && !fetching && !isEditMode && (
+          <Badge colorScheme="blue" fontSize="xs" mt={-3} mb={2}>No existing record — creating new</Badge>
+        )}
+      </SectionCard>
 
       {/* ─── Salary Structure ─── */}
       <SectionCard mb={4}>
@@ -416,8 +465,8 @@ function SalaryForm_({
       {/* ─── Actions ─── */}
       <Flex justify="flex-end" gap={3}>
         <SecondaryButton size="sm" onClick={onCancel}>Cancel</SecondaryButton>
-        <PrimaryButton size="sm" onClick={handleSave} isLoading={saving}>
-          {mode === "edit" ? "Update Details" : "Save Details"}
+        <PrimaryButton size="sm" onClick={handleSave} isLoading={saving} isDisabled={!selectedUserId || fetching}>
+          {isEditMode ? "Update Details" : "Save Details"}
         </PrimaryButton>
       </Flex>
     </Box>
@@ -558,8 +607,8 @@ export default function SalaryBankingPage() {
   if (view === "add") {
     return (
       <Box>
-        <PageHeader title="Salary & Banking" subtitle="Add salary structure and banking details for an employee." />
-        <SalaryForm_ mode="add" onDone={handleFormDone} onCancel={() => setView("list")} />
+        <PageHeader title="Salary & Banking" subtitle="Add or edit salary structure and banking details for an employee." />
+        <SalaryForm_ onDone={handleFormDone} onCancel={() => setView("list")} />
       </Box>
     );
   }
@@ -568,7 +617,7 @@ export default function SalaryBankingPage() {
     return (
       <Box>
         <PageHeader title="Salary & Banking" subtitle="Update salary structure and banking details." />
-        <SalaryForm_ mode="edit" editRecord={editRecord} onDone={handleFormDone} onCancel={() => { setView("list"); setEditRecord(null); }} />
+        <SalaryForm_ onDone={handleFormDone} onCancel={() => { setView("list"); setEditRecord(null); }} initialUserId={editRecord.userId} />
       </Box>
     );
   }

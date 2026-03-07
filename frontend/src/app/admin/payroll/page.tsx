@@ -369,9 +369,10 @@ function ManualPayrollTab({
           </SimpleGrid>
 
           {/* Attendance Breakdown */}
-          <SimpleGrid columns={{ base: 2, sm: 3, md: 5 }} spacing={3} mb={5}>
+          <SimpleGrid columns={{ base: 2, sm: 3, md: 6 }} spacing={3} mb={5}>
             {[
               { label: "Working Days", value: preview.workingDays, color: "#475569" },
+              { label: "Eligible Days", value: preview.eligibleWorkingDays, color: "#6D28D9" },
               { label: "Present Days", value: preview.presentDays, color: "#0D7C47" },
               { label: "Leave Days", value: preview.leaveDays, color: "#2563EB" },
               { label: "LOP Days", value: preview.lopDays, color: "#C41E3A" },

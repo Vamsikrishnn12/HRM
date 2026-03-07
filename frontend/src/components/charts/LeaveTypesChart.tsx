@@ -2,10 +2,14 @@
 
 import { useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import { leaveTypesData } from "@/lib/mockData";
+import type { LeaveTypeData } from "@/types";
 
-export default function LeaveTypesChart() {
-  const data = useMemo(() => leaveTypesData, []);
+interface LeaveTypesChartProps {
+  data?: LeaveTypeData[];
+}
+
+export default function LeaveTypesChart({ data: rawData }: LeaveTypesChartProps) {
+  const data = useMemo(() => rawData ?? [], [rawData]);
 
   return (
     <ResponsiveContainer width="100%" height={280}>

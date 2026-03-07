@@ -15,6 +15,7 @@ import {
   InputGroup,
   InputLeftElement,
   Badge,
+  Spinner,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -160,71 +161,100 @@ function ViewModal({
 
 /* ── Personal Details Form ──────────────────────────────────────── */
 function PersonalForm_({
-  mode,
-  editRecord,
   onDone,
   onCancel,
+  initialUserId,
 }: {
-  mode: "add" | "edit";
-  editRecord?: PersonalDetailsRow | null;
   onDone: () => void;
   onCancel: () => void;
+  initialUserId?: string;
 }) {
-  const [selectedUserId, setSelectedUserId] = useState(editRecord?.userId || "");
-  const [form, setForm] = useState<PersonalForm>(
-    editRecord
-      ? {
-          aadhaarNumber: editRecord.aadhaarNumber,
-          panNumber: editRecord.panNumber,
-          mobileNumber: editRecord.mobileNumber,
-          whatsappNumber: editRecord.whatsappNumber,
-          bloodGroup: editRecord.bloodGroup,
-          dateOfBirth: editRecord.dateOfBirth,
-          gender: editRecord.gender,
-          maritalStatus: editRecord.maritalStatus,
-          nationality: editRecord.nationality,
-          currentAddressLine1: editRecord.currentAddressLine1,
-          currentCity: editRecord.currentCity,
-          currentState: editRecord.currentState,
-          currentPincode: editRecord.currentPincode,
-          currentCountry: editRecord.currentCountry,
-          permanentSameAsCurrent: editRecord.permanentSameAsCurrent,
-          permanentAddressLine1: editRecord.permanentAddressLine1,
-          permanentCity: editRecord.permanentCity,
-          permanentState: editRecord.permanentState,
-          permanentPincode: editRecord.permanentPincode,
-          permanentCountry: editRecord.permanentCountry,
-          emergencyContactNumber: editRecord.emergencyContactNumber,
-          emergencyContactPerson: editRecord.emergencyContactPerson,
-          emergencyContactRelationship: editRecord.emergencyContactRelationship,
-          totalExperienceYears: editRecord.totalExperienceYears,
-          lastCompany: editRecord.lastCompany,
-          lastDesignation: editRecord.lastDesignation,
-          reasonForLeaving: editRecord.reasonForLeaving,
-          previousCompanyCTC: editRecord.previousCompanyCTC,
-          highestQualification: editRecord.highestQualification,
-          institutionName: editRecord.institutionName,
-          graduationYear: editRecord.graduationYear,
-        }
-      : { ...emptyForm },
-  );
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId || "");
+  const [existingRecordId, setExistingRecordId] = useState<string | null>(null);
+  const [form, setForm] = useState<PersonalForm>({ ...emptyForm });
   const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const toast = useToast();
 
+  const isEditMode = !!existingRecordId;
+
+  const resetForm = useCallback(() => {
+    setForm({ ...emptyForm });
+    setExistingRecordId(null);
+  }, []);
+
+  const populateForm = useCallback((record: PersonalDetailsRow) => {
+    setExistingRecordId(record.id);
+    setForm({
+      aadhaarNumber: record.aadhaarNumber,
+      panNumber: record.panNumber,
+      mobileNumber: record.mobileNumber,
+      whatsappNumber: record.whatsappNumber,
+      bloodGroup: record.bloodGroup,
+      dateOfBirth: record.dateOfBirth,
+      gender: record.gender,
+      maritalStatus: record.maritalStatus,
+      nationality: record.nationality,
+      currentAddressLine1: record.currentAddressLine1,
+      currentCity: record.currentCity,
+      currentState: record.currentState,
+      currentPincode: record.currentPincode,
+      currentCountry: record.currentCountry,
+      permanentSameAsCurrent: record.permanentSameAsCurrent,
+      permanentAddressLine1: record.permanentAddressLine1,
+      permanentCity: record.permanentCity,
+      permanentState: record.permanentState,
+      permanentPincode: record.permanentPincode,
+      permanentCountry: record.permanentCountry,
+      emergencyContactNumber: record.emergencyContactNumber,
+      emergencyContactPerson: record.emergencyContactPerson,
+      emergencyContactRelationship: record.emergencyContactRelationship,
+      totalExperienceYears: record.totalExperienceYears,
+      lastCompany: record.lastCompany,
+      lastDesignation: record.lastDesignation,
+      reasonForLeaving: record.reasonForLeaving,
+      previousCompanyCTC: record.previousCompanyCTC,
+      highestQualification: record.highestQualification,
+      institutionName: record.institutionName,
+      graduationYear: record.graduationYear,
+    });
+  }, []);
+
+  // Fetch existing data when employee changes
+  useEffect(() => {
+    if (!selectedUserId) {
+      resetForm();
+      return;
+    }
+    let cancelled = false;
+    const fetchData = async () => {
+      setFetching(true);
+      resetForm();
+      try {
+        const data = await personalDetailsApi.getByUserId(selectedUserId);
+        if (cancelled) return;
+        if (data) {
+          populateForm(data);
+        }
+      } catch {
+        // No existing data or error — keep empty form
+      } finally {
+        if (!cancelled) setFetching(false);
+      }
+    };
+    fetchData();
+    return () => { cancelled = true; };
+  }, [selectedUserId, resetForm, populateForm]);
+
   const handleSave = async () => {
-    const userId = mode === "edit" ? editRecord!.userId : selectedUserId;
-    if (!userId) {
+    if (!selectedUserId) {
       toast({ title: "Please select an employee", status: "warning", duration: 3000, isClosable: true });
       return;
     }
     try {
       setSaving(true);
-      if (mode === "edit" && editRecord) {
-        await personalDetailsApi.update(editRecord.id, form);
-      } else {
-        await personalDetailsApi.save(userId, form);
-      }
-      toast({ title: `Personal details ${mode === "edit" ? "updated" : "saved"}`, status: "success", duration: 3000, isClosable: true });
+      await personalDetailsApi.save(selectedUserId, form);
+      toast({ title: `Personal details ${isEditMode ? "updated" : "saved"}`, status: "success", duration: 3000, isClosable: true });
       onDone();
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Failed to save", status: "error", duration: 4000, isClosable: true });
@@ -237,16 +267,26 @@ function PersonalForm_({
     <Box>
       <Flex justify="space-between" align="center" mb={4}>
         <Text fontSize="lg" fontWeight="700" color="text.heading">
-          {mode === "edit" ? `Edit Details — ${editRecord?.employeeName}` : "Add Personal Details"}
+          {isEditMode ? "Edit Personal Details" : "Add Personal Details"}
         </Text>
         <SecondaryButton size="sm" onClick={onCancel}>Back to List</SecondaryButton>
       </Flex>
 
-      {mode === "add" && (
-        <SectionCard mb={4}>
-          <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} />
-        </SectionCard>
-      )}
+      <SectionCard mb={4}>
+        <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} />
+        {fetching && (
+          <Flex align="center" gap={2} mt={-3} mb={2}>
+            <Spinner size="sm" color="brand.400" />
+            <Text fontSize="sm" color="text.muted">Loading employee data...</Text>
+          </Flex>
+        )}
+        {selectedUserId && !fetching && isEditMode && (
+          <Badge colorScheme="green" fontSize="xs" mt={-3} mb={2}>Existing record found — editing</Badge>
+        )}
+        {selectedUserId && !fetching && !isEditMode && (
+          <Badge colorScheme="blue" fontSize="xs" mt={-3} mb={2}>No existing record — creating new</Badge>
+        )}
+      </SectionCard>
 
       <SectionCard mb={4}>
         <Text fontWeight="800" color="text.heading" mb={3}>Identity Information</Text>
@@ -456,8 +496,8 @@ function PersonalForm_({
       <SectionCard>
         <Flex justify="flex-end" gap={3}>
           <SecondaryButton size="sm" onClick={onCancel}>Cancel</SecondaryButton>
-          <PrimaryButton size="sm" onClick={handleSave} isLoading={saving}>
-            {mode === "edit" ? "Update Details" : "Save Details"}
+          <PrimaryButton size="sm" onClick={handleSave} isLoading={saving} isDisabled={!selectedUserId || fetching}>
+            {isEditMode ? "Update Details" : "Save Details"}
           </PrimaryButton>
         </Flex>
       </SectionCard>
@@ -594,8 +634,8 @@ export default function PersonalDetailsPage() {
   if (view === "add") {
     return (
       <Box>
-        <PageHeader title="Personal Details" subtitle="Add personal details for an employee." />
-        <PersonalForm_ mode="add" onDone={handleFormDone} onCancel={() => setView("list")} />
+        <PageHeader title="Personal Details" subtitle="Add or edit personal details for an employee." />
+        <PersonalForm_ onDone={handleFormDone} onCancel={() => setView("list")} />
       </Box>
     );
   }
@@ -604,7 +644,7 @@ export default function PersonalDetailsPage() {
     return (
       <Box>
         <PageHeader title="Personal Details" subtitle="Update personal, address, education, and experience information." />
-        <PersonalForm_ mode="edit" editRecord={editRecord} onDone={handleFormDone} onCancel={() => { setView("list"); setEditRecord(null); }} />
+        <PersonalForm_ onDone={handleFormDone} onCancel={() => { setView("list"); setEditRecord(null); }} initialUserId={editRecord.userId} />
       </Box>
     );
   }

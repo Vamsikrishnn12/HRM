@@ -29,15 +29,21 @@ router.get(
 );
 
 router.patch(
-  '/admin/:attendanceId/status',
+  '/admin/:employeeId/status',
   roleMiddleware('ADMIN'),
   asyncHandler(AttendanceController.overrideStatus),
 );
 
 router.patch(
-  '/admin/:attendanceId/manual-entry',
+  '/admin/:employeeId/manual-entry',
   roleMiddleware('ADMIN'),
   asyncHandler(AttendanceController.manualEntry),
+);
+
+router.patch(
+  '/admin/:employeeId/re-enable-start-work',
+  roleMiddleware('ADMIN'),
+  asyncHandler(AttendanceController.reEnableStartWork),
 );
 
 export default router;

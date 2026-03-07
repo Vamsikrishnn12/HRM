@@ -74,6 +74,9 @@ export class PayrollRecord {
   workingDays: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, default: 0 })
+  eligibleWorkingDays: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 1, default: 0 })
   presentDays: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, default: 0 })

@@ -84,17 +84,14 @@ export default function LoginPage() {
     });
 
     if (loggedInUser) {
-      // Small delay so user sees the "Preparing your dashboard..." transition
-      setTimeout(() => {
-        router.push(loggedInUser.role === "admin" ? "/admin/dashboard" : "/employee/dashboard");
-      }, 1500);
+      router.replace(loggedInUser.role === "admin" ? "/admin/dashboard" : "/employee/dashboard");
     } else {
       setIsSubmitting(false);
     }
   };
 
-  // Show auth transition screen during checking/redirecting
-  if (authStatus === "checking" || authStatus === "redirecting") {
+  // Only show loader while actively redirecting after a successful login
+  if (authStatus === "redirecting") {
     return <AuthLoader status={authStatus} />;
   }
 

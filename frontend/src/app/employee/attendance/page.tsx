@@ -32,6 +32,8 @@ const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }>
   LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
   HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
   WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
+  NOT_STARTED: { bg: "#F8F8FC", color: "#516079" },
+  MISSED_CHECK_IN: { bg: "#FEE7E7", color: "#C41E3A" },
 };
 
 function formatTime(dateStr: string | null): string {

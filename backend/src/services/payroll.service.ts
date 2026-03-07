@@ -14,7 +14,8 @@ import { PayrollRepository } from '../repositories/payroll.repository';
 import { generatePayslipPdf, PayslipData } from './pdf.service';
 import { parsePayrollExcel, ParsedRow } from './excel.service';
 import { EmailService } from './email.service';
-import { OrgSettings } from '../entities/OrgSettings.entity';
+import { OrgSettings, AlternateSaturdayRule } from '../entities/OrgSettings.entity';
+import { Holiday } from '../entities/Holiday.entity';
 import { ApiError } from '../utils/apiError';
 import { env } from '../config/env';
 import { transporter } from '../config/mail';
@@ -32,7 +33,7 @@ export class PayrollService {
 
   async previewPayroll(employeeId: string, month: number, year: number) {
     const { user, profile, salary } = await this.resolveEmployee(employeeId);
-    const attendance = await this.computeAttendance(employeeId, month, year);
+    const attendance = await this.computeAttendance(employeeId, month, year, profile?.dateOfJoining);
 
     const earnings: PayrollComponent[] = [];
     const deductions: PayrollComponent[] = [];
@@ -61,8 +62,8 @@ export class PayrollService {
     // Auto-add LOP deduction if applicable
     if (attendance.lopDays > 0) {
       const basic = earnings.find((e) => e.name.toLowerCase() === 'basic');
-      if (basic && attendance.workingDays > 0) {
-        const perDaySalary = basic.amount / attendance.workingDays;
+      if (basic && attendance.eligibleWorkingDays > 0) {
+        const perDaySalary = basic.amount / attendance.eligibleWorkingDays;
         const lopDeduction = round2(perDaySalary * attendance.lopDays);
         // Remove any existing LOP deduction and add computed one
         const idx = deductions.findIndex((d) => d.name === 'LOP Deduction');
@@ -132,7 +133,7 @@ export class PayrollService {
       );
     }
 
-    const attendance = await this.computeAttendance(input.employeeId, input.month, input.year);
+    const attendance = await this.computeAttendance(input.employeeId, input.month, input.year, profile?.dateOfJoining);
 
     const grossEarnings = round2(input.earnings.reduce((s, e) => s + e.amount, 0));
     const totalDeductions = round2(input.deductions.reduce((s, d) => s + d.amount, 0));
@@ -158,6 +159,7 @@ export class PayrollService {
           totalDeductions,
           netPay,
           workingDays: input.workingDays ?? attendance.workingDays,
+          eligibleWorkingDays: attendance.eligibleWorkingDays,
           payableDays: input.payableDays ?? attendance.payableDays,
           presentDays: input.presentDays ?? attendance.presentDays,
           leaveDays: input.leaveDays ?? attendance.leaveDays,
@@ -178,6 +180,7 @@ export class PayrollService {
           totalDeductions,
           netPay,
           workingDays: input.workingDays ?? attendance.workingDays,
+          eligibleWorkingDays: attendance.eligibleWorkingDays,
           payableDays: input.payableDays ?? attendance.payableDays,
           presentDays: input.presentDays ?? attendance.presentDays,
           leaveDays: input.leaveDays ?? attendance.leaveDays,
@@ -314,7 +317,7 @@ export class PayrollService {
     if (!user) throw new Error(`Employee not found for row ${row.rowNumber}`);
 
     const { profile, salary } = await this.resolveEmployeeData(user.id);
-    const attendance = await this.computeAttendance(user.id, month, year);
+    const attendance = await this.computeAttendance(user.id, month, year, profile?.dateOfJoining);
 
     // Smart merge: Excel fields override system, missing fields fallback to system
     const earnings = this.mergeEarnings(row.earnings, salary);
@@ -326,9 +329,9 @@ export class PayrollService {
     // Auto-add LOP deduction if applicable (same logic as previewPayroll)
     if (effectiveLopDays > 0) {
       const basic = earnings.find((e) => e.name.toLowerCase() === 'basic');
-      const effectiveWorkingDays = row.workingDays ?? attendance.workingDays;
-      if (basic && effectiveWorkingDays > 0) {
-        const perDaySalary = basic.amount / effectiveWorkingDays;
+      const effectiveEligibleDays = row.workingDays ?? attendance.eligibleWorkingDays;
+      if (basic && effectiveEligibleDays > 0) {
+        const perDaySalary = basic.amount / effectiveEligibleDays;
         const lopDeduction = round2(perDaySalary * effectiveLopDays);
         const idx = deductions.findIndex((d) => d.name === 'LOP Deduction' || d.name === 'Lop Deduction');
         if (idx >= 0) deductions.splice(idx, 1);
@@ -383,6 +386,7 @@ export class PayrollService {
       totalDeductions,
       netPay,
       workingDays: row.workingDays ?? attendance.workingDays,
+      eligibleWorkingDays: attendance.eligibleWorkingDays,
       payableDays: row.payableDays ?? attendance.payableDays,
       presentDays: row.presentDays ?? attendance.presentDays,
       leaveDays: row.leaveDays ?? attendance.leaveDays,
@@ -434,6 +438,7 @@ export class PayrollService {
       month: record.month,
       year: record.year,
       workingDays: Number(record.workingDays) || 0,
+      eligibleWorkingDays: Number(record.eligibleWorkingDays) || Number(record.workingDays) || 0,
       payableDays: Number(record.payableDays) || 0,
       presentDays: Number(record.presentDays) || 0,
       leaveDays: Number(record.leaveDays) || 0,
@@ -653,25 +658,98 @@ export class PayrollService {
     return null;
   }
 
-  private async computeAttendance(employeeId: string, month: number, year: number) {
+  private async computeAttendance(employeeId: string, month: number, year: number, dateOfJoining?: string) {
     const attRepo = AppDataSource.getRepository(Attendance);
     const leaveRepo = AppDataSource.getRepository(LeaveRequest);
+    const holidayRepo = AppDataSource.getRepository(Holiday);
 
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const lastDay = new Date(year, month, 0).getDate();
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-    // Count total working days (exclude weekends — Sat/Sun)
+    // Load org settings for weekly-off rules
+    let weekOffDays: string[] = ['SUNDAY'];
+    let altSatRule = AlternateSaturdayRule.NONE;
+    try {
+      const orgRepo = AppDataSource.getRepository(OrgSettings);
+      const org = await orgRepo.findOne({ where: {} });
+      if (org) {
+        weekOffDays = (org.weekOffDays || 'SUNDAY').split(',').map((d) => d.trim().toUpperCase());
+        altSatRule = org.alternateSaturdayOffRule || AlternateSaturdayRule.NONE;
+      }
+    } catch { /* use defaults */ }
+
+    // Load holidays in this month
+    const holidays = await holidayRepo
+      .createQueryBuilder('h')
+      .where('h.date >= :start AND h.date <= :end', { start: startDate, end: endDate })
+      .getMany();
+    const holidaySet = new Set(holidays.map((h) => h.date));
+
+    // Day name mapping for weekOffDays
+    const DAY_NAMES = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+    // Determine if a given date is a working day
+    const isWorkingDay = (d: number): boolean => {
+      const dt = new Date(year, month - 1, d);
+      const dayOfWeek = dt.getDay(); // 0=Sun, 6=Sat
+      const dayName = DAY_NAMES[dayOfWeek];
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+      // Check if it's a holiday
+      if (holidaySet.has(dateStr)) return false;
+
+      // Check weekly off (e.g., SUNDAY)
+      if (dayName !== 'SATURDAY' && weekOffDays.includes(dayName)) return false;
+
+      // Saturday handling with alternate rules
+      if (dayName === 'SATURDAY') {
+        if (weekOffDays.includes('SATURDAY')) return false; // All Saturdays off
+        if (altSatRule !== AlternateSaturdayRule.NONE) {
+          // Determine which Saturday of the month this is (1st, 2nd, 3rd, 4th, 5th)
+          const saturdayNum = Math.ceil(d / 7);
+          if (altSatRule === AlternateSaturdayRule.SECOND_FOURTH && (saturdayNum === 2 || saturdayNum === 4)) return false;
+          if (altSatRule === AlternateSaturdayRule.FIRST_THIRD && (saturdayNum === 1 || saturdayNum === 3)) return false;
+        }
+      }
+
+      return true;
+    };
+
+    // Count total working days for the entire month
     let workingDays = 0;
     for (let d = 1; d <= lastDay; d++) {
-      const dayOfWeek = new Date(year, month - 1, d).getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) workingDays++;
+      if (isWorkingDay(d)) workingDays++;
     }
+
+    // Compute eligible working days based on joining date
+    let eligibleStartDay = 1;
+    if (dateOfJoining) {
+      const joiningDate = new Date(dateOfJoining);
+      const monthStart = new Date(year, month - 1, 1);
+      const monthEnd = new Date(year, month - 1, lastDay);
+
+      if (joiningDate > monthEnd) {
+        // Employee joins after this month — not eligible at all
+        return { workingDays, eligibleWorkingDays: 0, payableDays: 0, presentDays: 0, leaveDays: 0, lopDays: 0 };
+      }
+      if (joiningDate > monthStart) {
+        eligibleStartDay = joiningDate.getDate();
+      }
+    }
+
+    let eligibleWorkingDays = 0;
+    for (let d = eligibleStartDay; d <= lastDay; d++) {
+      if (isWorkingDay(d)) eligibleWorkingDays++;
+    }
+
+    // Build eligible date range for attendance queries
+    const eligibleStartDate = `${year}-${String(month).padStart(2, '0')}-${String(eligibleStartDay).padStart(2, '0')}`;
 
     const attendances = await attRepo
       .createQueryBuilder('a')
       .where('a.employeeId = :employeeId', { employeeId })
-      .andWhere('a.date >= :start AND a.date <= :end', { start: startDate, end: endDate })
+      .andWhere('a.date >= :start AND a.date <= :end', { start: eligibleStartDate, end: endDate })
       .getMany();
 
     let presentDays = 0;
@@ -688,7 +766,7 @@ export class PayrollService {
       }
     }
 
-    // Count approved LOP leaves
+    // Count approved LOP leaves within the eligible range
     const lopLeaves = await leaveRepo
       .createQueryBuilder('lr')
       .where('lr.employeeId = :employeeId', { employeeId })
@@ -696,7 +774,7 @@ export class PayrollService {
       .andWhere('lr.status = :approved', { approved: LeaveStatus.APPROVED })
       .andWhere(
         '((lr.startDate >= :start AND lr.startDate <= :end) OR (lr.date >= :start AND lr.date <= :end))',
-        { start: startDate, end: endDate },
+        { start: eligibleStartDate, end: endDate },
       )
       .getMany();
 
@@ -704,9 +782,9 @@ export class PayrollService {
       lopDays += Number(leave.totalDays) || 0;
     }
 
-    const payableDays = Math.max(0, workingDays - lopDays);
+    const payableDays = Math.max(0, eligibleWorkingDays - lopDays);
 
-    return { workingDays, payableDays, presentDays, leaveDays, lopDays };
+    return { workingDays, eligibleWorkingDays, payableDays, presentDays, leaveDays, lopDays };
   }
 
   private mergeEarnings(excelEarnings: PayrollComponent[], salary: SalaryDetails | null): PayrollComponent[] {
@@ -751,6 +829,7 @@ export class PayrollService {
       totalDeductions: Number(r.totalDeductions),
       netPay: Number(r.netPay),
       workingDays: Number(r.workingDays),
+      eligibleWorkingDays: Number(r.eligibleWorkingDays) || Number(r.workingDays),
       payableDays: Number(r.payableDays),
       presentDays: Number(r.presentDays),
       leaveDays: Number(r.leaveDays),
@@ -770,21 +849,17 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function buildPayslipEmailHtml(empName: string, period: string, netPay?: number, companyName?: string): string {
+function buildPayslipEmailHtml(empName: string, period: string, _netPay?: number, companyName?: string): string {
   const company = companyName || 'HRMS';
-  const netPayStr = netPay ? `₹${Number(netPay).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '';
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head><body style="font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;margin:0;padding:0;">
 <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);">
   <div style="background:#4F46E5;padding:24px 28px;"><h1 style="margin:0;color:#fff;font-size:20px;">${company}</h1></div>
   <div style="padding:28px;">
-    <p style="margin:0 0 16px;color:#1a1a2e;font-size:15px;">Hello <strong>${empName}</strong>,</p>
-    <p style="margin:0 0 16px;color:#475569;font-size:14px;">Your payslip for <strong>${period}</strong> is attached to this email.</p>
-    ${netPayStr ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:0 0 16px;text-align:center;">
-      <p style="margin:0 0 4px;font-size:12px;color:#166534;text-transform:uppercase;letter-spacing:0.5px;">Net Pay</p>
-      <p style="margin:0;font-size:24px;font-weight:800;color:#166534;">${netPayStr}</p>
-    </div>` : ''}
+    <p style="margin:0 0 16px;color:#1a1a2e;font-size:15px;">Hi <strong>${empName}</strong>,</p>
+    <p style="margin:0 0 16px;color:#475569;font-size:14px;">We have sent your payslip for <strong>${period}</strong>. Please find it attached to this email.</p>
     <p style="margin:0 0 16px;color:#475569;font-size:14px;">You can also view and download your payslips from the HRMS portal.</p>
+    <p style="margin:0;color:#475569;font-size:14px;">Regards,<br><strong>${company}</strong></p>
     <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;">This is an automated message. Please do not reply.</p>
   </div>
   <div style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;">

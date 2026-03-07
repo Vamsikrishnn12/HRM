@@ -258,9 +258,10 @@ export default function EmployeePayrollPage() {
             {selected && (
               <Box>
                 {/* Attendance */}
-                <SimpleGrid columns={5} spacing={2} mb={4}>
+                <SimpleGrid columns={6} spacing={2} mb={4}>
                   {[
                     { label: "Working", value: selected.workingDays },
+                    { label: "Eligible", value: selected.eligibleWorkingDays },
                     { label: "Present", value: selected.presentDays },
                     { label: "Leave", value: selected.leaveDays },
                     { label: "LOP", value: selected.lopDays },

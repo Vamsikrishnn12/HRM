@@ -1,15 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
-import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react";
+import { useEffect, useMemo, useState } from "react";
+import { Box, Flex, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
 import { Calendar, Megaphone, Info, RefreshCw } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import SectionCard from "@/components/ui/SectionCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DataTable, { type Column } from "@/components/ui/DataTable";
-import { kpiStats, recentAttendance, announcements, upcomingHolidays, type AttendanceRecord } from "@/lib/mockData";
+import UpcomingBirthdaysWidget from "@/components/ui/UpcomingBirthdaysWidget";
+import UpcomingHolidaysWidget from "@/components/ui/UpcomingHolidaysWidget";
+import { dashboardApi, type DashboardSummary } from "@/api";
+import type { AttendanceRecord } from "@/types";
 
 const AttendanceChart = dynamic(() => import("@/components/charts/AttendanceChart"), { ssr: false });
 const DepartmentChart = dynamic(() => import("@/components/charts/DepartmentChart"), { ssr: false });
@@ -23,6 +26,17 @@ const announcementIcons: Record<string, typeof Info> = {
 };
 
 export default function AdminDashboard() {
+  const [data, setData] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    dashboardApi
+      .getSummary()
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const attendanceColumns = useMemo<Column<AttendanceRecord>[]>(
     () => [
       { key: "id", header: "Emp ID", width: "80px" },
@@ -38,6 +52,18 @@ export default function AdminDashboard() {
     ],
     []
   );
+
+  if (loading) {
+    return (
+      <Flex justify="center" align="center" minH="400px">
+        <Spinner size="xl" color="brand.400" />
+      </Flex>
+    );
+  }
+
+  const kpiStats = data?.kpiStats ?? [];
+  const recentAttendance = data?.recentAttendance ?? [];
+  const announcements = data?.announcements ?? [];
 
   return (
     <Box>
@@ -56,17 +82,17 @@ export default function AdminDashboard() {
       {/* Charts Row */}
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
         <SectionCard title="Attendance Trend (14 Days)">
-          <AttendanceChart />
+          <AttendanceChart data={data?.attendanceTrend} />
         </SectionCard>
         <SectionCard title="Department Headcount">
-          <DepartmentChart />
+          <DepartmentChart data={data?.departmentData} />
         </SectionCard>
       </SimpleGrid>
 
       {/* Leave Chart + Sidebar */}
-      <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={4} mb={6}>
-        <SectionCard title="Leave Distribution" gridColumn={{ lg: "span 1" }}>
-          <LeaveTypesChart />
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
+        <SectionCard title="Leave Distribution">
+          <LeaveTypesChart data={data?.leaveTypesData} />
         </SectionCard>
 
         {/* Announcements */}
@@ -112,50 +138,12 @@ export default function AdminDashboard() {
             })}
           </VStack>
         </SectionCard>
+      </SimpleGrid>
 
-        {/* Upcoming Holidays */}
-        <SectionCard title="Upcoming Holidays">
-          <VStack spacing={3} align="stretch">
-            {upcomingHolidays.map((h, i) => (
-              <Flex
-                key={i}
-                align="center"
-                gap={3}
-                p={3}
-                borderRadius="lg"
-                bg="surface.bg"
-              >
-                <Flex
-                  w={10}
-                  h={10}
-                  borderRadius="lg"
-                  bg="white"
-                  align="center"
-                  justify="center"
-                  flexShrink={0}
-                  border="1px solid"
-                  borderColor="surface.border"
-                  direction="column"
-                >
-                  <Text fontSize="xs" fontWeight="700" color="brand.400" lineHeight="1">
-                    {h.date.split(" ")[0]}
-                  </Text>
-                  <Text fontSize="10px" color="text.muted" lineHeight="1">
-                    {h.date.split(" ")[1]}
-                  </Text>
-                </Flex>
-                <Box>
-                  <Text fontSize="sm" fontWeight="600" color="text.heading">
-                    {h.name}
-                  </Text>
-                  <Text fontSize="xs" color="text.muted">
-                    {h.day}
-                  </Text>
-                </Box>
-              </Flex>
-            ))}
-          </VStack>
-        </SectionCard>
+      {/* Birthdays & Holidays Widgets */}
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
+        <UpcomingBirthdaysWidget />
+        <UpcomingHolidaysWidget />
       </SimpleGrid>
 
       {/* Recent Attendance Table */}

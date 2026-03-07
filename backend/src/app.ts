@@ -19,6 +19,8 @@ import settingsRoutes from './routes/settings.routes';
 import attendanceRoutes from './routes/attendance.routes';
 import leaveRoutes from './routes/leave.routes';
 import payrollRoutes from './routes/payroll.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+import profileRoutes from './routes/profile.routes';
 
 const app = express();
 
@@ -73,6 +75,8 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll', payrollRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.resolve('uploads')));

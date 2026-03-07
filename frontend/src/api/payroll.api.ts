@@ -23,6 +23,7 @@ export interface PayrollPreview {
   totalDeductions: number;
   netPay: number;
   workingDays: number;
+  eligibleWorkingDays: number;
   payableDays: number;
   presentDays: number;
   leaveDays: number;
@@ -54,6 +55,7 @@ export interface PayrollRecord {
   totalDeductions: number;
   netPay: number;
   workingDays: number;
+  eligibleWorkingDays: number;
   payableDays: number;
   presentDays: number;
   leaveDays: number;

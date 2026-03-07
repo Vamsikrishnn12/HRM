@@ -10,10 +10,14 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { attendanceTrend } from "@/lib/mockData";
+import type { AttendanceTrend } from "@/types";
 
-export default function AttendanceChart() {
-  const data = useMemo(() => attendanceTrend, []);
+interface AttendanceChartProps {
+  data?: AttendanceTrend[];
+}
+
+export default function AttendanceChart({ data: rawData }: AttendanceChartProps) {
+  const data = useMemo(() => rawData ?? [], [rawData]);
 
   return (
     <ResponsiveContainer width="100%" height={280}>

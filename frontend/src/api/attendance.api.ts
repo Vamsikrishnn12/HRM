@@ -9,7 +9,9 @@ export type AttendanceStatusType =
   | "HALF_DAY"
   | "LEAVE"
   | "HOLIDAY"
-  | "WEEK_OFF";
+  | "WEEK_OFF"
+  | "NOT_STARTED"
+  | "MISSED_CHECK_IN";
 
 export interface AttendanceRecord {
   id: string;
@@ -25,21 +27,49 @@ export interface AttendanceRecord {
   eodDescription: string | null;
 }
 
+export type ReasonCode =
+  | "HOLIDAY"
+  | "WEEK_OFF"
+  | "ON_LEAVE"
+  | "ALREADY_STARTED"
+  | "OVERRIDE_ACTIVE"
+  | "BEFORE_START_TIME"
+  | "WITHIN_WINDOW"
+  | "WINDOW_EXPIRED";
+
 export interface TodayAttendanceResponse {
   date: string;
   dayType: "WORKING" | "HOLIDAY" | "WEEK_OFF";
   workStartTime: string;
   workEndTime: string;
   lateGraceMinutes: number;
+  checkInWindowMinutes: number;
   canStartWork: boolean;
   isTooLate: boolean;
+  reasonCode: ReasonCode;
+  reasonMessage: string;
+  todayStatus: string;
+  overrideActive: boolean;
   attendance: AttendanceRecord | null;
 }
 
-export interface AdminAttendanceRecord extends AttendanceRecord {
+export interface AdminAttendanceRecord {
+  id: string | null;
+  employeeId: string;
   employeeName: string | null;
   employeeCode: string | null;
+  date: string;
+  firstCheckInAt: string | null;
+  lastCheckOutAt: string | null;
+  totalWorkMinutes: number;
+  status: AttendanceStatusType;
+  lateMinutes: number;
+  isManualOverride: boolean;
   overrideReason: string | null;
+  locationValidated: boolean;
+  eodDescription: string | null;
+  startWorkOverrideEnabled: boolean;
+  overrideActive: boolean;
   checkInLatitude: number | null;
   checkInLongitude: number | null;
   checkOutLatitude: number | null;
@@ -77,16 +107,20 @@ export const attendanceApi = {
   getAdminEmployeeAttendance: (employeeId: string, days = 30) =>
     api.get<AttendanceRecord[]>(`/attendance/admin/${employeeId}?days=${days}`),
 
-  overrideStatus: (attendanceId: string, data: { status: string; reason: string }) =>
-    api.patch<AdminAttendanceRecord>(`/attendance/admin/${attendanceId}/status`, data),
+  overrideStatus: (employeeId: string, data: { date: string; status: string; reason: string }) =>
+    api.patch<AdminAttendanceRecord>(`/attendance/admin/${employeeId}/status`, data),
 
   manualEntry: (
-    attendanceId: string,
+    employeeId: string,
     data: {
+      date: string;
       firstCheckInAt?: string;
       lastCheckOutAt?: string;
       status?: string;
       reason?: string;
     },
-  ) => api.patch<AdminAttendanceRecord>(`/attendance/admin/${attendanceId}/manual-entry`, data),
+  ) => api.patch<AdminAttendanceRecord>(`/attendance/admin/${employeeId}/manual-entry`, data),
+
+  reEnableStartWork: (employeeId: string, data?: { reason?: string; validUntil?: string }) =>
+    api.patch(`/attendance/admin/${employeeId}/re-enable-start-work`, data ?? {}),
 };
