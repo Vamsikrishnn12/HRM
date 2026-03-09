@@ -3,21 +3,29 @@ import fs from 'fs';
 import { env } from '../config/env';
 import { transporter } from '../config/mail';
 
+/**
+ * Resolve the templates directory.
+ * In dev  (ts-node):  src/services/../templates  →  src/templates
+ * In prod (compiled):  dist/services/../templates →  dist/templates  (copied by build)
+ */
+const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
+
 export class EmailService {
   private loadTemplate(
     templateName: string,
     variables: Record<string, string>,
   ): string {
-    const templatePath = path.join(
-      __dirname,
-      '..',
-      'templates',
-      `${templateName}.html`,
-    );
+    const templatePath = path.join(TEMPLATES_DIR, `${templateName}.html`);
+
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Email template not found: ${templatePath}`);
+    }
+
     let html = fs.readFileSync(templatePath, 'utf-8');
 
     for (const [key, value] of Object.entries(variables)) {
-      html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
+      // Use split/join for safe literal replacement (no regex special-char issues)
+      html = html.split(`{{${key}}}`).join(value);
     }
     return html;
   }

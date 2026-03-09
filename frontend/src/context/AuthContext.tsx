@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
 import {
   api,
+  API_BASE,
   setAccessToken,
   clearAccessToken,
   getAccessToken,
@@ -73,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // trigger the refresh flow or dispatch auth:expired.
     const controller = new AbortController();
     fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/me`,
+      `${API_BASE}/auth/me`,
       {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",

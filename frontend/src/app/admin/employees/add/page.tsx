@@ -298,7 +298,7 @@ function EmployeeForm_({
               <FormLabel htmlFor="status-switch" mb={0} fontSize="sm" fontWeight="600" color="text.heading">Account Status</FormLabel>
               <Text fontSize="xs" color="text.muted">{isActive ? "Employee can log in" : "Login is blocked"}</Text>
             </Box>
-            <Switch id="status-switch" isChecked={isActive} onChange={(e) => setIsActive(e.target.checked)} colorScheme="purple" size="md" />
+            <Switch id="status-switch" isChecked={isActive} onChange={(e) => setIsActive(e.target.checked)} colorScheme="brand" size="md" />
           </FormControl>
         )}
 
@@ -306,7 +306,7 @@ function EmployeeForm_({
           <Checkbox
             isChecked={form.allowLoginOnlyInsideOffice}
             onChange={(e) => setForm((p) => ({ ...p, allowLoginOnlyInsideOffice: e.target.checked }))}
-            colorScheme="purple"
+            colorScheme="brand"
           >
             <Text fontSize="sm" fontWeight="600" color="text.heading">Allow login only inside office</Text>
           </Checkbox>

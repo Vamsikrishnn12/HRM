@@ -62,7 +62,7 @@ export default function AuthLoader({ status }: AuthLoaderProps) {
           w={14}
           h={14}
           borderRadius="2xl"
-          bgGradient="linear(to-br, brand.400, brand.700)"
+          bgGradient="linear(to-br, brand.400, accent.400)"
           align="center"
           justify="center"
           shadow="lg"

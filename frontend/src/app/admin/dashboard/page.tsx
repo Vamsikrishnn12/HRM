@@ -73,14 +73,14 @@ export default function AdminDashboard() {
       />
 
       {/* KPI Cards */}
-      <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 6 }} spacing={4} mb={6}>
+      <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 6 }} spacing={5} mb={8}>
         {kpiStats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </SimpleGrid>
 
       {/* Charts Row */}
-      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} mb={8}>
         <SectionCard title="Attendance Trend (14 Days)">
           <AttendanceChart data={data?.attendanceTrend} />
         </SectionCard>
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
       </SimpleGrid>
 
       {/* Leave Chart + Sidebar */}
-      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} mb={8}>
         <SectionCard title="Leave Distribution">
           <LeaveTypesChart data={data?.leaveTypesData} />
         </SectionCard>
@@ -108,14 +108,14 @@ export default function AdminDashboard() {
                   p={3}
                   borderRadius="lg"
                   bg="surface.bg"
-                  _hover={{ bg: "brand.50" }}
-                  transition="all 0.15s"
+                  _hover={{ bg: "wash.50" }}
+                  transition="all 0.2s ease"
                   cursor="pointer"
                 >
                   <Flex
                     w={8}
                     h={8}
-                    borderRadius="md"
+                    borderRadius="lg"
                     bg="white"
                     align="center"
                     justify="center"
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
                     border="1px solid"
                     borderColor="surface.border"
                   >
-                    <Icon size={14} color="#8B5CF6" />
+                    <Icon size={14} color="#4C5CB2" />
                   </Flex>
                   <Box flex={1}>
                     <Text fontSize="sm" fontWeight="600" color="text.heading">
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
       </SimpleGrid>
 
       {/* Birthdays & Holidays Widgets */}
-      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={5} mb={8}>
         <UpcomingBirthdaysWidget />
         <UpcomingHolidaysWidget />
       </SimpleGrid>

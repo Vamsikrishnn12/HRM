@@ -15,16 +15,16 @@ function AppContent({ children }: { children: ReactNode }) {
   const sidebarWidth = collapsed ? "72px" : "260px";
 
   return (
-    <Flex minH="100vh">
+    <Flex minH="100vh" bg="surface.bg">
       <Sidebar />
       <Box
         flex={1}
         ml={sidebarWidth}
-        transition="margin-left 0.2s ease"
+        transition="margin-left 0.25s ease"
         minW={0}
       >
         <Topbar />
-        <Box as="main" p={{ base: 3, md: 6 }} maxW="1440px" mx="auto" w="100%">
+        <Box as="main" p={{ base: 4, md: 8 }} maxW="1440px" mx="auto" w="100%">
           {children}
         </Box>
       </Box>

@@ -51,7 +51,7 @@ export default function Topbar() {
         {/* Search */}
         <InputGroup maxW="400px" size="sm">
           <InputLeftElement pointerEvents="none">
-            <Search size={16} color="#516079" aria-hidden="true" />
+            <Search size={16} color="#6B7A99" aria-hidden="true" />
           </InputLeftElement>
           <Input
             placeholder="Search anything..."
@@ -60,7 +60,8 @@ export default function Topbar() {
             border="1px solid"
             borderColor="surface.border"
             _placeholder={{ color: "text.muted", fontSize: "sm" }}
-            _focus={{ borderColor: "brand.400", bg: "white" }}
+            _hover={{ borderColor: "brand.200" }}
+            _focus={{ borderColor: "brand.400", boxShadow: "focus-ring", bg: "white" }}
           />
         </InputGroup>
 
@@ -112,7 +113,7 @@ export default function Topbar() {
                       key={i}
                       px={4}
                       py={3}
-                      _hover={{ bg: "surface.bg" }}
+                      _hover={{ bg: "wash.50" }}
                       cursor="pointer"
                       borderBottom={i < 2 ? "1px solid" : "none"}
                       borderColor="surface.border"
@@ -159,8 +160,8 @@ export default function Topbar() {
               py={1}
               borderRadius="lg"
               cursor="pointer"
-              _hover={{ bg: "surface.bg" }}
-              transition="all 0.15s"
+              _hover={{ bg: "wash.50" }}
+              transition="all 0.2s ease"
             >
               <Flex align="center" gap={2}>
                 <Avatar
@@ -178,7 +179,7 @@ export default function Topbar() {
                     {user?.role ?? "—"}
                   </Text>
                 </Box>
-                <ChevronDown size={14} color="#516079" />
+                <ChevronDown size={14} color="#6B7A99" />
               </Flex>
             </MenuButton>
             <MenuList borderRadius="xl" shadow="lg" border="1px solid" borderColor="surface.border" py={1} minW="180px">

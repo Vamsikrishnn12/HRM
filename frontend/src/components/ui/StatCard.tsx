@@ -34,9 +34,9 @@ interface StatCardProps {
 export default function StatCard({ label, value, change, changeType, icon }: StatCardProps) {
   const Icon = iconMap[icon] ?? FileText;
   const changeColor =
-    changeType === "up" ? "#0D7C47" : changeType === "down" ? "#C41E3A" : "#516079";
+    changeType === "up" ? "#0D7C47" : changeType === "down" ? "#C41E3A" : "#6B7A99";
   const changeBg =
-    changeType === "up" ? "#E6F9F0" : changeType === "down" ? "#FEE7E7" : "#F8F8FC";
+    changeType === "up" ? "#E6F9F0" : changeType === "down" ? "#FEF0F0" : "#F5F7FB";
   const TrendIcon =
     changeType === "up" ? TrendingUp : changeType === "down" ? TrendingDown : Minus;
 
@@ -48,12 +48,12 @@ export default function StatCard({ label, value, change, changeType, icon }: Sta
       border="1px solid"
       borderColor="surface.border"
       shadow="card"
-      transition="all 0.2s"
+      transition="all 0.25s ease"
       _hover={{ shadow: "card-hover", transform: "translateY(-2px)" }}
     >
       <Flex justify="space-between" align="flex-start" mb={3}>
         <Box>
-          <Text fontSize="sm" color="text.muted" fontWeight="500" mb={1}>
+          <Text fontSize="xs" color="text.muted" fontWeight="500" mb={1} textTransform="uppercase" letterSpacing="wide">
             {label}
           </Text>
           <Text fontSize="2xl" fontWeight="700" color="text.heading" lineHeight="1.2">
@@ -63,13 +63,13 @@ export default function StatCard({ label, value, change, changeType, icon }: Sta
         <Flex
           w={10}
           h={10}
-          borderRadius="lg"
+          borderRadius="xl"
           bg="brand.50"
           align="center"
           justify="center"
           flexShrink={0}
         >
-          <Icon size={20} color="#8B5CF6" aria-hidden="true" />
+          <Icon size={20} color="#30B8E9" aria-hidden="true" />
         </Flex>
       </Flex>
       <Flex align="center" gap={1.5}>

@@ -29,11 +29,11 @@ function NavItem({
         py={2.5}
         borderRadius="lg"
         bg={isActive ? "brand.50" : "transparent"}
-        color={isActive ? "brand.400" : "text.muted"}
+        color={isActive ? "brand.500" : "text.muted"}
         fontWeight={isActive ? "600" : "500"}
         fontSize="sm"
-        transition="all 0.15s"
-        _hover={{ bg: isActive ? "brand.50" : "surface.bg", color: "brand.400" }}
+        transition="all 0.2s ease"
+        _hover={{ bg: isActive ? "brand.50" : "wash.50", color: "brand.500" }}
         justify={collapsed ? "center" : "flex-start"}
         title={collapsed ? route.label : undefined}
       >
@@ -74,9 +74,9 @@ function NavGroup({
             py={2.5}
             borderRadius="lg"
             bg={isChildActive ? "brand.50" : "transparent"}
-            color={isChildActive ? "brand.400" : "text.muted"}
-            transition="all 0.15s"
-            _hover={{ bg: "surface.bg", color: "brand.400" }}
+            color={isChildActive ? "brand.500" : "text.muted"}
+            transition="all 0.2s ease"
+            _hover={{ bg: "wash.50", color: "brand.500" }}
             title={route.label}
           >
             <Icon size={20} />
@@ -97,11 +97,11 @@ function NavGroup({
         py={2.5}
         borderRadius="lg"
         bg={isChildActive && !open ? "brand.50" : "transparent"}
-        color={isChildActive ? "brand.400" : "text.muted"}
+        color={isChildActive ? "brand.500" : "text.muted"}
         fontWeight={isChildActive ? "600" : "500"}
         fontSize="sm"
-        transition="all 0.15s"
-        _hover={{ bg: "surface.bg", color: "brand.400" }}
+        transition="all 0.2s ease"
+        _hover={{ bg: "wash.50", color: "brand.500" }}
         onClick={() => setOpen((p) => !p)}
       >
         <Icon size={20} aria-hidden="true" />
@@ -130,11 +130,11 @@ function NavGroup({
                   py={2}
                   borderRadius="lg"
                   bg={childActive ? "brand.50" : "transparent"}
-                  color={childActive ? "brand.400" : "text.muted"}
+                  color={childActive ? "brand.500" : "text.muted"}
                   fontWeight={childActive ? "600" : "500"}
                   fontSize="13px"
-                  transition="all 0.15s"
-                  _hover={{ bg: "surface.bg", color: "brand.400" }}
+                  transition="all 0.2s ease"
+                  _hover={{ bg: "wash.50", color: "brand.500" }}
                 >
                   <ChildIcon size={16} aria-hidden="true" />
                   <Text>{child.label}</Text>
@@ -168,7 +168,7 @@ export default function Sidebar() {
       top={0}
       left={0}
       zIndex={20}
-      transition="width 0.2s ease"
+      transition="width 0.25s ease"
       display="flex"
       flexDirection="column"
     >
@@ -188,7 +188,7 @@ export default function Sidebar() {
               w={8}
               h={8}
               borderRadius="lg"
-              bgGradient="linear(to-br, brand.400, brand.700)"
+              bgGradient="linear(to-br, brand.400, accent.400)"
               align="center"
               justify="center"
             >
@@ -206,7 +206,7 @@ export default function Sidebar() {
             w={8}
             h={8}
             borderRadius="lg"
-            bgGradient="linear(to-br, brand.400, brand.700)"
+            bgGradient="linear(to-br, brand.400, accent.400)"
             align="center"
             justify="center"
           >
@@ -253,7 +253,7 @@ export default function Sidebar() {
           fontWeight="500"
           fontSize="sm"
           transition="all 0.15s"
-          _hover={{ bg: "#FEE7E7", color: "#C41E3A" }}
+          _hover={{ bg: "#FEF0F0", color: "#C41E3A" }}
           onClick={logout}
           w="100%"
           justify={collapsed ? "center" : "flex-start"}

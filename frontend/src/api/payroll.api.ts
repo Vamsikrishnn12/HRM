@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 
 // ─── Types ───
 
@@ -162,13 +162,13 @@ export const payrollApi = {
 
   emailPayslip: (id: string) => api.post(`${BASE}/records/${id}/email`),
 
-  downloadTemplate: () => `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}${BASE}/template`,
+  downloadTemplate: () => `${API_BASE}${BASE}/template`,
 
   downloadTemplateFile: () =>
     api.downloadBlob(`${BASE}/template`, 'payroll_template.xlsx'),
 
   downloadPayslipUrl: (id: string) =>
-    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}${BASE}/records/${id}/download`,
+    `${API_BASE}${BASE}/records/${id}/download`,
 
   downloadPayslip: (id: string) =>
     api.downloadBlob(`${BASE}/records/${id}/download`, `payslip_${id}.pdf`),
@@ -186,5 +186,5 @@ export const payrollApi = {
     api.get<PayrollRecord>(`${BASE}/my-payslips/${id}`),
 
   myPayslipDownloadUrl: (id: string) =>
-    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}${BASE}/my-payslips/${id}/download`,
+    `${API_BASE}${BASE}/my-payslips/${id}/download`,
 };

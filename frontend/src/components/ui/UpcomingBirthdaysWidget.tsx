@@ -71,8 +71,8 @@ export default function UpcomingBirthdaysWidget(props: Record<string, any>) {
                 px={2}
                 py={0.5}
                 borderRadius="full"
-                bg={b.daysLeft === 0 ? "#E6F9F0" : "#F0EBFF"}
-                color={b.daysLeft === 0 ? "#0D7C47" : "#6B46C1"}
+                bg={b.daysLeft === 0 ? "#E6F9F0" : "wash.100"}
+                color={b.daysLeft === 0 ? "#0D7C47" : "accent.400"}
                 flexShrink={0}
               >
                 {b.daysLeft === 0 ? "🎂 Today" : `In ${b.daysLeft}d`}

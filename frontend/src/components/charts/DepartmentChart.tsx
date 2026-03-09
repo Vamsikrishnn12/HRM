@@ -22,25 +22,25 @@ export default function DepartmentChart({ data: rawData }: DepartmentChartProps)
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#EEEEF4" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E1E7F5" vertical={false} />
         <XAxis
           dataKey="department"
-          tick={{ fill: "#516079", fontSize: 11 }}
+          tick={{ fill: "#6B7A99", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
-        <YAxis tick={{ fill: "#516079", fontSize: 12 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "#6B7A99", fontSize: 12 }} axisLine={false} tickLine={false} />
         <Tooltip
           contentStyle={{
             borderRadius: "12px",
-            border: "1px solid #EEEEF4",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            border: "1px solid #E1E7F5",
+            boxShadow: "0 4px 12px rgba(27,41,89,0.08)",
             fontSize: "13px",
           }}
         />
         <Bar
           dataKey="count"
-          fill="#8B5CF6"
+          fill="#4C5CB2"
           radius={[6, 6, 0, 0]}
           barSize={32}
           name="Headcount"

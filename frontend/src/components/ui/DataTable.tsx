@@ -49,6 +49,7 @@ export default function DataTable<T extends Record<string, any>>({
                 letterSpacing="wider"
                 py={3}
                 borderColor="surface.border"
+                bg="surface.bg"
                 width={col.width}
               >
                 {col.header}
@@ -59,7 +60,7 @@ export default function DataTable<T extends Record<string, any>>({
         <Tbody>
           {rows.length === 0 ? (
             <Tr>
-              <Td colSpan={columns.length} textAlign="center" py={8}>
+              <Td colSpan={columns.length} textAlign="center" py={10}>
                 <Text color="text.muted" fontSize="sm">
                   {emptyMessage}
                 </Text>
@@ -69,13 +70,13 @@ export default function DataTable<T extends Record<string, any>>({
             rows.map((row) => (
               <Tr
                 key={String(row[keyField])}
-                _hover={{ bg: "surface.bg" }}
-                transition="background 0.15s"
+                _hover={{ bg: "wash.50" }}
+                transition="background 0.15s ease"
               >
                 {columns.map((col) => (
                   <Td
                     key={col.key}
-                    py={3}
+                    py={3.5}
                     fontSize="sm"
                     color="text.body"
                     borderColor="surface.border"

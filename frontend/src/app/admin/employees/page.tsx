@@ -69,7 +69,7 @@ function ViewModal({
 }) {
   if (!employee) return null;
   const InfoRow = ({ label, value }: { label: string; value: string }) => (
-    <Flex justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.50">
+    <Flex justify="space-between" py={1.5} borderBottom="1px solid" borderColor="surface.border">
       <Text fontSize="sm" color="text.muted" fontWeight="500">{label}</Text>
       <Text fontSize="sm" color="text.body" fontWeight="500">{value || "—"}</Text>
     </Flex>
@@ -250,7 +250,7 @@ function EmployeeForm_({
             </Field>
           ) : (
             <Field label="Email">
-              <StyledInput value={form.email} isReadOnly bg="gray.50" cursor="not-allowed" />
+              <StyledInput value={form.email} isReadOnly bg="surface.bg" cursor="not-allowed" />
             </Field>
           )}
           <Field label="Department" required>
@@ -298,7 +298,7 @@ function EmployeeForm_({
               <FormLabel htmlFor="status-switch" mb={0} fontSize="sm" fontWeight="600" color="text.heading">Account Status</FormLabel>
               <Text fontSize="xs" color="text.muted">{isActive ? "Employee can log in" : "Login is blocked"}</Text>
             </Box>
-            <Switch id="status-switch" isChecked={isActive} onChange={(e) => setIsActive(e.target.checked)} colorScheme="purple" size="md" />
+            <Switch id="status-switch" isChecked={isActive} onChange={(e) => setIsActive(e.target.checked)} colorScheme="brand" size="md" />
           </FormControl>
         )}
 
@@ -306,7 +306,7 @@ function EmployeeForm_({
           <Checkbox
             isChecked={form.allowLoginOnlyInsideOffice}
             onChange={(e) => setForm((p) => ({ ...p, allowLoginOnlyInsideOffice: e.target.checked }))}
-            colorScheme="purple"
+            colorScheme="brand"
           >
             <Text fontSize="sm" fontWeight="600" color="text.heading">Allow login only inside office</Text>
           </Checkbox>
@@ -433,7 +433,7 @@ export default function EmployeesPage() {
       header: "Emp ID",
       width: "100px",
       render: (row) => (
-        <Text fontWeight="600" fontSize="sm" color="brand.500">{row.empId}</Text>
+        <Text fontWeight="600" fontSize="sm" color="brand.400">{row.empId}</Text>
       ),
     },
     {
@@ -508,7 +508,7 @@ export default function EmployeesPage() {
             <AlertTitle mt={4} mb={1} fontSize="lg">Employee Account Created!</AlertTitle>
             <AlertDescription maxWidth="sm">
               <Text mb={3}>Credentials have been sent to the employee&apos;s email. You can also share them manually:</Text>
-              <Box bg="gray.50" borderRadius="lg" p={4} textAlign="left">
+              <Box bg="wash.50" borderRadius="lg" p={4} textAlign="left">
                 <Text fontSize="sm" mb={1}><strong>Employee ID:</strong> <Code>{createdResult.empId}</Code></Text>
                 <Text fontSize="sm"><strong>Password:</strong> <Code>{createdResult.generatedPassword}</Code></Text>
               </Box>

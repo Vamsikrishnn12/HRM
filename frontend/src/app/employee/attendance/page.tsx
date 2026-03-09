@@ -31,8 +31,8 @@ const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }>
   HALF_DAY: { bg: "#FFF8E1", color: "#B7791F" },
   LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
   HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
-  WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
-  NOT_STARTED: { bg: "#F8F8FC", color: "#516079" },
+  WEEK_OFF: { bg: "#EDE9F5", color: "#7A6DAF" },
+  NOT_STARTED: { bg: "#F5F7FB", color: "#6B7A99" },
   MISSED_CHECK_IN: { bg: "#FEE7E7", color: "#C41E3A" },
 };
 
@@ -139,7 +139,7 @@ export default function EmployeeAttendancePage() {
 
       <SectionCard noPadding>
         <Flex gap={3} p={5} pb={0} align="center">
-          <CalendarCheck size={16} color="#516079" />
+          <CalendarCheck size={16} color="#6B7A99" />
           <Text fontSize="sm" color="text.muted" fontWeight="500">
             Attendance Records
           </Text>

@@ -32,15 +32,15 @@ export default function LeaveTypesChart({ data: rawData }: LeaveTypesChartProps)
         <Tooltip
           contentStyle={{
             borderRadius: "12px",
-            border: "1px solid #EEEEF4",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            border: "1px solid #E1E7F5",
+            boxShadow: "0 4px 12px rgba(27,41,89,0.08)",
             fontSize: "13px",
           }}
         />
         <Legend
           iconType="circle"
           iconSize={8}
-          wrapperStyle={{ fontSize: "12px", color: "#516079" }}
+          wrapperStyle={{ fontSize: "12px", color: "#6B7A99" }}
         />
       </PieChart>
     </ResponsiveContainer>

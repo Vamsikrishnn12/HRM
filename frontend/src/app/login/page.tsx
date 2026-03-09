@@ -101,7 +101,7 @@ export default function LoginPage() {
       <Flex
         display={{ base: "none", lg: "flex" }}
         w="45%"
-        bgGradient="linear(135deg, #8B5CF6 0%, #6D28D9 50%, #5B21B6 100%)"
+        bgGradient="linear(135deg, #30B8E9 0%, #4C5CB2 50%, #1B2959 100%)"
         direction="column"
         justify="center"
         align="center"
@@ -174,7 +174,7 @@ export default function LoginPage() {
           lineHeight="1.7"
         >
           Streamline your workforce management with our comprehensive HRMS
-          platform. Track attendance, manage leaves, process payroll — all in one
+          platform. Track attendance, manage leaves, process payroll all in one
           place.
         </Text>
       </Flex>
@@ -211,7 +211,7 @@ export default function LoginPage() {
                   bg="white"
                   border="1px solid"
                   borderColor="surface.border"
-                  _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 1px #8B5CF6" }}
+                  _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 1px #30B8E9" }}
                   fontSize="sm"
                 />
                 <FormErrorMessage fontSize="xs">{errors.email?.message}</FormErrorMessage>
@@ -231,7 +231,7 @@ export default function LoginPage() {
                     bg="white"
                     border="1px solid"
                     borderColor="surface.border"
-                    _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 1px #8B5CF6" }}
+                    _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 1px #30B8E9" }}
                     fontSize="sm"
                     pr={12}
                   />
@@ -254,7 +254,7 @@ export default function LoginPage() {
               </FormControl>
 
               {/* <Flex justify="space-between" align="center">
-                <Checkbox size="sm" colorScheme="purple">
+                <Checkbox size="sm" colorScheme="brand">
                   <Text fontSize="sm" color="text.muted">
                     Remember me
                   </Text>

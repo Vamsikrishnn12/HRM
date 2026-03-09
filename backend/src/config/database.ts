@@ -18,15 +18,28 @@ import { PayrollRecord } from '../entities/PayrollRecord.entity';
 import { PayslipDocument } from '../entities/PayslipDocument.entity';
 import { PayrollImportJob } from '../entities/PayrollImportJob.entity';
 
+const isProduction = env.NODE_ENV === 'production';
+
+// Build connection options — prefer DATABASE_URL (Neon / managed Postgres)
+const connectionOptions = env.DATABASE_URL
+  ? {
+      type: 'postgres' as const,
+      url: env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    }
+  : {
+      type: 'postgres' as const,
+      host: env.DATABASE_HOST,
+      port: env.DATABASE_PORT,
+      username: env.DATABASE_USER,
+      password: env.DATABASE_PASSWORD,
+      database: env.DATABASE_NAME,
+    };
+
 export const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: env.DATABASE_HOST,
-  port: env.DATABASE_PORT,
-  username: env.DATABASE_USER,
-  password: env.DATABASE_PASSWORD,
-  database: env.DATABASE_NAME,
-  synchronize: env.NODE_ENV === 'development',
-  logging: env.NODE_ENV === 'development',
+  ...connectionOptions,
+  synchronize: !isProduction,
+  logging: !isProduction,
   entities: [
     User,
     RefreshToken,
@@ -46,6 +59,6 @@ export const AppDataSource = new DataSource({
     PayslipDocument,
     PayrollImportJob,
   ],
-  migrations: ['src/migrations/*.ts'],
+  migrations: ['src/migrations/*.ts', 'dist/migrations/*.js'],
   subscribers: [],
 });

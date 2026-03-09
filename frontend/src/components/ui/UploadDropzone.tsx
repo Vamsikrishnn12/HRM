@@ -63,7 +63,7 @@ export default function UploadDropzone({
         borderRadius="xl"
         border="1px solid"
         borderColor={isDragging ? "brand.400" : "surface.border"}
-        bg={isDragging ? "purple.50" : "surface.bg"}
+        bg={isDragging ? "brand.50" : "white"}
         px={{ base: 4, md: 6 }}
         py={{ base: 6, md: 7 }}
         cursor="pointer"
@@ -71,11 +71,10 @@ export default function UploadDropzone({
         _hover={{ borderColor: "brand.400" }}
       >
         <Flex direction="column" align="center" justify="center" gap={2}>
-          <Box w="44px" h="44px" borderRadius="full" display="flex" alignItems="center" justifyContent="center" bg={isDragging ? "brand.500" : "white"} border="1px solid" borderColor={isDragging ? "brand.500" : "surface.border"} color={isDragging ? "white" : "brand.500"}>
-            <UploadCloud size={20} />
+          <Box w="44px" h="44px" borderRadius="full" display="flex" alignItems="center" justifyContent="center" bg={isDragging ? "brand.500" : "surface.bg"} border="1px solid" borderColor={isDragging ? "brand.500" : "surface.border"} color={isDragging ? "white" : "brand.400"}>            <UploadCloud size={20} />
           </Box>
           <Text fontSize="sm" fontWeight="700" color="text.heading" textAlign="center">
-            Drag & drop files here <Text as="span" color="brand.500">or click to upload</Text>
+            Drag & drop files here <Text as="span" color="brand.400">or click to upload</Text>
           </Text>
           <Text fontSize="xs" color="text.muted" textAlign="center">
             Accepted: PDF, JPG, PNG, DOCX

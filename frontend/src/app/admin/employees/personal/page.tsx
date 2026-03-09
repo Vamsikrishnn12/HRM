@@ -313,7 +313,7 @@ function PersonalForm_({
               setForm((p) => ({ ...p, whatsappNumber: "" }));
             }
           }}
-          colorScheme="purple"
+          colorScheme="brand"
           mb={4}
         >
           <Text fontSize="sm">WhatsApp same as Mobile Number</Text>
@@ -378,7 +378,7 @@ function PersonalForm_({
         <Checkbox
           isChecked={form.permanentSameAsCurrent}
           onChange={(e) => setForm((p) => ({ ...p, permanentSameAsCurrent: e.target.checked }))}
-          colorScheme="purple"
+          colorScheme="brand"
           mb={4}
         >
           Permanent Address same as Current Address
@@ -597,7 +597,7 @@ export default function PersonalDetailsPage() {
       header: "Qualification",
       render: (row) =>
         row.highestQualification ? (
-          <Badge variant="subtle" colorScheme="purple" fontSize="xs">{row.highestQualification}</Badge>
+          <Badge variant="subtle" colorScheme="brand" fontSize="xs">{row.highestQualification}</Badge>
         ) : (
           <Text fontSize="sm" color="text.muted">—</Text>
         ),

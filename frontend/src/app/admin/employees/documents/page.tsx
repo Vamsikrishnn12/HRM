@@ -40,7 +40,7 @@ import EmployeeSelector from "@/components/ui/EmployeeSelector";
 import type { DocumentRow } from "@/types";
 
 /** Server origin (no /api suffix) — used for static file URLs */
-const SERVER_BASE = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+const SERVER_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
 
 const DOCUMENT_TYPES = [
   "Aadhaar",
@@ -63,7 +63,7 @@ function getTypeColor(type: string) {
   const map: Record<string, string> = {
     Aadhaar: "blue",
     "PAN Card": "orange",
-    Passport: "purple",
+    Passport: "brand",
     Resume: "teal",
     "Offer Letter": "green",
     "Relieving Letter": "pink",
@@ -139,7 +139,7 @@ function ViewModal({
               target="_blank"
               rel="noopener noreferrer"
               size="sm"
-              colorScheme="purple"
+              colorScheme="brand"
               leftIcon={<Download size={14} />}
             >
               Download

@@ -57,7 +57,7 @@ const STATUS_COLORS: Record<LeaveStatusType, { bg: string; color: string }> = {
   PENDING: { bg: "#FFF8E1", color: "#B7791F" },
   APPROVED: { bg: "#E6F9F0", color: "#0D7C47" },
   REJECTED: { bg: "#FEE7E7", color: "#C41E3A" },
-  CANCELLED: { bg: "#F8F8FC", color: "#516079" },
+  CANCELLED: { bg: "#F5F7FB", color: "#6B7A99" },
 };
 
 export default function EmployeeLeavePage() {
@@ -220,7 +220,7 @@ export default function EmployeeLeavePage() {
 
       {/* Balance Cards */}
       <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} spacing={4} mb={6}>
-        <BalanceCard label="Casual Leave" used={summary?.used.cl ?? 0} total={summary?.entitlement.cl ?? 0} balance={summary?.balance.cl ?? 0} color="#4F46E5" />
+        <BalanceCard label="Casual Leave" used={summary?.used.cl ?? 0} total={summary?.entitlement.cl ?? 0} balance={summary?.balance.cl ?? 0} color="#4C5CB2" />
         <BalanceCard label="Sick Leave" used={summary?.used.sl ?? 0} total={summary?.entitlement.sl ?? 0} balance={summary?.balance.sl ?? 0} color="#0D7C47" />
         <BalanceCard label="Earned Leave" used={summary?.used.el ?? 0} total={summary?.entitlement.el ?? 0} balance={summary?.balance.el ?? 0} color="#B7791F" />
         <Box bg="white" borderRadius="xl" p={4} border="1px solid" borderColor="surface.border" shadow="card">
@@ -232,7 +232,7 @@ export default function EmployeeLeavePage() {
           <Text fontSize="xs" color="text.muted">days</Text>
         </Box>
         <Box bg="white" borderRadius="xl" p={4} border="1px solid" borderColor="surface.border" shadow="card">
-          <Flex align="center" gap={2} mb={2} color="#7B1FA2">
+          <Flex align="center" gap={2} mb={2} color="#7A6DAF">
             <Clock size={16} />
             <Text fontSize="xs" fontWeight="600" textTransform="uppercase" color="text.muted">Permission</Text>
           </Flex>
@@ -251,7 +251,7 @@ export default function EmployeeLeavePage() {
           <Flex direction="column" gap={3}>
             <Flex justify="space-between" align="center">
               <Flex align="center" gap={2}>
-                <Briefcase size={16} color="#4F46E5" />
+                <Briefcase size={16} color="#4C5CB2" />
                 <Text fontSize="sm" color="text.muted">Joining Date</Text>
               </Flex>
               <Text fontSize="sm" fontWeight="600" color="text.heading">
@@ -262,7 +262,7 @@ export default function EmployeeLeavePage() {
             </Flex>
             <Flex justify="space-between" align="center">
               <Flex align="center" gap={2}>
-                <Shield size={16} color="#4F46E5" />
+                <Shield size={16} color="#4C5CB2" />
                 <Text fontSize="sm" color="text.muted">Status</Text>
               </Flex>
               <Badge
@@ -289,7 +289,7 @@ export default function EmployeeLeavePage() {
                 Service year slab: {summary.currentSlab.minYears}–{summary.currentSlab.maxYears ?? "∞"} years
               </Text>
               <SimpleGrid columns={3} spacing={3}>
-                <Box bg="#F0F4FF" p={3} borderRadius="lg" textAlign="center">
+                <Box bg="#E1E7F5" p={3} borderRadius="lg" textAlign="center">
                   <Text fontSize="xs" color="text.muted">CL</Text>
                   <Text fontSize="lg" fontWeight="700" color="brand.600">{summary.currentSlab.cl}</Text>
                 </Box>
@@ -352,7 +352,7 @@ export default function EmployeeLeavePage() {
                         {new Date(rec.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </Td>
                       <Td borderColor="surface.border">
-                        <Badge px={2} py={0.5} borderRadius="full" bg="#F0F4FF" color="#4F46E5" fontSize="xs" fontWeight="600">
+                        <Badge px={2} py={0.5} borderRadius="full" bg="#E1E7F5" color="#4C5CB2" fontSize="xs" fontWeight="600">
                           {rec.leaveType}
                         </Badge>
                       </Td>
@@ -400,7 +400,7 @@ export default function EmployeeLeavePage() {
         <ModalContent borderRadius="xl">
           <ModalHeader borderBottom="1px solid" borderColor="surface.border" fontSize="md" fontWeight="700">
             <Flex align="center" gap={2}>
-              <Send size={18} color="#4F46E5" />
+              <Send size={18} color="#4C5CB2" />
               Apply Leave
             </Flex>
           </ModalHeader>
@@ -542,7 +542,7 @@ export default function EmployeeLeavePage() {
 
               {/* Preview */}
               {(previewDays != null || previewHours != null) && (
-                <Box bg="#F0F4FF" borderRadius="lg" p={3}>
+                <Box bg="#E1E7F5" borderRadius="lg" p={3}>
                   <Text fontSize="sm" fontWeight="600" color="brand.600">
                     {previewDays != null ? `${previewDays} day(s)` : `${previewHours?.toFixed(1)} hour(s)`}
                   </Text>

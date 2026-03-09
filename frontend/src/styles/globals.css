@@ -2,25 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap");
 
 @layer base {
   html {
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-family: "Inter", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     background-color: #ffffff;
-    color: #0b1220;
+    color: #2D3A5C;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   }
 }
 
 /* Modern scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -28,28 +32,34 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4d4e8;
+  background: #CAD3EB;
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8d0;
+  background: #A095CF;
 }
 
 /* Focus ring consistency */
 *:focus-visible {
-  outline: 2px solid #8B5CF6;
+  outline: 2px solid #30B8E9;
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 /* Smooth transitions */
 a,
 button {
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 /* Chakra toast overrides */
 .chakra-toast {
   border-radius: 12px !important;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(48, 184, 233, 0.15);
+  color: #1B2959;
 }

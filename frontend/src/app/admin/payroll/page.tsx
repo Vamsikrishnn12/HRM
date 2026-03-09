@@ -89,7 +89,7 @@ export default function PayrollPage() {
 
   const summaryCards = useMemo(
     () => [
-      { label: "Total Records", value: summary?.totalRecords ?? 0, icon: DollarSign, color: "#8B5CF6", bg: "#F3EEFE" },
+      { label: "Total Records", value: summary?.totalRecords ?? 0, icon: DollarSign, color: "#4C5CB2", bg: "#E1E7F5" },
       { label: "Generated", value: summary?.generated ?? 0, icon: TrendingUp, color: "#0D7C47", bg: "#E6F9F0" },
       { label: "Emailed", value: summary?.emailed ?? 0, icon: Mail, color: "#2563EB", bg: "#EFF6FF" },
       { label: "Total Payout", value: `₹${(summary?.totalPayout ?? 0).toLocaleString("en-IN")}`, icon: DollarSign, color: "#B25E09", bg: "#FFF4E5" },
@@ -240,7 +240,7 @@ export default function PayrollPage() {
       </SimpleGrid>
 
       {/* Tabs */}
-      <Tabs variant="enclosed" colorScheme="purple">
+      <Tabs variant="enclosed" colorScheme="brand">
         <TabList>
           <Tab fontWeight="600" fontSize="sm">Manual Payroll</Tab>
           <Tab fontWeight="600" fontSize="sm">Bulk Upload</Tab>
@@ -263,7 +263,7 @@ export default function PayrollPage() {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                     maxW="300px"
                   />
-                  {loading && <Spinner size="sm" color="brand.500" />}
+                  {loading && <Spinner size="sm" color="brand.400" />}
                 </Flex>
                 <DataTable<PayrollRecordType> columns={columns} data={records} keyField="id" />
               </Box>
@@ -372,11 +372,11 @@ function ManualPayrollTab({
           <SimpleGrid columns={{ base: 2, sm: 3, md: 6 }} spacing={3} mb={5}>
             {[
               { label: "Working Days", value: preview.workingDays, color: "#475569" },
-              { label: "Eligible Days", value: preview.eligibleWorkingDays, color: "#6D28D9" },
+              { label: "Eligible Days", value: preview.eligibleWorkingDays, color: "#4C5CB2" },
               { label: "Present Days", value: preview.presentDays, color: "#0D7C47" },
               { label: "Leave Days", value: preview.leaveDays, color: "#2563EB" },
               { label: "LOP Days", value: preview.lopDays, color: "#C41E3A" },
-              { label: "Paid Days", value: preview.payableDays, color: "#8B5CF6" },
+              { label: "Paid Days", value: preview.payableDays, color: "#4C5CB2" },
             ].map((item) => (
               <Box key={item.label} p={3} bg="white" borderRadius="lg" border="1px solid" borderColor="surface.border" textAlign="center">
                 <Text fontSize="xl" fontWeight="700" color={item.color}>{item.value}</Text>
@@ -459,7 +459,7 @@ function ManualPayrollTab({
           </SecondaryButton>
 
           {/* Summary & Remarks */}
-          <Box p={4} bg="purple.50" borderRadius="lg" mb={4}>
+          <Box p={4} bg="wash.50" borderRadius="lg" mb={4}>
             <SimpleGrid columns={3} spacing={4}>
               <Box><Text fontSize="xs" color="text.muted">Gross Earnings</Text><Text fontWeight="700" color="#0D7C47">₹{grossEarnings.toLocaleString("en-IN")}</Text></Box>
               <Box><Text fontSize="xs" color="text.muted">Total Deductions</Text><Text fontWeight="700" color="#C41E3A">₹{totalDeductions.toLocaleString("en-IN")}</Text></Box>
@@ -636,7 +636,7 @@ function BulkUploadTab({
         {/* File info */}
         <Box p={3} bg="surface.bg" borderRadius="lg" mb={5}>
           <Flex gap={3} align="center">
-            <FileSpreadsheet size={16} color="#8B5CF6" />
+            <FileSpreadsheet size={16} color="#4C5CB2" />
             <Box flex={1}>
               <Text fontSize="sm" fontWeight="600" color="text.heading">{jobStatus.originalFileName || file?.name || "Uploaded file"}</Text>
               <Text fontSize="xs" color="text.muted">
@@ -722,7 +722,7 @@ function BulkUploadTab({
         textAlign="center"
         cursor={view === "processing" ? "default" : "pointer"}
         onClick={() => view !== "processing" && inputRef.current?.click()}
-        bg={file ? "purple.50" : "surface.bg"}
+        bg={file ? "wash.50" : "surface.bg"}
         mb={4}
         transition="all 0.15s"
         _hover={view !== "processing" ? { borderColor: "brand.400" } : {}}
@@ -736,7 +736,7 @@ function BulkUploadTab({
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           disabled={view === "processing"}
         />
-        <Upload size={32} color="#8B5CF6" style={{ margin: "0 auto 8px" }} />
+        <Upload size={32} color="#30B8E9" style={{ margin: "0 auto 8px" }} />
         {file ? (
           <Text fontSize="sm" fontWeight="600" color="brand.600">{file.name}</Text>
         ) : (
@@ -753,14 +753,14 @@ function BulkUploadTab({
         <Box mt={5} p={4} borderRadius="lg" border="1px solid" borderColor="surface.border">
           <Flex justify="space-between" mb={2}>
             <Flex align="center" gap={2}>
-              <Spinner size="xs" color="brand.500" />
+              <Spinner size="xs" color="brand.400" />
               <Text fontSize="sm" fontWeight="600">Processing Import...</Text>
             </Flex>
             <Badge colorScheme="yellow">{jobStatus.status}</Badge>
           </Flex>
           <Progress
             value={jobStatus.progressPercentage}
-            colorScheme="purple"
+            colorScheme="brand"
             borderRadius="full"
             size="sm"
             mb={2}

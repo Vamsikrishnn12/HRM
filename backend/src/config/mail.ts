@@ -15,6 +15,19 @@ if (smtpReady) {
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
     },
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 30_000,
+  });
+
+  // Verify SMTP connection on startup (non-blocking)
+  transporter.verify().then(() => {
+    console.log('✅ SMTP connection verified');
+  }).catch((err) => {
+    console.error('❌ SMTP connection failed:', err.message);
   });
 }
 

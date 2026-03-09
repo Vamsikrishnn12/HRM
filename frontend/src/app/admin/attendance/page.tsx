@@ -49,14 +49,14 @@ import {
 
 const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }> = {
   PRESENT: { bg: "#E6F9F0", color: "#0D7C47" },
-  LATE: { bg: "#FFF8E1", color: "#B7791F" },
-  ABSENT: { bg: "#FEE7E7", color: "#C41E3A" },
-  HALF_DAY: { bg: "#FFF8E1", color: "#B7791F" },
-  LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
-  HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
-  WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
-  NOT_STARTED: { bg: "#F8F8FC", color: "#516079" },
-  MISSED_CHECK_IN: { bg: "#FEE7E7", color: "#C41E3A" },
+  LATE: { bg: "#FEF9EC", color: "#92640D" },
+  ABSENT: { bg: "#FEF0F0", color: "#C41E3A" },
+  HALF_DAY: { bg: "#FEF9EC", color: "#92640D" },
+  LEAVE: { bg: "#E1E7F5", color: "#4C5CB2" },
+  HOLIDAY: { bg: "#E6F9F0", color: "#0D7C47" },
+  WEEK_OFF: { bg: "#F4F2FA", color: "#5C5190" },
+  NOT_STARTED: { bg: "#F5F7FB", color: "#6B7A99" },
+  MISSED_CHECK_IN: { bg: "#FEF0F0", color: "#C41E3A" },
 };
 
 function formatTime(dateStr: string | null): string {
@@ -304,7 +304,7 @@ export default function AdminAttendancePage() {
       <SectionCard noPadding mb={6}>
         <Flex gap={3} p={5} align="center" flexWrap="wrap">
           <Flex align="center" gap={2}>
-            <Calendar size={16} color="#516079" />
+            <Calendar size={16} color="#6B7A99" />
             <Text fontSize="sm" color="text.muted" fontWeight="500">
               Date:
             </Text>
@@ -347,7 +347,7 @@ export default function AdminAttendancePage() {
 
           <InputGroup maxW="250px" size="sm">
             <InputLeftElement pointerEvents="none">
-              <Search size={14} color="#516079" />
+              <Search size={14} color="#6B7A99" />
             </InputLeftElement>
             <Input
               placeholder="Search employee..."
@@ -393,7 +393,7 @@ export default function AdminAttendancePage() {
                   </Tr>
                 ) : (
                   (data?.records ?? []).map((rec) => {
-                    const sc = STATUS_COLORS[rec.status] ?? { bg: "#F8F8FC", color: "#516079" };
+                    const sc = STATUS_COLORS[rec.status] ?? { bg: "#F5F7FB", color: "#6B7A99" };
                     return (
                       <Tr key={rec.employeeId} _hover={{ bg: "surface.bg" }}>
                         <Td borderColor="surface.border">
@@ -556,9 +556,9 @@ export default function AdminAttendancePage() {
             </Button>
             <Button
               size="sm"
-              bgGradient="linear(to-r, brand.400, brand.700)"
+              bg="brand.400"
               color="white"
-              _hover={{ bgGradient: "linear(to-r, brand.500, brand.800)" }}
+              _hover={{ bg: "brand.500" }}
               isLoading={overrideLoading}
               isDisabled={!overrideStatus || !overrideReason}
               onClick={handleOverride}
@@ -636,9 +636,9 @@ export default function AdminAttendancePage() {
             </Button>
             <Button
               size="sm"
-              bgGradient="linear(to-r, brand.400, brand.700)"
+              bg="brand.400"
               color="white"
-              _hover={{ bgGradient: "linear(to-r, brand.500, brand.800)" }}
+              _hover={{ bg: "brand.500" }}
               isLoading={manualLoading}
               onClick={handleManualEntry}
             >

@@ -105,12 +105,12 @@ export default function EmployeeEditModal({ isOpen, onClose, employee, onSaved }
                     {editIsActive ? "Employee can log in" : "Login is blocked"}
                   </Text>
                 </Box>
-                <Switch id="status-switch" isChecked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} colorScheme="purple" size="md" />
+                <Switch id="status-switch" isChecked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} colorScheme="brand" size="md" />
               </FormControl>
 
               <Divider mb={4} />
 
-              <Checkbox isChecked={editLocationRequired} onChange={(e) => setEditLocationRequired(e.target.checked)} colorScheme="purple" mb={3}>
+              <Checkbox isChecked={editLocationRequired} onChange={(e) => setEditLocationRequired(e.target.checked)} colorScheme="brand" mb={3}>
                 <Text fontSize="sm" fontWeight="600" color="text.heading">Enable location-based login</Text>
               </Checkbox>
 

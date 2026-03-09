@@ -64,8 +64,8 @@ const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }>
   HALF_DAY: { bg: "#FFF8E1", color: "#B7791F" },
   LEAVE: { bg: "#E8EAF6", color: "#3949AB" },
   HOLIDAY: { bg: "#E8F5E9", color: "#2E7D32" },
-  WEEK_OFF: { bg: "#F3E5F5", color: "#7B1FA2" },
-  NOT_STARTED: { bg: "#F8F8FC", color: "#516079" },
+  WEEK_OFF: { bg: "#EDE9F5", color: "#7A6DAF" },
+  NOT_STARTED: { bg: "#F5F7FB", color: "#6B7A99" },
   MISSED_CHECK_IN: { bg: "#FEE7E7", color: "#C41E3A" },
 };
 
@@ -282,7 +282,7 @@ export default function EmployeeDashboard() {
         >
           <Box>
             <Flex align="center" gap={2} mb={1}>
-              <CalendarCheck size={18} color="#4F46E5" />
+              <CalendarCheck size={18} color="#4C5CB2" />
               <Text fontSize="md" fontWeight="600" color="text.heading">
                 Today&apos;s Attendance
               </Text>
@@ -292,8 +292,8 @@ export default function EmployeeDashboard() {
                 px={3}
                 py={1}
                 borderRadius="full"
-                bg={todayData?.dayType === "HOLIDAY" ? "#E8F5E9" : "#F3E5F5"}
-                color={todayData?.dayType === "HOLIDAY" ? "#2E7D32" : "#7B1FA2"}
+                bg={todayData?.dayType === "HOLIDAY" ? "#E8F5E9" : "#EDE9F5"}
+                color={todayData?.dayType === "HOLIDAY" ? "#2E7D32" : "#7A6DAF"}
                 fontSize="xs"
                 fontWeight="600"
               >
@@ -463,8 +463,8 @@ export default function EmployeeDashboard() {
                           px={2}
                           py={0.5}
                           borderRadius="full"
-                          bg={sc?.bg ?? "#F8F8FC"}
-                          color={sc?.color ?? "#516079"}
+                          bg={sc?.bg ?? "#F5F7FB"}
+                          color={sc?.color ?? "#6B7A99"}
                           fontSize="xs"
                           fontWeight="600"
                         >

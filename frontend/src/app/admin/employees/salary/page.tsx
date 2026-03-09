@@ -413,7 +413,7 @@ function SalaryForm_({
         <Checkbox
           isChecked={form.pfApplicable}
           onChange={(e) => setForm((p) => ({ ...p, pfApplicable: e.target.checked }))}
-          colorScheme="purple"
+          colorScheme="brand"
           mb={4}
         >
           PF Applicable

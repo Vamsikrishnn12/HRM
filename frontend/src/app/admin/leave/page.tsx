@@ -52,10 +52,10 @@ type TabKey = "ALL" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 const TABS: TabKey[] = ["ALL", "PENDING", "APPROVED", "REJECTED", "CANCELLED"];
 
 const STATUS_COLORS: Record<LeaveStatusType, { bg: string; color: string }> = {
-  PENDING: { bg: "#FFF8E1", color: "#B7791F" },
+  PENDING: { bg: "#FEF9EC", color: "#92640D" },
   APPROVED: { bg: "#E6F9F0", color: "#0D7C47" },
-  REJECTED: { bg: "#FEE7E7", color: "#C41E3A" },
-  CANCELLED: { bg: "#F8F8FC", color: "#516079" },
+  REJECTED: { bg: "#FEF0F0", color: "#C41E3A" },
+  CANCELLED: { bg: "#F5F7FB", color: "#6B7A99" },
 };
 
 export default function AdminLeavePage() {
@@ -163,10 +163,10 @@ export default function AdminLeavePage() {
 
       {/* Summary Cards */}
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} mb={6}>
-        <StatCard icon={<Clock size={18} />} label="Pending" value={stats.pending} color="#B7791F" bg="#FFF8E1" />
+        <StatCard icon={<Clock size={18} />} label="Pending" value={stats.pending} color="#92640D" bg="#FEF9EC" />
         <StatCard icon={<CheckCircle size={18} />} label="Approved" value={stats.approved} color="#0D7C47" bg="#E6F9F0" />
         <StatCard icon={<XCircle size={18} />} label="Rejected" value={stats.rejected} color="#C41E3A" bg="#FEE7E7" />
-        <StatCard icon={<FileText size={18} />} label="Total" value={stats.total} color="#4F46E5" bg="#F0F4FF" />
+        <StatCard icon={<FileText size={18} />} label="Total" value={stats.total} color="#4C5CB2" bg="#E1E7F5" />
       </SimpleGrid>
 
       <SectionCard noPadding>
@@ -256,13 +256,13 @@ export default function AdminLeavePage() {
                         <Text fontSize="sm" fontWeight="600" color="text.heading">{req.employeeName ?? "—"}</Text>
                         <Text fontSize="xs" color="text.muted">{req.employeeCode ?? ""}</Text>
                         {req.inProbation && (
-                          <Badge bg="#FFF8E1" color="#B7791F" fontSize="2xs" px={1.5} borderRadius="full" mt={0.5}>
+                          <Badge bg="#FEF9EC" color="#92640D" fontSize="2xs" px={1.5} borderRadius="full" mt={0.5}>
                             <Flex align="center" gap={1}><AlertTriangle size={10} /> Probation</Flex>
                           </Badge>
                         )}
                       </Td>
                       <Td borderColor="surface.border">
-                        <Badge px={2} py={0.5} borderRadius="full" bg="#F0F4FF" color="#4F46E5" fontSize="xs" fontWeight="600">
+                        <Badge px={2} py={0.5} borderRadius="full" bg="#E1E7F5" color="#4C5CB2" fontSize="xs" fontWeight="600">
                           {req.leaveType}
                         </Badge>
                       </Td>
