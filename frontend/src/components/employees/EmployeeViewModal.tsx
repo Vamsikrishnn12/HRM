@@ -66,7 +66,7 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }: Props) 
                 <>
                   <Divider my={4} />
                   <Flex align="center" gap={2} mb={2}>
-                    <MapPin size={14} color="#30B8E9" />
+                    <MapPin size={14} color="#7548b9" />
                     <Text fontSize="sm" fontWeight="600" color="text.heading">Location-Based Login Enabled</Text>
                   </Flex>
                   <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>

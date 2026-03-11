@@ -42,15 +42,16 @@ export default function DataTable<T extends Record<string, any>>({
             {columns.map((col) => (
               <Th
                 key={col.key}
-                fontSize="xs"
+                fontSize="11px"
                 color="text.muted"
-                fontWeight="600"
+                fontWeight="700"
                 textTransform="uppercase"
                 letterSpacing="wider"
-                py={3}
+                py={3.5}
                 borderColor="surface.border"
                 bg="surface.bg"
                 width={col.width}
+                fontFamily="'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif"
               >
                 {col.header}
               </Th>
@@ -60,8 +61,8 @@ export default function DataTable<T extends Record<string, any>>({
         <Tbody>
           {rows.length === 0 ? (
             <Tr>
-              <Td colSpan={columns.length} textAlign="center" py={10}>
-                <Text color="text.muted" fontSize="sm">
+              <Td colSpan={columns.length} textAlign="center" py={12}>
+                <Text color="text.muted" fontSize="sm" fontWeight="500">
                   {emptyMessage}
                 </Text>
               </Td>
@@ -70,16 +71,17 @@ export default function DataTable<T extends Record<string, any>>({
             rows.map((row) => (
               <Tr
                 key={String(row[keyField])}
-                _hover={{ bg: "wash.50" }}
-                transition="background 0.15s ease"
+                _hover={{ bg: "brand.50" }}
+                transition="all 0.2s cubic-bezier(.4,0,.2,1)"
               >
                 {columns.map((col) => (
                   <Td
                     key={col.key}
-                    py={3.5}
+                    py={4}
                     fontSize="sm"
                     color="text.body"
                     borderColor="surface.border"
+                    fontWeight="500"
                   >
                     {col.render ? col.render(row) : String(row[col.key] ?? "")}
                   </Td>

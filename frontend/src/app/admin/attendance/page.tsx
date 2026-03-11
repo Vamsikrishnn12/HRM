@@ -52,7 +52,7 @@ const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }>
   LATE: { bg: "#FEF9EC", color: "#92640D" },
   ABSENT: { bg: "#FEF0F0", color: "#C41E3A" },
   HALF_DAY: { bg: "#FEF9EC", color: "#92640D" },
-  LEAVE: { bg: "#E1E7F5", color: "#4C5CB2" },
+  LEAVE: { bg: "#EDE9F5", color: "#7548b9" },
   HOLIDAY: { bg: "#E6F9F0", color: "#0D7C47" },
   WEEK_OFF: { bg: "#F4F2FA", color: "#5C5190" },
   NOT_STARTED: { bg: "#F5F7FB", color: "#6B7A99" },

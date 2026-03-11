@@ -20,16 +20,22 @@ export default function PageHeader({ title, subtitle, actions, ...rest }: PageHe
       {...rest}
     >
       <Box>
-        <Heading size="lg" color="text.heading" fontWeight="700" letterSpacing="-0.01em">
+        <Heading
+          size="lg"
+          color="text.heading"
+          fontWeight="800"
+          letterSpacing="-0.02em"
+          lineHeight="1.2"
+        >
           {title}
         </Heading>
         {subtitle && (
-          <Text fontSize="sm" color="text.muted" mt={1.5}>
+          <Text fontSize="sm" color="text.muted" mt={1.5} fontWeight="500">
             {subtitle}
           </Text>
         )}
       </Box>
-      {actions && <Flex gap={3}>{actions}</Flex>}
+      {actions && <Flex gap={3} flexWrap="wrap">{actions}</Flex>}
     </Flex>
   );
 }

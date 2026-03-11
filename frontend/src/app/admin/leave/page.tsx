@@ -166,7 +166,7 @@ export default function AdminLeavePage() {
         <StatCard icon={<Clock size={18} />} label="Pending" value={stats.pending} color="#92640D" bg="#FEF9EC" />
         <StatCard icon={<CheckCircle size={18} />} label="Approved" value={stats.approved} color="#0D7C47" bg="#E6F9F0" />
         <StatCard icon={<XCircle size={18} />} label="Rejected" value={stats.rejected} color="#C41E3A" bg="#FEE7E7" />
-        <StatCard icon={<FileText size={18} />} label="Total" value={stats.total} color="#4C5CB2" bg="#E1E7F5" />
+        <StatCard icon={<FileText size={18} />} label="Total" value={stats.total} color="#7548b9" bg="#EDE9F5" />
       </SimpleGrid>
 
       <SectionCard noPadding>
@@ -262,7 +262,7 @@ export default function AdminLeavePage() {
                         )}
                       </Td>
                       <Td borderColor="surface.border">
-                        <Badge px={2} py={0.5} borderRadius="full" bg="#E1E7F5" color="#4C5CB2" fontSize="xs" fontWeight="600">
+                        <Badge px={2} py={0.5} borderRadius="full" bg="#EDE9F5" color="#7548b9" fontSize="xs" fontWeight="600">
                           {req.leaveType}
                         </Badge>
                       </Td>

@@ -2,22 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap");
 
 @layer base {
   html {
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "Plus Jakarta Sans", "Manrope", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    background-color: #ffffff;
-    color: #2D3A5C;
+    background-color: #F4F2F9;
+    color: #3B3F5C;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-family: "Plus Jakarta Sans", "Manrope", system-ui, sans-serif;
   }
 }
 
@@ -32,34 +32,46 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CAD3EB;
+  background: #D1C3EC;
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A095CF;
+  background: #A58FD8;
 }
 
 /* Focus ring consistency */
 *:focus-visible {
-  outline: 2px solid #30B8E9;
+  outline: 2px solid #7548b9;
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* Smooth transitions */
 a,
 button {
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 
 /* Chakra toast overrides */
 .chakra-toast {
-  border-radius: 12px !important;
+  border-radius: 14px !important;
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(48, 184, 233, 0.15);
-  color: #1B2959;
+  background: rgba(117, 72, 185, 0.15);
+  color: #1E2548;
+}
+
+/* Gradient utilities */
+.gradient-brand {
+  background: linear-gradient(135deg, #7548b9, #359de9);
+}
+
+.gradient-brand-text {
+  background: linear-gradient(135deg, #7548b9, #359de9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

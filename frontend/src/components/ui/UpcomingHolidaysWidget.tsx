@@ -22,8 +22,15 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
     <SectionCard
       title="Upcoming Holidays"
       actions={
-        <Flex align="center" color="brand.400">
-          <CalendarDays size={14} />
+        <Flex
+          align="center"
+          justify="center"
+          w={7}
+          h={7}
+          borderRadius="lg"
+          bgGradient="linear(135deg, #7548b9, #359de9)"
+        >
+          <CalendarDays size={14} color="white" />
         </Flex>
       }
       {...props}
@@ -34,7 +41,7 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
         </Flex>
       ) : holidays.length === 0 ? (
         <Flex justify="center" py={8}>
-          <Text fontSize="sm" color="text.muted">
+          <Text fontSize="sm" color="text.muted" fontWeight="500">
             No upcoming holidays scheduled.
           </Text>
         </Flex>
@@ -50,13 +57,15 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
                 align="center"
                 gap={3}
                 p={3}
-                borderRadius="lg"
+                borderRadius="xl"
                 bg="surface.bg"
+                _hover={{ bg: "brand.50", transform: "translateX(2px)" }}
+                transition="all 0.25s cubic-bezier(.4,0,.2,1)"
               >
                 <Flex
                   w={10}
                   h={10}
-                  borderRadius="lg"
+                  borderRadius="xl"
                   bg="white"
                   align="center"
                   justify="center"
@@ -64,11 +73,12 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
                   border="1px solid"
                   borderColor="surface.border"
                   direction="column"
+                  shadow="card"
                 >
-                  <Text fontSize="xs" fontWeight="700" color="brand.400" lineHeight="1">
+                  <Text fontSize="xs" fontWeight="800" color="brand.400" lineHeight="1">
                     {dayNum}
                   </Text>
-                  <Text fontSize="10px" color="text.muted" lineHeight="1">
+                  <Text fontSize="10px" color="text.muted" lineHeight="1" fontWeight="600">
                     {monthStr}
                   </Text>
                 </Flex>
@@ -76,18 +86,18 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
                   <Text fontSize="sm" fontWeight="600" color="text.heading" isTruncated>
                     {h.name}
                   </Text>
-                  <Text fontSize="xs" color="text.muted">
+                  <Text fontSize="xs" color="text.muted" fontWeight="500">
                     {h.dayName}
                   </Text>
                 </Box>
                 <Text
                   fontSize="xs"
-                  fontWeight="600"
-                  px={2}
+                  fontWeight="700"
+                  px={2.5}
                   py={0.5}
                   borderRadius="full"
-                  bg={h.daysLeft === 0 ? "#E6F9F0" : "wash.100"}
-                  color={h.daysLeft === 0 ? "#0D7C47" : "accent.400"}
+                  bg={h.daysLeft === 0 ? "#E6F9F0" : "brand.50"}
+                  color={h.daysLeft === 0 ? "#0D7C47" : "brand.400"}
                   flexShrink={0}
                 >
                   {h.daysLeft === 0 ? "Today" : `In ${h.daysLeft}d`}

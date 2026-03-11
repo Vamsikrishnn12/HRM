@@ -15,7 +15,7 @@ export function Field({
   return (
     <FormControl>
       <FormLabel fontSize="sm" fontWeight="600" color="text.heading" mb={1.5}>
-        {label} {required ? <Text as="span" color="red.400">*</Text> : null}
+        {label} {required ? <Text as="span" color="#C41E3A">*</Text> : null}
       </FormLabel>
       {children}
     </FormControl>
@@ -31,9 +31,11 @@ export function StyledInput(props: React.ComponentProps<typeof Input>) {
       border="1px solid"
       borderColor="surface.border"
       _hover={{ borderColor: "brand.200" }}
-      _focus={{ borderColor: "brand.400", boxShadow: "focus-ring", bg: "white" }}
+      _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)", bg: "white" }}
       fontSize="sm"
+      fontWeight="500"
       autoComplete="off"
+      transition="all 0.25s cubic-bezier(.4,0,.2,1)"
       {...props}
     />
   );
@@ -48,9 +50,11 @@ export function StyledSelect(props: React.ComponentProps<typeof Select>) {
       border="1px solid"
       borderColor="surface.border"
       _hover={{ borderColor: "brand.200" }}
-      _focus={{ borderColor: "brand.400", boxShadow: "focus-ring" }}
+      _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)" }}
       fontSize="sm"
+      fontWeight="500"
       autoComplete="off"
+      transition="all 0.25s cubic-bezier(.4,0,.2,1)"
       {...props}
     />
   );

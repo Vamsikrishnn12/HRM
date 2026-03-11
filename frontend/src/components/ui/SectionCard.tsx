@@ -20,12 +20,13 @@ export default function SectionCard({
   return (
     <Box
       bg="white"
-      borderRadius="xl"
+      borderRadius="2xl"
       border="1px solid"
       borderColor="surface.border"
       shadow="card"
       overflow="hidden"
-      transition="shadow 0.2s ease"
+      transition="all 0.3s cubic-bezier(.4,0,.2,1)"
+      _hover={{ shadow: "soft" }}
       {...rest}
     >
       {title && (
@@ -37,7 +38,7 @@ export default function SectionCard({
           borderBottom="1px solid"
           borderColor="surface.border"
         >
-          <Heading size="sm" color="text.heading" fontWeight="700">
+          <Heading size="sm" color="text.heading" fontWeight="700" letterSpacing="-0.01em">
             {title}
           </Heading>
           {actions}

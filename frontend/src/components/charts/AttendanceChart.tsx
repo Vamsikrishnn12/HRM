@@ -24,30 +24,31 @@ export default function AttendanceChart({ data: rawData }: AttendanceChartProps)
       <AreaChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
         <defs>
           <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#30B8E9" stopOpacity={0.15} />
-            <stop offset="95%" stopColor="#30B8E9" stopOpacity={0} />
+            <stop offset="5%" stopColor="#7548b9" stopOpacity={0.15} />
+            <stop offset="95%" stopColor="#7548b9" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="colorAbsent" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#C41E3A" stopOpacity={0.1} />
             <stop offset="95%" stopColor="#C41E3A" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E1E7F5" vertical={false} />
-        <XAxis dataKey="date" tick={{ fill: "#6B7A99", fontSize: 12 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: "#6B7A99", fontSize: 12 }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E8E4F0" vertical={false} />
+        <XAxis dataKey="date" tick={{ fill: "#7C7F99", fontSize: 12 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "#7C7F99", fontSize: 12 }} axisLine={false} tickLine={false} />
         <Tooltip
           contentStyle={{
-            borderRadius: "12px",
-            border: "1px solid #E1E7F5",
-            boxShadow: "0 4px 12px rgba(27,41,89,0.08)",
+            borderRadius: "14px",
+            border: "1px solid #E8E4F0",
+            boxShadow: "0 8px 24px rgba(117,72,185,0.10)",
             fontSize: "13px",
+            fontFamily: "Plus Jakarta Sans, Manrope, sans-serif",
           }}
         />
         <Area
           type="monotone"
           dataKey="present"
-          stroke="#30B8E9"
-          strokeWidth={2}
+          stroke="#7548b9"
+          strokeWidth={2.5}
           fill="url(#colorPresent)"
           name="Present"
         />

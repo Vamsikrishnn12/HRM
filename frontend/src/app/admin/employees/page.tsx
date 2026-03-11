@@ -508,7 +508,7 @@ export default function EmployeesPage() {
             <AlertTitle mt={4} mb={1} fontSize="lg">Employee Account Created!</AlertTitle>
             <AlertDescription maxWidth="sm">
               <Text mb={3}>Credentials have been sent to the employee&apos;s email. You can also share them manually:</Text>
-              <Box bg="wash.50" borderRadius="lg" p={4} textAlign="left">
+              <Box bg="surface.bg" borderRadius="lg" p={4} textAlign="left">
                 <Text fontSize="sm" mb={1}><strong>Employee ID:</strong> <Code>{createdResult.empId}</Code></Text>
                 <Text fontSize="sm"><strong>Password:</strong> <Code>{createdResult.generatedPassword}</Code></Text>
               </Box>

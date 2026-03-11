@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import type { LeaveTypeData } from "@/types";
 
+const BRAND_COLORS = ["#7548b9", "#359de9", "#A58FD8", "#6DBAEF", "#4B2A82", "#2578BA"];
+
 interface LeaveTypesChartProps {
   data?: LeaveTypeData[];
 }
@@ -18,29 +20,30 @@ export default function LeaveTypesChart({ data: rawData }: LeaveTypesChartProps)
           data={data}
           cx="50%"
           cy="50%"
-          innerRadius={60}
-          outerRadius={100}
+          innerRadius={65}
+          outerRadius={105}
           paddingAngle={3}
           dataKey="value"
           nameKey="name"
           stroke="none"
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
+            <Cell key={`cell-${index}`} fill={entry.color || BRAND_COLORS[index % BRAND_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip
           contentStyle={{
-            borderRadius: "12px",
-            border: "1px solid #E1E7F5",
-            boxShadow: "0 4px 12px rgba(27,41,89,0.08)",
+            borderRadius: "14px",
+            border: "1px solid #E8E4F0",
+            boxShadow: "0 8px 24px rgba(117,72,185,0.10)",
             fontSize: "13px",
+            fontFamily: "Plus Jakarta Sans, Manrope, sans-serif",
           }}
         />
         <Legend
           iconType="circle"
           iconSize={8}
-          wrapperStyle={{ fontSize: "12px", color: "#6B7A99" }}
+          wrapperStyle={{ fontSize: "12px", color: "#7C7F99", fontFamily: "Plus Jakarta Sans, Manrope, sans-serif" }}
         />
       </PieChart>
     </ResponsiveContainer>

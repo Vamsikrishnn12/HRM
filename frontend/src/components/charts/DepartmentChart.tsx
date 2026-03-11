@@ -22,26 +22,33 @@ export default function DepartmentChart({ data: rawData }: DepartmentChartProps)
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E1E7F5" vertical={false} />
+        <defs>
+          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#7548b9" stopOpacity={1} />
+            <stop offset="100%" stopColor="#359de9" stopOpacity={0.85} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E8E4F0" vertical={false} />
         <XAxis
           dataKey="department"
-          tick={{ fill: "#6B7A99", fontSize: 11 }}
+          tick={{ fill: "#7C7F99", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
-        <YAxis tick={{ fill: "#6B7A99", fontSize: 12 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "#7C7F99", fontSize: 12 }} axisLine={false} tickLine={false} />
         <Tooltip
           contentStyle={{
-            borderRadius: "12px",
-            border: "1px solid #E1E7F5",
-            boxShadow: "0 4px 12px rgba(27,41,89,0.08)",
+            borderRadius: "14px",
+            border: "1px solid #E8E4F0",
+            boxShadow: "0 8px 24px rgba(117,72,185,0.10)",
             fontSize: "13px",
+            fontFamily: "Plus Jakarta Sans, Manrope, sans-serif",
           }}
         />
         <Bar
           dataKey="count"
-          fill="#4C5CB2"
-          radius={[6, 6, 0, 0]}
+          fill="url(#barGradient)"
+          radius={[8, 8, 0, 0]}
           barSize={32}
           name="Headcount"
         />

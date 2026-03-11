@@ -1,12 +1,9 @@
 import { extendTheme, type ThemeConfig } from "@chakra-ui/react";
 
 /* ─── Palette ─────────────────────────────────────────────────────
-   Primary:  #30B8E9 (sky blue)
-   Accent:   #4C5CB2 (indigo-violet)
-   Deep:     #1B2959 (navy)
-   Soft:     #A095CF (lavender)
-   Wash:     #E1E7F5 (ice-blue)
-   Base:     #FFFFFF
+   Primary:  #7548b9 (rich purple)
+   Accent:   #359de9 (vibrant blue)
+   Gradient: linear-gradient(135deg, #7548b9, #359de9)
    ──────────────────────────────────────────────────────────────── */
 
 const config: ThemeConfig = {
@@ -20,103 +17,103 @@ const theme = extendTheme({
   /* ── Colors ─────────────────────────────────────────────────── */
   colors: {
     brand: {
-      50: "#EBF7FD",
-      100: "#C6EBFA",
-      200: "#94D9F4",
-      300: "#60C8EE",
-      400: "#30B8E9",
-      500: "#1DA3D4",
-      600: "#178BB5",
-      700: "#116E90",
-      800: "#0B506A",
-      900: "#063345",
+      50: "#F3EEFB",
+      100: "#E0D3F5",
+      200: "#C5AAEC",
+      300: "#A97FE2",
+      400: "#7548b9",
+      500: "#6A3FAF",
+      600: "#5C359E",
+      700: "#4B2A82",
+      800: "#3A2066",
+      900: "#29164A",
     },
     accent: {
-      50: "#EDEEF8",
-      100: "#D0D3EE",
-      200: "#A9AFD9",
-      300: "#7F88C3",
-      400: "#4C5CB2",
-      500: "#3F4E9E",
-      600: "#354289",
-      700: "#2B3670",
-      800: "#1F2752",
-      900: "#151B3A",
+      50: "#EDF6FD",
+      100: "#CFE8FA",
+      200: "#A3D2F5",
+      300: "#6DBAEF",
+      400: "#359de9",
+      500: "#2D8BD4",
+      600: "#2578BA",
+      700: "#1D6199",
+      800: "#154A78",
+      900: "#0D3357",
     },
     navy: {
-      50: "#E8ECF5",
-      100: "#C3CBE3",
-      200: "#8E9CC5",
-      300: "#5A6DA7",
-      400: "#344383",
-      500: "#1B2959",
-      600: "#162249",
-      700: "#111A39",
-      800: "#0D132A",
-      900: "#080C1B",
+      50: "#ECEEF5",
+      100: "#CDD1E3",
+      200: "#9AA1C5",
+      300: "#6770A7",
+      400: "#3E4783",
+      500: "#1E2548",
+      600: "#181D3B",
+      700: "#12162E",
+      800: "#0C0F21",
+      900: "#070914",
     },
     lavender: {
-      50: "#F4F2FA",
-      100: "#E4E0F2",
-      200: "#CDC6E5",
-      300: "#B6ABD8",
-      400: "#A095CF",
-      500: "#8A7DBF",
-      600: "#7367AB",
-      700: "#5C5190",
-      800: "#453D6E",
-      900: "#30294D",
+      50: "#F5F1FB",
+      100: "#E5DCF5",
+      200: "#D1C3EC",
+      300: "#BBA8E2",
+      400: "#A58FD8",
+      500: "#8E76CA",
+      600: "#7760B8",
+      700: "#5F4A9A",
+      800: "#47377C",
+      900: "#31265C",
     },
     wash: {
-      50: "#F8FAFD",
-      100: "#E1E7F5",
-      200: "#CAD3EB",
-      300: "#B0BCE0",
-      400: "#97A6D5",
-      500: "#7D90CB",
-      600: "#647ABF",
-      700: "#4E63A8",
-      800: "#3C4D85",
-      900: "#2B3761",
+      50: "#F8F6FC",
+      100: "#EDE8F6",
+      200: "#DDD5ED",
+      300: "#CBC0E3",
+      400: "#B9ABD9",
+      500: "#A596CF",
+      600: "#8F7EC4",
+      700: "#7A68B3",
+      800: "#60508F",
+      900: "#463A6B",
     },
     surface: {
-      bg: "#F5F7FB",
+      bg: "#F4F2F9",
       card: "#FFFFFF",
-      border: "#E1E7F5",
+      border: "#E8E4F0",
     },
     text: {
-      heading: "#1B2959",
-      body: "#2D3A5C",
-      muted: "#6B7A99",
+      heading: "#1E2548",
+      body: "#3B3F5C",
+      muted: "#7C7F99",
     },
   },
 
   /* ── Fonts ─────────────────────────────────────────────────── */
   fonts: {
-    heading: `'Plus Jakarta Sans', system-ui, sans-serif`,
-    body: `'Inter', system-ui, sans-serif`,
+    heading: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
+    body: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
   },
 
   /* ── Radii ─────────────────────────────────────────────────── */
   radii: {
-    sm: "6px",
-    md: "8px",
-    lg: "12px",
-    xl: "16px",
-    "2xl": "20px",
-    "3xl": "24px",
+    sm: "8px",
+    md: "10px",
+    lg: "14px",
+    xl: "18px",
+    "2xl": "22px",
+    "3xl": "28px",
   },
 
   /* ── Shadows ───────────────────────────────────────────────── */
   shadows: {
-    card: "0 1px 3px 0 rgba(27,41,89,0.04), 0 1px 2px -1px rgba(27,41,89,0.03)",
+    card: "0 1px 3px 0 rgba(117,72,185,0.04), 0 1px 2px -1px rgba(117,72,185,0.03)",
     "card-hover":
-      "0 8px 24px -4px rgba(27,41,89,0.08), 0 2px 6px -2px rgba(27,41,89,0.04)",
-    sidebar: "2px 0 16px 0 rgba(27,41,89,0.05)",
-    soft: "0 2px 8px 0 rgba(27,41,89,0.06)",
+      "0 10px 30px -6px rgba(117,72,185,0.10), 0 4px 8px -2px rgba(117,72,185,0.05)",
+    sidebar: "2px 0 20px 0 rgba(117,72,185,0.06)",
+    soft: "0 2px 10px 0 rgba(117,72,185,0.07)",
     elevated:
-      "0 12px 32px -8px rgba(27,41,89,0.12), 0 4px 8px -4px rgba(27,41,89,0.06)",
-    "focus-ring": "0 0 0 3px rgba(48,184,233,0.3)",
+      "0 16px 40px -8px rgba(117,72,185,0.14), 0 6px 12px -4px rgba(117,72,185,0.07)",
+    "focus-ring": "0 0 0 3px rgba(117,72,185,0.25)",
   },
 
   /* ── Component overrides ───────────────────────────────────── */
@@ -125,8 +122,8 @@ const theme = extendTheme({
       baseStyle: {
         fontWeight: "600",
         borderRadius: "lg",
-        fontFamily: `'Inter', system-ui, sans-serif`,
-        transition: "all 0.2s ease",
+        fontFamily: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
+        transition: "all 0.25s cubic-bezier(.4,0,.2,1)",
       },
       sizes: {
         sm: { fontSize: "sm", px: 4, h: 9 },
@@ -156,22 +153,30 @@ const theme = extendTheme({
             _disabled: { bg: "accent.400", transform: "none" },
           },
           _active: { bg: "accent.600", transform: "translateY(0)" },
-          _focusVisible: { shadow: "0 0 0 3px rgba(76,92,178,0.3)" },
+          _focusVisible: { shadow: "0 0 0 3px rgba(53,157,233,0.3)" },
         },
         secondary: {
           bg: "white",
-          color: "accent.400",
+          color: "brand.400",
           border: "1px solid",
           borderColor: "surface.border",
-          _hover: { bg: "wash.50", borderColor: "brand.200" },
-          _active: { bg: "wash.100" },
+          _hover: { bg: "brand.50", borderColor: "brand.200" },
+          _active: { bg: "brand.100" },
           _focusVisible: { shadow: "focus-ring" },
         },
         ghost: {
           color: "text.muted",
-          _hover: { bg: "surface.bg", color: "brand.400" },
-          _active: { bg: "wash.100" },
+          _hover: { bg: "brand.50", color: "brand.400" },
+          _active: { bg: "brand.100" },
           _focusVisible: { shadow: "focus-ring" },
+        },
+        outline: {
+          color: "brand.400",
+          border: "1px solid",
+          borderColor: "brand.400",
+          bg: "transparent",
+          _hover: { bg: "brand.50" },
+          _active: { bg: "brand.100" },
         },
       },
       defaultProps: {
@@ -202,8 +207,8 @@ const theme = extendTheme({
           color: "#C41E3A",
         },
         info: {
-          bg: "wash.100",
-          color: "accent.400",
+          bg: "brand.50",
+          color: "brand.400",
         },
         neutral: {
           bg: "surface.bg",
@@ -285,10 +290,10 @@ const theme = extendTheme({
           borderColor: "surface.border",
         },
         header: {
-          fontFamily: `'Plus Jakarta Sans', system-ui, sans-serif`,
+          fontFamily: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
           fontWeight: "700",
           fontSize: "lg",
-          py: 4,
+          py: 5,
           px: 6,
         },
         body: {
@@ -311,25 +316,25 @@ const theme = extendTheme({
       variants: {
         simple: {
           th: {
-            fontSize: "xs",
+            fontSize: "11px",
             color: "text.muted",
-            fontWeight: "600",
+            fontWeight: "700",
             textTransform: "uppercase",
             letterSpacing: "wider",
             borderColor: "surface.border",
             bg: "surface.bg",
-            py: 3,
-            fontFamily: `'Inter', system-ui, sans-serif`,
+            py: 3.5,
+            fontFamily: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
           },
           td: {
             borderColor: "surface.border",
             fontSize: "sm",
             color: "text.body",
-            py: 3.5,
+            py: 4,
           },
           tr: {
-            _hover: { bg: "wash.50" },
-            transition: "background 0.15s ease",
+            _hover: { bg: "brand.50" },
+            transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
           },
         },
       },
@@ -351,8 +356,8 @@ const theme = extendTheme({
           py: 2.5,
           borderRadius: "md",
           mx: 1.5,
-          _hover: { bg: "wash.50" },
-          _focus: { bg: "wash.50" },
+          _hover: { bg: "brand.50" },
+          _focus: { bg: "brand.50" },
           transition: "all 0.15s ease",
         },
       },
@@ -461,10 +466,10 @@ const theme = extendTheme({
       body: {
         bg: "white",
         color: "text.body",
-        fontFamily: `'Inter', system-ui, sans-serif`,
+        fontFamily: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
       },
       "h1, h2, h3, h4, h5, h6": {
-        fontFamily: `'Plus Jakarta Sans', system-ui, sans-serif`,
+        fontFamily: `'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif`,
       },
     },
   },

@@ -101,7 +101,7 @@ export default function LoginPage() {
       <Flex
         display={{ base: "none", lg: "flex" }}
         w="45%"
-        bgGradient="linear(135deg, #30B8E9 0%, #4C5CB2 50%, #1B2959 100%)"
+        bgGradient="linear(135deg, #7548b9 0%, #359de9 50%, #1E2548 100%)"
         direction="column"
         justify="center"
         align="center"
@@ -148,6 +148,8 @@ export default function LoginPage() {
           justify="center"
           mb={8}
           backdropFilter="blur(10px)"
+          border="1px solid"
+          borderColor="whiteAlpha.200"
         >
           <Text fontSize="2xl" fontWeight="800" color="white">
             HR
@@ -207,12 +209,13 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Enter your email"
                   size="lg"
-                  borderRadius="lg"
+                  borderRadius="xl"
                   bg="white"
                   border="1px solid"
                   borderColor="surface.border"
-                  _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 1px #30B8E9" }}
+                  _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)" }}
                   fontSize="sm"
+                  fontWeight="500"
                 />
                 <FormErrorMessage fontSize="xs">{errors.email?.message}</FormErrorMessage>
               </FormControl>
@@ -227,12 +230,13 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     size="lg"
-                    borderRadius="lg"
+                    borderRadius="xl"
                     bg="white"
                     border="1px solid"
                     borderColor="surface.border"
-                    _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 1px #30B8E9" }}
+                    _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)" }}
                     fontSize="sm"
+                    fontWeight="500"
                     pr={12}
                   />
                   <Button
@@ -275,9 +279,9 @@ export default function LoginPage() {
                 variant="primary"
                 size="lg"
                 w="100%"
-                borderRadius="lg"
+                borderRadius="xl"
                 fontSize="sm"
-                fontWeight="600"
+                fontWeight="700"
                 isLoading={isSubmitting}
                 loadingText="Signing in..."
                 mt={2}

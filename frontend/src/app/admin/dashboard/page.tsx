@@ -61,7 +61,8 @@ export default function AdminDashboard() {
     );
   }
 
-  const kpiStats = data?.kpiStats ?? [];
+  const KEEP_LABELS = new Set(["Total Employees", "Present Today", "Late Arrivals", "Payroll Processed"]);
+  const kpiStats = (data?.kpiStats ?? []).filter((s) => KEEP_LABELS.has(s.label));
   const recentAttendance = data?.recentAttendance ?? [];
   const announcements = data?.announcements ?? [];
 
@@ -73,7 +74,7 @@ export default function AdminDashboard() {
       />
 
       {/* KPI Cards */}
-      <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 6 }} spacing={5} mb={8}>
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={6} mb={8}>
         {kpiStats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
@@ -106,30 +107,28 @@ export default function AdminDashboard() {
                   align="center"
                   gap={3}
                   p={3}
-                  borderRadius="lg"
+                  borderRadius="xl"
                   bg="surface.bg"
-                  _hover={{ bg: "wash.50" }}
-                  transition="all 0.2s ease"
+                  _hover={{ bg: "brand.50", transform: "translateX(2px)" }}
+                  transition="all 0.25s cubic-bezier(.4,0,.2,1)"
                   cursor="pointer"
                 >
                   <Flex
                     w={8}
                     h={8}
-                    borderRadius="lg"
-                    bg="white"
+                    borderRadius="xl"
+                    bgGradient="linear(135deg, #7548b9, #359de9)"
                     align="center"
                     justify="center"
                     flexShrink={0}
-                    border="1px solid"
-                    borderColor="surface.border"
                   >
-                    <Icon size={14} color="#4C5CB2" />
+                    <Icon size={14} color="white" />
                   </Flex>
                   <Box flex={1}>
-                    <Text fontSize="sm" fontWeight="600" color="text.heading">
+                    <Text fontSize="sm" fontWeight="700" color="text.heading">
                       {a.title}
                     </Text>
-                    <Text fontSize="xs" color="text.muted">
+                    <Text fontSize="xs" color="text.muted" fontWeight="500">
                       {a.date}
                     </Text>
                   </Box>

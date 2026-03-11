@@ -282,7 +282,7 @@ export default function EmployeeDashboard() {
         >
           <Box>
             <Flex align="center" gap={2} mb={1}>
-              <CalendarCheck size={18} color="#4C5CB2" />
+              <CalendarCheck size={18} color="#7548b9" />
               <Text fontSize="md" fontWeight="600" color="text.heading">
                 Today&apos;s Attendance
               </Text>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Flex } from "@chakra-ui/react";
+import { Box, Flex, useBreakpointValue } from "@chakra-ui/react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
@@ -12,7 +12,8 @@ interface AppShellProps {
 
 function AppContent({ children }: { children: ReactNode }) {
   const { collapsed } = useSidebar();
-  const sidebarWidth = collapsed ? "72px" : "260px";
+  const isMobile = useBreakpointValue({ base: true, lg: false });
+  const sidebarWidth = isMobile ? "0px" : collapsed ? "72px" : "260px";
 
   return (
     <Flex minH="100vh" bg="surface.bg">
@@ -20,11 +21,11 @@ function AppContent({ children }: { children: ReactNode }) {
       <Box
         flex={1}
         ml={sidebarWidth}
-        transition="margin-left 0.25s ease"
+        transition="margin-left 0.3s cubic-bezier(.4,0,.2,1)"
         minW={0}
       >
         <Topbar />
-        <Box as="main" p={{ base: 4, md: 8 }} maxW="1440px" mx="auto" w="100%">
+        <Box as="main" p={{ base: 4, md: 6, lg: 8 }} maxW="1440px" mx="auto" w="100%">
           {children}
         </Box>
       </Box>
