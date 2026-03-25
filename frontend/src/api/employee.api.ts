@@ -6,9 +6,11 @@ import type {
   CreateEmployeeResult,
   PersonalForm,
   PersonalDetailsRow,
-  SalaryForm,
   SalaryDetailsRow,
   DocumentRow,
+  EmployeeSalaryStructureRow,
+  SalaryComputation,
+  SaveEmployeeSalaryStructureInput,
 } from "@/types";
 
 export const employeeApi = {
@@ -72,6 +74,20 @@ export const salaryDetailsApi = {
 
   update: (id: string, data: Record<string, unknown>) =>
     api.patch<SalaryDetailsRow>(`/salary-details/${id}`, data),
+};
+
+export const salaryStructureApi = {
+  list: () =>
+    api.get<{ data: EmployeeSalaryStructureRow[]; total: number }>("/salary-structures"),
+
+  getByUserId: (userId: string) =>
+    api.get<EmployeeSalaryStructureRow | null>(`/salary-structures/user/${userId}`),
+
+  preview: (payload: SaveEmployeeSalaryStructureInput) =>
+    api.post<SalaryComputation>("/salary-structures/preview", payload),
+
+  save: (userId: string, payload: SaveEmployeeSalaryStructureInput) =>
+    api.put<EmployeeSalaryStructureRow>(`/salary-structures/user/${userId}`, payload),
 };
 
 export const documentsApi = {

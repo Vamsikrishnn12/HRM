@@ -10,6 +10,12 @@ import { OrgSettings } from '../entities/OrgSettings.entity';
 import { Holiday } from '../entities/Holiday.entity';
 import { Attendance } from '../entities/Attendance.entity';
 import { AttendancePunch } from '../entities/AttendancePunch.entity';
+import { AttendancePolicy } from '../entities/AttendancePolicy.entity';
+import { AttendanceSession } from '../entities/AttendanceSession.entity';
+import { AttendanceRegularizationRequest } from '../entities/AttendanceRegularizationRequest.entity';
+import { AttendancePermissionRequest } from '../entities/AttendancePermissionRequest.entity';
+import { AttendanceAuditLog } from '../entities/AttendanceAuditLog.entity';
+import { AttendanceEmployeePolicyOverride } from '../entities/AttendanceEmployeePolicyOverride.entity';
 import { LeavePolicy } from '../entities/LeavePolicy.entity';
 import { LeavePolicySlab } from '../entities/LeavePolicySlab.entity';
 import { LeaveRequest } from '../entities/LeaveRequest.entity';
@@ -17,6 +23,11 @@ import { PayrollRun } from '../entities/PayrollRun.entity';
 import { PayrollRecord } from '../entities/PayrollRecord.entity';
 import { PayslipDocument } from '../entities/PayslipDocument.entity';
 import { PayrollImportJob } from '../entities/PayrollImportJob.entity';
+import { OrganizationSalaryConfig } from '../entities/OrganizationSalaryConfig.entity';
+import { SalaryTemplateComponent } from '../entities/SalaryTemplateComponent.entity';
+import { EmployeeSalaryStructure } from '../entities/EmployeeSalaryStructure.entity';
+import { EmployeeSalaryComponent } from '../entities/EmployeeSalaryComponent.entity';
+import { EmployeeStatutoryBreakdown } from '../entities/EmployeeStatutoryBreakdown.entity';
 
 const isProduction = env.NODE_ENV === 'production';
 
@@ -51,6 +62,12 @@ export const AppDataSource = new DataSource({
     Holiday,
     Attendance,
     AttendancePunch,
+    AttendancePolicy,
+    AttendanceSession,
+    AttendanceRegularizationRequest,
+    AttendancePermissionRequest,
+    AttendanceAuditLog,
+    AttendanceEmployeePolicyOverride,
     LeavePolicy,
     LeavePolicySlab,
     LeaveRequest,
@@ -58,6 +75,11 @@ export const AppDataSource = new DataSource({
     PayrollRecord,
     PayslipDocument,
     PayrollImportJob,
+    OrganizationSalaryConfig,
+    SalaryTemplateComponent,
+    EmployeeSalaryStructure,
+    EmployeeSalaryComponent,
+    EmployeeStatutoryBreakdown,
   ],
   migrations: ['src/migrations/*.ts', 'dist/migrations/*.js'],
   subscribers: [],

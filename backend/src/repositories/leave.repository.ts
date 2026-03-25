@@ -1,8 +1,8 @@
-import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, Not, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { LeavePolicy } from '../entities/LeavePolicy.entity';
 import { LeavePolicySlab } from '../entities/LeavePolicySlab.entity';
-import { LeaveRequest, LeaveStatus, LeaveType, RequestMode } from '../entities/LeaveRequest.entity';
+import { LeaveRequest, LeaveStatus, RequestMode } from '../entities/LeaveRequest.entity';
 
 export class LeaveRepository {
   private policyRepo: Repository<LeavePolicy>;

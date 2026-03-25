@@ -43,6 +43,20 @@ export class LeaveRequest {
   @Column({ type: 'enum', enum: LeaveType })
   leaveType: LeaveType;
 
+  // Admin-reviewed treatment (can differ from requested leave type)
+  @Column({ type: 'enum', enum: LeaveType, nullable: true })
+  approvedLeaveType: LeaveType | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  finalAttendanceCode: string | null;
+
+  // Suggested treatment snapshot at apply-time (for probation/policy contexts)
+  @Column({ type: 'enum', enum: LeaveType, nullable: true })
+  suggestedLeaveType: LeaveType | null;
+
+  @Column({ type: 'text', nullable: true })
+  treatmentNote: string | null;
+
   @Column({ type: 'enum', enum: RequestMode })
   requestMode: RequestMode;
 

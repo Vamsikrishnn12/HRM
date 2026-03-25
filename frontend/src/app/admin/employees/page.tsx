@@ -254,13 +254,21 @@ function EmployeeForm_({
             </Field>
           )}
           <Field label="Department" required>
-            <StyledSelect placeholder="Select department" value={form.department} onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}>
-              <option value="Engineering">Engineering</option>
-              <option value="HR">HR</option>
-              <option value="Sales">Sales</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Finance">Finance</option>
-            </StyledSelect>
+       <StyledSelect
+  placeholder="Select department"
+  value={form.department}
+  onChange={(e) =>
+    setForm((p) => ({ ...p, department: e.target.value }))
+  }
+>
+  <option value="Developer">Developer</option>
+  <option value="Digital Marketing">Digital Marketing</option>
+  <option value="Human Resources">Human Resources</option>
+  <option value="Business Development">Business Development</option>
+  <option value="Design">Design</option>
+  <option value="Quality Assurance">Quality Assurance</option>
+  <option value="DevOps">DevOps</option>
+</StyledSelect>
           </Field>
           <Field label="Designation" required>
             <StyledInput placeholder="e.g., Sr. Developer" value={form.designation} onChange={(e) => setForm((p) => ({ ...p, designation: e.target.value }))} />

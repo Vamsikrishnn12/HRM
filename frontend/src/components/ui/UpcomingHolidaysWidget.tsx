@@ -40,15 +40,23 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
           <Spinner size="sm" color="brand.400" />
         </Flex>
       ) : holidays.length === 0 ? (
-        <Flex justify="center" py={8}>
-          <Text fontSize="sm" color="text.muted" fontWeight="500">
+        <Flex
+          justify="center"
+          py={8}
+          px={4}
+          border="1px dashed"
+          borderColor="surface.border"
+          borderRadius="xl"
+          bg="surface.bg"
+        >
+          <Text fontSize="sm" color="text.muted" fontWeight="600">
             No upcoming holidays scheduled.
           </Text>
         </Flex>
       ) : (
         <VStack spacing={3} align="stretch">
           {holidays.map((h) => {
-            const dt = new Date(h.date + "T00:00:00");
+            const dt = new Date(`${h.date}T00:00:00`);
             const monthStr = dt.toLocaleString("en-US", { month: "short" });
             const dayNum = dt.getDate();
             return (
@@ -58,8 +66,10 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
                 gap={3}
                 p={3}
                 borderRadius="xl"
-                bg="surface.bg"
-                _hover={{ bg: "brand.50", transform: "translateX(2px)" }}
+                bg="white"
+                border="1px solid"
+                borderColor="surface.border"
+                _hover={{ bg: "brand.50", transform: "translateX(2px)", borderColor: "brand.100" }}
                 transition="all 0.25s cubic-bezier(.4,0,.2,1)"
               >
                 <Flex
@@ -83,10 +93,10 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
                   </Text>
                 </Flex>
                 <Box flex={1} minW={0}>
-                  <Text fontSize="sm" fontWeight="600" color="text.heading" isTruncated>
+                  <Text fontSize="sm" fontWeight="700" color="text.heading" isTruncated>
                     {h.name}
                   </Text>
-                  <Text fontSize="xs" color="text.muted" fontWeight="500">
+                  <Text fontSize="xs" color="text.muted" fontWeight="600">
                     {h.dayName}
                   </Text>
                 </Box>

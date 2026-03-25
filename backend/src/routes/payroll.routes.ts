@@ -44,8 +44,13 @@ router.use(authMiddleware);
 
 // ═══════ Admin routes ═══════
 router.get('/template', roleMiddleware('ADMIN'), asyncHandler(PayrollController.downloadTemplate));
+router.get('/reports/attendance', roleMiddleware('ADMIN'), asyncHandler(PayrollController.attendanceReport));
+router.get('/reports/salary', roleMiddleware('ADMIN'), asyncHandler(PayrollController.salaryReport));
 router.get('/summary', roleMiddleware('ADMIN'), asyncHandler(PayrollController.summary));
 router.get('/runs', roleMiddleware('ADMIN'), asyncHandler(PayrollController.listRuns));
+router.get('/runs/:id', roleMiddleware('ADMIN'), asyncHandler(PayrollController.runDetail));
+router.post('/runs/system-generate', roleMiddleware('ADMIN'), asyncHandler(PayrollController.bulkGenerate));
+router.post('/runs/:id/dispatch', roleMiddleware('ADMIN'), asyncHandler(PayrollController.dispatchRun));
 router.get('/records', roleMiddleware('ADMIN'), asyncHandler(PayrollController.listRecords));
 router.get('/records/:id', roleMiddleware('ADMIN'), asyncHandler(PayrollController.getRecord));
 router.get('/records/:id/download', roleMiddleware('ADMIN'), asyncHandler(PayrollController.downloadPayslip));

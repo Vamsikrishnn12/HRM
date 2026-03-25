@@ -29,11 +29,13 @@
       <p>Hi {{firstName}},</p>
       <p>Your leave request has been <strong>{{status}}</strong> by the admin.</p>
       <div class="details">
-        <p><strong>Leave Type:</strong> {{leaveType}}</p>
+        <p><strong>Requested Type:</strong> {{requestedLeaveType}}</p>
+        <p><strong>Final Treatment:</strong> {{approvedLeaveType}}</p>
+        <p><strong>Final Attendance Code:</strong> {{finalAttendanceCode}}</p>
         <p><strong>Request Mode:</strong> {{requestMode}}</p>
         <p><strong>Date / Range:</strong> {{dateRange}}</p>
         <p><strong>Duration:</strong> {{daysOrHours}}</p>
-        <p><strong>Status:</strong> <span class="status-{{status}}">{{status}}</span></p>
+        <p><strong>Status:</strong> <span class="status-{{statusClass}}">{{status}}</span></p>
       </div>
       <div class="remarks">
         <strong>Admin Remarks:</strong> {{adminRemarks}}

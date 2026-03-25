@@ -1,650 +1,696 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Badge,
   Box,
+  Button,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
   Flex,
-  Text,
+  HStack,
+  IconButton,
   Input,
-  Select,
   InputGroup,
   InputLeftElement,
-  SimpleGrid,
-  Spinner,
-  Badge,
-  Button,
   Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
   ModalBody,
   ModalCloseButton,
+  ModalContent,
   ModalFooter,
-  FormControl,
-  FormLabel,
+  ModalHeader,
+  ModalOverlay,
+  Select,
+  SimpleGrid,
+  Spinner,
+  Switch,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Table,
+  Tabs,
+  Tbody,
+  Td,
+  Text,
   Textarea,
+  Th,
+  Thead,
+  Tr,
   useDisclosure,
   useToast,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  IconButton,
 } from "@chakra-ui/react";
-import { Calendar, Search, MoreVertical, CheckCircle, XCircle, Clock, MapPin, RotateCcw } from "lucide-react";
+import { Check, Eye, Pencil, RefreshCcw, Search, X } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import {
   attendanceApi,
+  type AdminAttendanceDayDetailsResponse,
   type AdminAttendanceRecord,
   type AdminAttendanceResponse,
   type AttendanceStatusType,
+  type EmployeeAttendanceAccessOverride,
+  type MonthlyAttendanceResponse,
+  type PermissionRequest,
+  type RegularizationRequest,
 } from "@/api/attendance.api";
+import { employeeApi } from "@/api/employee.api";
 
-const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string }> = {
-  PRESENT: { bg: "#E6F9F0", color: "#0D7C47" },
-  LATE: { bg: "#FEF9EC", color: "#92640D" },
-  ABSENT: { bg: "#FEF0F0", color: "#C41E3A" },
-  HALF_DAY: { bg: "#FEF9EC", color: "#92640D" },
-  LEAVE: { bg: "#EDE9F5", color: "#7548b9" },
-  HOLIDAY: { bg: "#E6F9F0", color: "#0D7C47" },
-  WEEK_OFF: { bg: "#F4F2FA", color: "#5C5190" },
-  NOT_STARTED: { bg: "#F5F7FB", color: "#6B7A99" },
-  MISSED_CHECK_IN: { bg: "#FEF0F0", color: "#C41E3A" },
+const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string; label: string }> = {
+  PRESENT: { bg: "#E6F9F0", color: "#0D7C47", label: "Present" },
+  LATE: { bg: "#FFF8E1", color: "#9E6A00", label: "Late" },
+  ABSENT: { bg: "#FEE7E7", color: "#C41E3A", label: "Absent" },
+  HALF_DAY: { bg: "#FFF3E0", color: "#A76200", label: "Half Day" },
+  LEAVE: { bg: "#EDF0FF", color: "#3A4AB1", label: "Leave" },
+  HOLIDAY: { bg: "#ECF7EC", color: "#1E8E3E", label: "Holiday" },
+  WEEK_OFF: { bg: "#F3EEFF", color: "#6A42C2", label: "Week Off" },
+  NOT_STARTED: { bg: "#F5F7FB", color: "#62708B", label: "Not Started" },
+  MISSED_CHECK_IN: { bg: "#FFEAE6", color: "#BF3D1F", label: "Missed In" },
+  PERMISSION: { bg: "#EAF7FF", color: "#0B68A6", label: "Permission" },
+  REGULARIZED: { bg: "#FFF5EB", color: "#A45B1A", label: "Regularized" },
+  LOP: { bg: "#FDECEC", color: "#AE1F44", label: "LOP" },
+  MISSING_PUNCH: { bg: "#FFF0ED", color: "#C4472A", label: "Missing Punch" },
+  EARLY_OUT: { bg: "#FFF3E0", color: "#B36B00", label: "Early Out" },
+  OVERTIME: { bg: "#EAFBF5", color: "#0C8A61", label: "Overtime" },
 };
 
-function formatTime(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+const SUMMARY_STATUSES: AttendanceStatusType[] = [
+  "PRESENT",
+  "LATE",
+  "HALF_DAY",
+  "LOP",
+  "LEAVE",
+  "WEEK_OFF",
+  "HOLIDAY",
+  "NOT_STARTED",
+];
+
+const FILTER_STATUSES: AttendanceStatusType[] = [
+  "PRESENT",
+  "LATE",
+  "HALF_DAY",
+  "LOP",
+  "LEAVE",
+  "WEEK_OFF",
+  "HOLIDAY",
+  "NOT_STARTED",
+  "PERMISSION",
+  "REGULARIZED",
+];
+
+const DEFAULT_OVERRIDE_FORM = {
+  overrideMode: "ORG_DEFAULT" as "ORG_DEFAULT" | "GEO_FENCE_ONLY" | "REMOTE_ALLOWED" | "HYBRID",
+  geoFenceExempt: false,
+  remotePunchAllowed: "INHERIT" as "INHERIT" | "YES" | "NO",
+  reason: "",
+  effectiveFrom: "",
+  effectiveUntil: "",
+  active: true,
+};
+
+function formatTime(value: string | null): string {
+  if (!value) return "-";
+  return new Date(value).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
-function formatMinutes(mins: number): string {
-  if (mins <= 0) return "—";
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
+function formatMinutes(total: number): string {
+  if (!total) return "-";
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function formatDateLabel(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function requestBadge(status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED") {
+  if (status === "APPROVED") return { bg: "#EAF8F0", color: "#0F7A46" };
+  if (status === "REJECTED") return { bg: "#FDECEC", color: "#AE1F44" };
+  if (status === "CANCELLED") return { bg: "#F4F6FA", color: "#5D6983" };
+  return { bg: "#FFF8E1", color: "#9E6A00" };
+}
+
+function AdminTab({ label, count }: { label: string; count: number }) {
+  return (
+    <Tab
+      border="1px solid"
+      borderColor="surface.border"
+      borderRadius="full"
+      px={3}
+      py={1.5}
+      fontSize="sm"
+      fontWeight="600"
+      gap={2}
+      _selected={{ bg: "brand.500", color: "white", borderColor: "brand.500" }}
+      _focusVisible={{ boxShadow: "none" }}
+    >
+      <Text>{label}</Text>
+      <Badge borderRadius="full" px={2} bg="whiteAlpha.700" color="currentColor">{count}</Badge>
+    </Tab>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <Box border="1px solid" borderColor="surface.border" borderRadius="md" px={2.5} py={2}>
+      <Text fontSize="10px" textTransform="uppercase" color="text.muted">{label}</Text>
+      <Text fontSize="sm" fontWeight="700">{value}</Text>
+    </Box>
+  );
 }
 
 export default function AdminAttendancePage() {
   const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [department, setDepartment] = useState("");
+
   const [data, setData] = useState<AdminAttendanceResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [pendingRegularizations, setPendingRegularizations] = useState<RegularizationRequest[]>([]);
+  const [pendingPermissions, setPendingPermissions] = useState<PermissionRequest[]>([]);
+  const [accessOverrides, setAccessOverrides] = useState<EmployeeAttendanceAccessOverride[]>([]);
+  const [employeeOptions, setEmployeeOptions] = useState<Array<{ userId: string; firstName: string; lastName: string; empId: string | null }>>([]);
 
-  // Override modal state
   const [selectedRecord, setSelectedRecord] = useState<AdminAttendanceRecord | null>(null);
-  const [overrideStatus, setOverrideStatus] = useState("");
-  const [overrideReason, setOverrideReason] = useState("");
-  const [overrideLoading, setOverrideLoading] = useState(false);
+  const [dayDetailDate, setDayDetailDate] = useState(date);
+  const [dayDetailLoading, setDayDetailLoading] = useState(false);
+  const [dayDetail, setDayDetail] = useState<AdminAttendanceDayDetailsResponse | null>(null);
+  const [monthly, setMonthly] = useState<MonthlyAttendanceResponse | null>(null);
+  const [monthlyEmployeeName, setMonthlyEmployeeName] = useState("");
 
-  // Manual entry modal
-  const {
-    isOpen: isManualOpen,
-    onOpen: onManualOpen,
-    onClose: onManualClose,
-  } = useDisclosure();
+  const [overrideStatus, setOverrideStatus] = useState<AttendanceStatusType>("PRESENT");
+  const [overrideReason, setOverrideReason] = useState("");
   const [manualCheckIn, setManualCheckIn] = useState("");
   const [manualCheckOut, setManualCheckOut] = useState("");
-  const [manualStatus, setManualStatus] = useState("");
+  const [manualStatus, setManualStatus] = useState<AttendanceStatusType | "">("");
   const [manualReason, setManualReason] = useState("");
-  const [manualLoading, setManualLoading] = useState(false);
-  const [reEnableLoading, setReEnableLoading] = useState(false);
+
+  const [overrideEmployeeId, setOverrideEmployeeId] = useState("");
+  const [overridePolicyForm, setOverridePolicyForm] = useState(DEFAULT_OVERRIDE_FORM);
+
+  const overrideModal = useDisclosure();
+  const manualModal = useDisclosure();
+  const monthlyModal = useDisclosure();
+  const dayDetailDrawer = useDisclosure();
+  const accessOverrideModal = useDisclosure();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await attendanceApi.getAdminAttendance(date, statusFilter || undefined, search || undefined);
-      setData(result);
+      const [attendance, pending, overrides] = await Promise.all([
+        attendanceApi.getAdminAttendance(date, statusFilter || undefined, search || undefined, department || undefined),
+        attendanceApi.getAdminPendingRequests(),
+        attendanceApi.listEmployeeAccessOverrides(),
+      ]);
+      setData(attendance);
+      setPendingRegularizations(pending.regularizations);
+      setPendingPermissions(pending.permissions);
+      setAccessOverrides(overrides);
     } catch {
-      toast({
-        title: "Failed to load attendance data",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
-      });
+      toast({ title: "Failed to load attendance data", status: "error", duration: 3000, isClosable: true, position: "top-right" });
     } finally {
       setLoading(false);
     }
-  }, [date, statusFilter, search, toast]);
+  }, [date, department, search, statusFilter, toast]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const handleOverride = async () => {
-    if (!selectedRecord || !overrideStatus || !overrideReason) return;
-    setOverrideLoading(true);
+  useEffect(() => {
+    employeeApi.dropdown().then(setEmployeeOptions).catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!overrideEmployeeId) return;
+    attendanceApi.getEmployeeAccessOverride(overrideEmployeeId).then((res) => {
+      if (!res.override) {
+        setOverridePolicyForm(DEFAULT_OVERRIDE_FORM);
+        return;
+      }
+      setOverridePolicyForm({
+        overrideMode: (res.override.overrideMode as typeof DEFAULT_OVERRIDE_FORM.overrideMode) || "ORG_DEFAULT",
+        geoFenceExempt: Boolean(res.override.geoFenceExempt),
+        remotePunchAllowed: res.override.remotePunchAllowed == null ? "INHERIT" : res.override.remotePunchAllowed ? "YES" : "NO",
+        reason: res.override.reason || "",
+        effectiveFrom: res.override.effectiveFrom || "",
+        effectiveUntil: res.override.effectiveUntil || "",
+        active: Boolean(res.override.active),
+      });
+    }).catch(() => undefined);
+  }, [overrideEmployeeId]);
+
+  const summaryCards = useMemo(() => {
+    const summary = data?.summary ?? {};
+    return SUMMARY_STATUSES.map((k) => ({ key: k, count: summary[k] ?? 0, style: STATUS_COLORS[k] }));
+  }, [data]);
+
+  const tabCounts = useMemo(() => ({
+    register: data?.records.length ?? 0,
+    regularizations: pendingRegularizations.length,
+    permissions: pendingPermissions.length,
+    overrides: accessOverrides.length,
+  }), [accessOverrides.length, data?.records.length, pendingPermissions.length, pendingRegularizations.length]);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
+  const openDayDetail = async (employeeId: string, targetDate: string, row?: AdminAttendanceRecord) => {
+    setDayDetailDate(targetDate);
+    setSelectedRecord(row ?? null);
+    setDayDetailLoading(true);
+    dayDetailDrawer.onOpen();
     try {
-      await attendanceApi.overrideStatus(selectedRecord.employeeId, {
-        date,
-        status: overrideStatus,
-        reason: overrideReason,
-      });
-      toast({
-        title: "Status overridden successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
-      });
-      onClose();
-      setOverrideStatus("");
-      setOverrideReason("");
-      setSelectedRecord(null);
-      await fetchData();
-    } catch (err: any) {
-      toast({
-        title: "Failed to override status",
-        description: err?.message || "Something went wrong",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-        position: "top-right",
-      });
+      const detail = await attendanceApi.getAdminEmployeeDay(employeeId, targetDate);
+      setDayDetail(detail);
+      if (!row) {
+        setSelectedRecord({
+          ...detail.attendance,
+          employeeName: detail.employee.name,
+          employeeCode: detail.employee.employeeCode,
+          email: detail.employee.email,
+          department: detail.employee.department,
+          designation: detail.employee.designation,
+        });
+      }
+    } catch {
+      toast({ title: "Failed to load employee day details", status: "error", duration: 3000, isClosable: true, position: "top-right" });
     } finally {
-      setOverrideLoading(false);
+      setDayDetailLoading(false);
+    }
+  };
+
+  const openMonthly = async (row: AdminAttendanceRecord) => {
+    try {
+      const d = new Date(`${date}T00:00:00`);
+      const res = await attendanceApi.getAdminEmployeeMonthly(row.employeeId, d.getFullYear(), d.getMonth() + 1);
+      setMonthly(res);
+      setMonthlyEmployeeName(row.employeeName);
+      monthlyModal.onOpen();
+    } catch {
+      toast({ title: "Failed to load monthly summary", status: "error", duration: 2500, isClosable: true, position: "top-right" });
+    }
+  };
+
+  const handleOverride = async () => {
+    if (!selectedRecord || !overrideReason.trim()) return;
+    setActionLoading(true);
+    try {
+      await attendanceApi.overrideStatus(selectedRecord.employeeId, { date: dayDetailDate, status: overrideStatus, reason: overrideReason });
+      overrideModal.onClose();
+      setOverrideReason("");
+      await refresh();
+      if (dayDetailDrawer.isOpen) await openDayDetail(selectedRecord.employeeId, dayDetailDate, selectedRecord);
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleManualEntry = async () => {
     if (!selectedRecord) return;
-    setManualLoading(true);
+    setActionLoading(true);
     try {
-      const payload: { date: string; firstCheckInAt?: string; lastCheckOutAt?: string; status?: string; reason?: string } = { date };
-      if (manualCheckIn) payload.firstCheckInAt = new Date(`${date}T${manualCheckIn}`).toISOString();
-      if (manualCheckOut) payload.lastCheckOutAt = new Date(`${date}T${manualCheckOut}`).toISOString();
-      if (manualStatus) payload.status = manualStatus;
-      if (manualReason) payload.reason = manualReason;
-
-      await attendanceApi.manualEntry(selectedRecord.employeeId, payload);
-      toast({
-        title: "Manual entry saved successfully",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
+      await attendanceApi.manualEntry(selectedRecord.employeeId, {
+        date: dayDetailDate,
+        firstCheckInAt: manualCheckIn ? new Date(`${dayDetailDate}T${manualCheckIn}`).toISOString() : undefined,
+        lastCheckOutAt: manualCheckOut ? new Date(`${dayDetailDate}T${manualCheckOut}`).toISOString() : undefined,
+        status: manualStatus || undefined,
+        reason: manualReason || undefined,
       });
-      onManualClose();
+      manualModal.onClose();
       setManualCheckIn("");
       setManualCheckOut("");
       setManualStatus("");
       setManualReason("");
-      setSelectedRecord(null);
-      await fetchData();
-    } catch (err: any) {
-      toast({
-        title: "Failed to save manual entry",
-        description: err?.message || "Something went wrong",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-        position: "top-right",
-      });
+      await refresh();
+      if (dayDetailDrawer.isOpen) await openDayDetail(selectedRecord.employeeId, dayDetailDate, selectedRecord);
     } finally {
-      setManualLoading(false);
+      setActionLoading(false);
     }
   };
 
-  const openOverrideModal = (record: AdminAttendanceRecord) => {
-    setSelectedRecord(record);
-    setOverrideStatus("");
-    setOverrideReason("");
-    onOpen();
-  };
-
-  const openManualModal = (record: AdminAttendanceRecord) => {
-    setSelectedRecord(record);
-    setManualCheckIn("");
-    setManualCheckOut("");
-    setManualStatus("");
-    setManualReason("");
-    onManualOpen();
-  };
-
-  const handleReEnableStartWork = async (record: AdminAttendanceRecord) => {
-    setReEnableLoading(true);
+  const reviewRegularization = async (id: string, approved: boolean) => {
+    setActionLoading(true);
     try {
-      await attendanceApi.reEnableStartWork(record.employeeId);
-      toast({
-        title: "Start work re-enabled",
-        description: `${record.employeeName} can now start work`,
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
-      });
-      await fetchData();
-    } catch (err: any) {
-      toast({
-        title: "Failed to re-enable start work",
-        description: err?.message || "Something went wrong",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-        position: "top-right",
-      });
+      await attendanceApi.reviewRegularization(id, { approved });
+      await refresh();
     } finally {
-      setReEnableLoading(false);
+      setActionLoading(false);
     }
   };
 
-  const summary = data?.summary ?? {
-    PRESENT: 0,
-    LATE: 0,
-    ABSENT: 0,
-    HALF_DAY: 0,
-    LEAVE: 0,
-    HOLIDAY: 0,
-    WEEK_OFF: 0,
-    NOT_STARTED: 0,
-    MISSED_CHECK_IN: 0,
+  const reviewPermission = async (id: string, approved: boolean) => {
+    setActionLoading(true);
+    try {
+      await attendanceApi.reviewPermission(id, { approved });
+      await refresh();
+    } finally {
+      setActionLoading(false);
+    }
   };
+
+  const saveAccessOverride = async () => {
+    if (!overrideEmployeeId) return;
+    setActionLoading(true);
+    try {
+      await attendanceApi.saveEmployeeAccessOverride(overrideEmployeeId, {
+        overrideMode: overridePolicyForm.overrideMode,
+        geoFenceExempt: overridePolicyForm.geoFenceExempt,
+        remotePunchAllowed: overridePolicyForm.remotePunchAllowed === "INHERIT" ? null : overridePolicyForm.remotePunchAllowed === "YES",
+        reason: overridePolicyForm.reason || undefined,
+        effectiveFrom: overridePolicyForm.effectiveFrom || undefined,
+        effectiveUntil: overridePolicyForm.effectiveUntil || undefined,
+        active: overridePolicyForm.active,
+      });
+      accessOverrideModal.onClose();
+      await refresh();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <Flex justify="center" align="center" minH="420px"><Spinner size="lg" color="brand.400" /></Flex>;
+  }
 
   return (
     <Box>
-      <PageHeader
-        title="Attendance Management"
-        subtitle="Track and manage employee attendance records"
-      />
+      <PageHeader title="Attendance Management" subtitle="Daily register, approvals, and employee timeline controls" />
 
-      {/* Summary Cards */}
-      <SimpleGrid columns={{ base: 2, md: 3, lg: 9 }} spacing={3} mb={6}>
-        {(
-          [
-            { key: "PRESENT", label: "Present", icon: <CheckCircle size={16} /> },
-            { key: "LATE", label: "Late", icon: <Clock size={16} /> },
-            { key: "ABSENT", label: "Absent", icon: <XCircle size={16} /> },
-            { key: "HALF_DAY", label: "Half Day", icon: <Clock size={16} /> },
-            { key: "LEAVE", label: "Leave", icon: <Calendar size={16} /> },
-            { key: "HOLIDAY", label: "Holiday", icon: <Calendar size={16} /> },
-            { key: "WEEK_OFF", label: "Week Off", icon: <Calendar size={16} /> },
-            { key: "NOT_STARTED", label: "Not Started", icon: <Clock size={16} /> },
-            { key: "MISSED_CHECK_IN", label: "Missed", icon: <XCircle size={16} /> },
-          ] as const
-        ).map(({ key, label, icon }) => {
-          const sc = STATUS_COLORS[key];
-          return (
-            <Box
-              key={key}
-              bg="white"
-              borderRadius="xl"
-              p={4}
-              border="1px solid"
-              borderColor="surface.border"
-              shadow="card"
-            >
-              <Flex align="center" gap={1.5} mb={1} color={sc.color}>
-                {icon}
-                <Text fontSize="xs" fontWeight="600" textTransform="uppercase">
-                  {label}
-                </Text>
-              </Flex>
-              <Text fontSize="xl" fontWeight="700" color="text.heading">
-                {summary[key] ?? 0}
-              </Text>
-            </Box>
-          );
-        })}
-      </SimpleGrid>
-
-      {/* Filters */}
-      <SectionCard noPadding mb={6}>
-        <Flex gap={3} p={5} align="center" flexWrap="wrap">
-          <Flex align="center" gap={2}>
-            <Calendar size={16} color="#6B7A99" />
-            <Text fontSize="sm" color="text.muted" fontWeight="500">
-              Date:
-            </Text>
-          </Flex>
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            maxW="180px"
-            size="sm"
-            borderRadius="lg"
-            bg="surface.bg"
-            border="1px solid"
-            borderColor="surface.border"
-            fontSize="sm"
-          />
-
-          <Select
-            size="sm"
-            maxW="160px"
-            borderRadius="lg"
-            bg="surface.bg"
-            border="1px solid"
-            borderColor="surface.border"
-            fontSize="sm"
-            placeholder="All Statuses"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="PRESENT">Present</option>
-            <option value="LATE">Late</option>
-            <option value="ABSENT">Absent</option>
-            <option value="HALF_DAY">Half Day</option>
-            <option value="LEAVE">Leave</option>
-            <option value="HOLIDAY">Holiday</option>
-            <option value="WEEK_OFF">Week Off</option>
-            <option value="NOT_STARTED">Not Started</option>
-            <option value="MISSED_CHECK_IN">Missed Check-in</option>
-          </Select>
-
-          <InputGroup maxW="250px" size="sm">
-            <InputLeftElement pointerEvents="none">
-              <Search size={14} color="#6B7A99" />
-            </InputLeftElement>
-            <Input
-              placeholder="Search employee..."
-              borderRadius="lg"
-              bg="surface.bg"
-              border="1px solid"
-              borderColor="surface.border"
-              fontSize="sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
+      <SectionCard noPadding mb={4}>
+        <Flex p={4} gap={3} flexWrap="wrap" align="center" justify="space-between">
+          <HStack spacing={3} flexWrap="wrap">
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} maxW="170px" />
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} placeholder="All statuses" maxW="180px">
+              {FILTER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_COLORS[s].label}</option>)}
+            </Select>
+            <InputGroup maxW="240px">
+              <InputLeftElement pointerEvents="none"><Search size={14} /></InputLeftElement>
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search employee" />
+            </InputGroup>
+            <Input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Department" maxW="170px" />
+          </HStack>
+          <HStack>
+            <Button size="sm" variant="ghost" onClick={() => { setStatusFilter(""); setSearch(""); setDepartment(""); }}>Reset</Button>
+            <Button size="sm" variant="outline" leftIcon={<RefreshCcw size={14} />} onClick={refresh} isLoading={refreshing}>Refresh</Button>
+          </HStack>
         </Flex>
-
-        {/* Table */}
-        <Box p={5} pt={0} overflowX="auto">
-          {loading ? (
-            <Flex justify="center" py={10}>
-              <Spinner size="lg" color="brand.400" />
-            </Flex>
-          ) : (
-            <Table variant="simple" size="sm">
-              <Thead>
-                <Tr>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Employee</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="80px">Code</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="90px">Check-in</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="90px">Check-out</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="80px">Hours</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="90px">Status</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="70px">Late</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="150px">EOD Note</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="50px">Loc.</Th>
-                  <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border" width="50px">Actions</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {(data?.records ?? []).length === 0 ? (
-                  <Tr>
-                    <Td colSpan={10} textAlign="center" py={8}>
-                      <Text color="text.muted" fontSize="sm">No attendance records found for this date</Text>
-                    </Td>
-                  </Tr>
-                ) : (
-                  (data?.records ?? []).map((rec) => {
-                    const sc = STATUS_COLORS[rec.status] ?? { bg: "#F5F7FB", color: "#6B7A99" };
-                    return (
-                      <Tr key={rec.employeeId} _hover={{ bg: "surface.bg" }}>
-                        <Td borderColor="surface.border">
-                          <Text fontWeight="600" color="text.heading" fontSize="sm">
-                            {rec.employeeName ?? "—"}
-                          </Text>
-                        </Td>
-                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
-                          {rec.employeeCode ?? "—"}
-                        </Td>
-                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
-                          {formatTime(rec.firstCheckInAt)}
-                        </Td>
-                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
-                          {formatTime(rec.lastCheckOutAt)}
-                        </Td>
-                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
-                          {formatMinutes(rec.totalWorkMinutes)}
-                        </Td>
-                        <Td borderColor="surface.border">
-                          <Badge
-                            px={2}
-                            py={0.5}
-                            borderRadius="full"
-                            bg={sc.bg}
-                            color={sc.color}
-                            fontSize="xs"
-                            fontWeight="600"
-                          >
-                            {rec.status.replace("_", " ")}
-                          </Badge>
-                          {rec.isManualOverride && (
-                            <Text fontSize="9px" color="text.muted" mt={0.5}>
-                              Overridden
-                            </Text>
-                          )}
-                          {rec.overrideActive && (
-                            <Badge px={1.5} py={0.5} borderRadius="full" bg="#E8EAF6" color="#3949AB" fontSize="9px" mt={0.5}>
-                              Override Active
-                            </Badge>
-                          )}
-                        </Td>
-                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
-                          {rec.lateMinutes > 0 ? (
-                            <Badge px={2} py={0.5} borderRadius="full" bg="#FEE7E7" color="#C41E3A" fontSize="xs">
-                              {rec.lateMinutes}m
-                            </Badge>
-                          ) : (
-                            "—"
-                          )}
-                        </Td>
-                        <Td fontSize="sm" color="text.body" borderColor="surface.border">
-                          <Text fontSize="xs" color="text.muted" noOfLines={2} title={rec.eodDescription ?? ""}>
-                            {rec.eodDescription || "—"}
-                          </Text>
-                        </Td>
-                        <Td borderColor="surface.border" textAlign="center">
-                          {rec.locationValidated ? (
-                            <MapPin size={14} color="#0D7C47" />
-                          ) : (
-                            <Text fontSize="xs" color="text.muted">—</Text>
-                          )}
-                        </Td>
-                        <Td borderColor="surface.border">
-                          <Menu>
-                            <MenuButton
-                              as={IconButton}
-                              icon={<MoreVertical size={14} />}
-                              variant="ghost"
-                              size="xs"
-                              color="text.muted"
-                            />
-                            <MenuList minW="180px" borderRadius="xl" shadow="lg" border="1px solid" borderColor="surface.border" py={1}>
-                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("PRESENT"); setOverrideReason(""); onOpen(); }}>
-                                Mark Present
-                              </MenuItem>
-                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("LEAVE"); setOverrideReason(""); onOpen(); }}>
-                                Mark Leave
-                              </MenuItem>
-                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("HALF_DAY"); setOverrideReason(""); onOpen(); }}>
-                                Mark Half Day
-                              </MenuItem>
-                              <MenuItem fontSize="sm" onClick={() => { setSelectedRecord(rec); setOverrideStatus("ABSENT"); setOverrideReason(""); onOpen(); }}>
-                                Mark Absent
-                              </MenuItem>
-                              <MenuItem fontSize="sm" onClick={() => openManualModal(rec)}>
-                                Manual Entry
-                              </MenuItem>
-                              <MenuItem fontSize="sm" onClick={() => openOverrideModal(rec)}>
-                                Override with Reason
-                              </MenuItem>
-                              {(rec.status === "MISSED_CHECK_IN" || rec.status === "NOT_STARTED") && !rec.overrideActive && (
-                                <MenuItem
-                                  fontSize="sm"
-                                  icon={<RotateCcw size={14} />}
-                                  isDisabled={reEnableLoading}
-                                  onClick={() => handleReEnableStartWork(rec)}
-                                >
-                                  Re-enable Start Work
-                                </MenuItem>
-                              )}
-                            </MenuList>
-                          </Menu>
-                        </Td>
-                      </Tr>
-                    );
-                  })
-                )}
-              </Tbody>
-            </Table>
-          )}
-        </Box>
       </SectionCard>
 
-      {/* Override Status Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <SimpleGrid columns={{ base: 2, md: 4, xl: 8 }} spacing={3} mb={4}>
+        {summaryCards.map((item) => (
+          <Box key={item.key} border="1px solid" borderColor="surface.border" borderRadius="xl" p={3} bg="white">
+            <Text fontSize="10px" textTransform="uppercase" color="text.muted">{item.style.label}</Text>
+            <Badge mt={1.5} bg={item.style.bg} color={item.style.color} borderRadius="full">{item.count}</Badge>
+          </Box>
+        ))}
+      </SimpleGrid>
+
+      <SectionCard noPadding>
+        <Tabs isLazy variant="unstyled">
+          <TabList px={4} pt={4} gap={2} flexWrap="wrap">
+            <AdminTab label="Daily Register" count={tabCounts.register} />
+            <AdminTab label="Pending Regularizations" count={tabCounts.regularizations} />
+            <AdminTab label="Pending Permissions" count={tabCounts.permissions} />
+            <AdminTab label="Access Overrides" count={tabCounts.overrides} />
+          </TabList>
+          <TabPanels>
+            <TabPanel pt={4}>
+              <Box overflowX="auto">
+                <Table size="sm">
+                  <Thead><Tr><Th>Employee</Th><Th>Dept</Th><Th>In</Th><Th>Out</Th><Th>Active</Th><Th>Break</Th><Th>Late</Th><Th>Early Out</Th><Th>OT</Th><Th>Status</Th><Th textAlign="right">Actions</Th></Tr></Thead>
+                  <Tbody>
+                    {(data?.records ?? []).length === 0 ? (
+                      <Tr><Td colSpan={11} textAlign="center" py={7}><Text color="text.muted" fontSize="sm">No records found.</Text></Td></Tr>
+                    ) : (
+                      (data?.records ?? []).map((r) => {
+                        const s = STATUS_COLORS[r.status] || STATUS_COLORS.NOT_STARTED;
+                        return (
+                          <Tr key={`${r.employeeId}-${r.date}`}>
+                            <Td><Text fontWeight="700">{r.employeeName}</Text><Text fontSize="xs" color="text.muted">{r.employeeCode || "-"}</Text></Td>
+                            <Td><Text fontSize="sm">{r.department || "-"}</Text><Text fontSize="xs" color="text.muted">{r.designation || "-"}</Text></Td>
+                            <Td>{formatTime(r.firstCheckInAt)}</Td>
+                            <Td>{formatTime(r.lastCheckOutAt)}</Td>
+                            <Td><Text fontWeight="600">{formatMinutes(r.totalWorkMinutes)}</Text></Td>
+                            <Td>{formatMinutes(r.totalBreakMinutes)}</Td>
+                            <Td>{formatMinutes(r.lateMinutes)}</Td>
+                            <Td>{formatMinutes(r.earlyOutMinutes)}</Td>
+                            <Td>{formatMinutes(r.overtimeMinutes)}</Td>
+                            <Td><Badge bg={s.bg} color={s.color} borderRadius="full">{s.label}</Badge></Td>
+                            <Td textAlign="right">
+                              <HStack spacing={1} justify="flex-end">
+                                <IconButton aria-label="View" icon={<Eye size={14} />} size="xs" variant="ghost" onClick={() => openDayDetail(r.employeeId, date, r)} />
+                                <IconButton aria-label="Override" icon={<Pencil size={14} />} size="xs" variant="ghost" onClick={() => { setSelectedRecord(r); setDayDetailDate(date); setOverrideStatus(r.status); setOverrideReason(""); overrideModal.onOpen(); }} />
+                                <Button size="xs" variant="ghost" onClick={() => { setSelectedRecord(r); setDayDetailDate(date); manualModal.onOpen(); }}>Manual</Button>
+                                <Button size="xs" variant="ghost" onClick={() => openMonthly(r)}>Monthly</Button>
+                              </HStack>
+                            </Td>
+                          </Tr>
+                        );
+                      })
+                    )}
+                  </Tbody>
+                </Table>
+              </Box>
+            </TabPanel>
+
+            <TabPanel pt={4}>
+              <Table size="sm">
+                <Thead><Tr><Th>Employee</Th><Th>Date</Th><Th>Type</Th><Th>Requested</Th><Th>Reason</Th><Th>Status</Th><Th textAlign="right">Actions</Th></Tr></Thead>
+                <Tbody>
+                  {pendingRegularizations.length === 0 ? <Tr><Td colSpan={7} textAlign="center" py={7}><Text color="text.muted">No pending regularizations.</Text></Td></Tr> : pendingRegularizations.map((r) => {
+                    const b = requestBadge(r.status);
+                    return (
+                      <Tr key={r.id}>
+                        <Td>{r.employeeName || r.employeeId}</Td>
+                        <Td>{formatDateLabel(r.date)}</Td>
+                        <Td>{r.requestType.replace(/_/g, " ")}</Td>
+                        <Td>{r.requestedInTime ? formatTime(r.requestedInTime) : "-"} / {r.requestedOutTime ? formatTime(r.requestedOutTime) : "-"}</Td>
+                        <Td><Text noOfLines={2}>{r.reason}</Text></Td>
+                        <Td><Badge bg={b.bg} color={b.color} borderRadius="full">{r.status}</Badge></Td>
+                        <Td textAlign="right"><HStack justify="flex-end" spacing={1}><IconButton aria-label="View" icon={<Eye size={14} />} size="xs" variant="ghost" onClick={() => openDayDetail(r.employeeId, r.date)} /><Button size="xs" colorScheme="green" leftIcon={<Check size={12} />} onClick={() => reviewRegularization(r.id, true)} isLoading={actionLoading}>Approve</Button><Button size="xs" colorScheme="red" variant="outline" leftIcon={<X size={12} />} onClick={() => reviewRegularization(r.id, false)} isLoading={actionLoading}>Reject</Button></HStack></Td>
+                      </Tr>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+            </TabPanel>
+
+            <TabPanel pt={4}>
+              <Table size="sm">
+                <Thead><Tr><Th>Employee</Th><Th>Date</Th><Th>From-To</Th><Th>Duration</Th><Th>Reason</Th><Th>Status</Th><Th textAlign="right">Actions</Th></Tr></Thead>
+                <Tbody>
+                  {pendingPermissions.length === 0 ? <Tr><Td colSpan={7} textAlign="center" py={7}><Text color="text.muted">No pending permissions.</Text></Td></Tr> : pendingPermissions.map((p) => {
+                    const b = requestBadge(p.status);
+                    return (
+                      <Tr key={p.id}>
+                        <Td>{p.employeeName || p.employeeId}</Td>
+                        <Td>{formatDateLabel(p.date)}</Td>
+                        <Td>{p.fromTime} - {p.toTime}</Td>
+                        <Td>{formatMinutes(p.totalMinutes)}</Td>
+                        <Td><Text noOfLines={2}>{p.reason}</Text></Td>
+                        <Td><Badge bg={b.bg} color={b.color} borderRadius="full">{p.status}</Badge></Td>
+                        <Td textAlign="right"><HStack justify="flex-end" spacing={1}><IconButton aria-label="View" icon={<Eye size={14} />} size="xs" variant="ghost" onClick={() => openDayDetail(p.employeeId, p.date)} /><Button size="xs" colorScheme="green" leftIcon={<Check size={12} />} onClick={() => reviewPermission(p.id, true)} isLoading={actionLoading}>Approve</Button><Button size="xs" colorScheme="red" variant="outline" leftIcon={<X size={12} />} onClick={() => reviewPermission(p.id, false)} isLoading={actionLoading}>Reject</Button></HStack></Td>
+                      </Tr>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+            </TabPanel>
+
+            <TabPanel pt={4}>
+              <Flex mb={3} justify="flex-end"><Button size="sm" bg="brand.500" color="white" _hover={{ bg: "brand.600" }} onClick={() => { setOverrideEmployeeId(""); setOverridePolicyForm(DEFAULT_OVERRIDE_FORM); accessOverrideModal.onOpen(); }}>Add Override</Button></Flex>
+              <Table size="sm">
+                <Thead><Tr><Th>Employee</Th><Th>Mode</Th><Th>Remote</Th><Th>Geo Exempt</Th><Th>Start</Th><Th>End</Th><Th>Reason</Th><Th>Active</Th><Th textAlign="right">Actions</Th></Tr></Thead>
+                <Tbody>
+                  {accessOverrides.length === 0 ? <Tr><Td colSpan={9} textAlign="center" py={7}><Text color="text.muted">No access overrides configured.</Text></Td></Tr> : accessOverrides.map((o) => (
+                    <Tr key={o.id}>
+                      <Td>{o.employeeName}</Td>
+                      <Td>{o.overrideMode.replace(/_/g, " ")}</Td>
+                      <Td>{o.remotePunchAllowed == null ? "Inherit" : o.remotePunchAllowed ? "Allowed" : "Blocked"}</Td>
+                      <Td>{o.geoFenceExempt ? "Yes" : "No"}</Td>
+                      <Td>{o.effectiveFrom || "-"}</Td>
+                      <Td>{o.effectiveUntil || "-"}</Td>
+                      <Td><Text noOfLines={2}>{o.reason || "-"}</Text></Td>
+                      <Td><Badge borderRadius="full" bg={o.active ? "#EEF6FF" : "#F4F6FA"} color={o.active ? "#3B4AA6" : "#62708B"}>{o.active ? "Active" : "Inactive"}</Badge></Td>
+                      <Td textAlign="right"><HStack justify="flex-end" spacing={1}><IconButton aria-label="Edit" icon={<Pencil size={14} />} size="xs" variant="ghost" onClick={() => { setOverrideEmployeeId(o.employeeId); accessOverrideModal.onOpen(); }} /><Button size="xs" variant="outline" colorScheme="red" onClick={() => attendanceApi.clearEmployeeAccessOverride(o.employeeId).then(refresh)}>Clear</Button></HStack></Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </SectionCard>
+
+      <Drawer isOpen={dayDetailDrawer.isOpen} placement="right" size="md" onClose={dayDetailDrawer.onClose}>
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerHeader>Employee Day Attendance</DrawerHeader>
+          <DrawerBody>
+            {dayDetailLoading ? (
+              <Flex minH="260px" justify="center" align="center"><Spinner color="brand.500" /></Flex>
+            ) : !dayDetail ? (
+              <Text color="text.muted">No details.</Text>
+            ) : (
+              <Flex direction="column" gap={4}>
+                <Box border="1px solid" borderColor="surface.border" borderRadius="xl" p={3}>
+                  <Text fontWeight="700">{dayDetail.employee.name}</Text>
+                  <Text fontSize="xs" color="text.muted">{dayDetail.employee.employeeCode || "-"} • {dayDetail.employee.department || "-"}</Text>
+                  <Badge mt={2} borderRadius="full">{formatDateLabel(dayDetail.date)}</Badge>
+                </Box>
+                <SimpleGrid columns={2} spacing={2}>
+                  <Metric label="First In" value={formatTime(dayDetail.attendance.firstCheckInAt)} />
+                  <Metric label="Last Out" value={formatTime(dayDetail.attendance.lastCheckOutAt)} />
+                  <Metric label="Active" value={formatMinutes(dayDetail.attendance.totalWorkMinutes)} />
+                  <Metric label="Break" value={formatMinutes(dayDetail.attendance.totalBreakMinutes)} />
+                  <Metric label="Late By" value={formatMinutes(dayDetail.attendance.lateMinutes)} />
+                  <Metric label="Early Out" value={formatMinutes(dayDetail.attendance.earlyOutMinutes)} />
+                </SimpleGrid>
+                <Box border="1px solid" borderColor="surface.border" borderRadius="xl" p={3}>
+                  <Text fontSize="xs" textTransform="uppercase" color="text.muted" mb={2}>Punch Timeline</Text>
+                  {dayDetail.punches.length === 0 ? (
+                    <Text color="text.muted" fontSize="sm">No punches recorded.</Text>
+                  ) : (
+                    <Flex direction="column" gap={2}>
+                      {dayDetail.punches.map((p) => (
+                        <HStack key={p.id} justify="space-between" border="1px solid" borderColor="surface.border" borderRadius="md" px={2.5} py={2}>
+                          <Text fontSize="sm" fontWeight="600">{p.type === "CHECK_IN" ? "Punch In" : "Punch Out"} {formatTime(p.time)}</Text>
+                          <Badge borderRadius="full" bg={p.isInsideOffice ? "#EAF8F0" : "#FFF3E8"} color={p.isInsideOffice ? "#0F7A46" : "#C7681B"}>{p.isInsideOffice ? "Inside" : "Remote/Outside"}</Badge>
+                        </HStack>
+                      ))}
+                    </Flex>
+                  )}
+                </Box>
+              </Flex>
+            )}
+          </DrawerBody>
+          <DrawerFooter borderTop="1px solid" borderColor="surface.border">
+            <HStack>
+              <Button size="sm" variant="outline" onClick={() => selectedRecord && overrideModal.onOpen()} isDisabled={!selectedRecord}>Override Status</Button>
+              <Button size="sm" variant="outline" onClick={() => selectedRecord && manualModal.onOpen()} isDisabled={!selectedRecord}>Manual Entry</Button>
+            </HStack>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      <Modal isOpen={overrideModal.isOpen} onClose={overrideModal.onClose} isCentered>
         <ModalOverlay />
         <ModalContent borderRadius="xl">
-          <ModalHeader fontSize="md" fontWeight="600">
-            Override Attendance Status
-          </ModalHeader>
+          <ModalHeader fontSize="md">Override Attendance</ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={4}>
-            <Text fontSize="sm" color="text.muted" mb={4}>
-              {selectedRecord?.employeeName} &mdash; {date}
-            </Text>
-            <FormControl mb={4}>
-              <FormLabel fontSize="sm" fontWeight="500">Status</FormLabel>
-              <Select
-                size="sm"
-                borderRadius="lg"
-                value={overrideStatus}
-                onChange={(e) => setOverrideStatus(e.target.value)}
-              >
-                <option value="">Select status</option>
-                <option value="PRESENT">Present</option>
-                <option value="LATE">Late</option>
-                <option value="ABSENT">Absent</option>
-                <option value="HALF_DAY">Half Day</option>
-                <option value="LEAVE">Leave</option>
-                <option value="NOT_STARTED">Not Started</option>
-                <option value="MISSED_CHECK_IN">Missed Check-in</option>
+          <ModalBody>
+            <Flex direction="column" gap={3}>
+              <Select value={overrideStatus} onChange={(e) => setOverrideStatus(e.target.value as AttendanceStatusType)}>
+                {FILTER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_COLORS[s].label}</option>)}
               </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="sm" fontWeight="500">Reason</FormLabel>
-              <Textarea
-                size="sm"
-                borderRadius="lg"
-                rows={3}
-                placeholder="Provide a reason for override..."
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-              />
-            </FormControl>
+              <Textarea rows={3} placeholder="Reason" value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} />
+            </Flex>
           </ModalBody>
           <ModalFooter gap={2}>
-            <Button size="sm" variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              bg="brand.400"
-              color="white"
-              _hover={{ bg: "brand.500" }}
-              isLoading={overrideLoading}
-              isDisabled={!overrideStatus || !overrideReason}
-              onClick={handleOverride}
-            >
-              Save Override
-            </Button>
+            <Button variant="ghost" onClick={overrideModal.onClose}>Cancel</Button>
+            <Button bg="brand.500" color="white" _hover={{ bg: "brand.600" }} onClick={handleOverride} isLoading={actionLoading}>Save</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
-      {/* Manual Entry Modal */}
-      <Modal isOpen={isManualOpen} onClose={onManualClose} isCentered>
+      <Modal isOpen={manualModal.isOpen} onClose={manualModal.onClose} isCentered>
         <ModalOverlay />
         <ModalContent borderRadius="xl">
-          <ModalHeader fontSize="md" fontWeight="600">
-            Manual Attendance Entry
-          </ModalHeader>
+          <ModalHeader fontSize="md">Manual Entry</ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={4}>
-            <Text fontSize="sm" color="text.muted" mb={4}>
-              {selectedRecord?.employeeName} &mdash; {date}
-            </Text>
-            <SimpleGrid columns={2} spacing={3} mb={4}>
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="500">Check-in Time</FormLabel>
-                <Input
-                  type="time"
-                  size="sm"
-                  borderRadius="lg"
-                  value={manualCheckIn}
-                  onChange={(e) => setManualCheckIn(e.target.value)}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="500">Check-out Time</FormLabel>
-                <Input
-                  type="time"
-                  size="sm"
-                  borderRadius="lg"
-                  value={manualCheckOut}
-                  onChange={(e) => setManualCheckOut(e.target.value)}
-                />
-              </FormControl>
-            </SimpleGrid>
-            <FormControl mb={4}>
-              <FormLabel fontSize="sm" fontWeight="500">Status</FormLabel>
-              <Select
-                size="sm"
-                borderRadius="lg"
-                placeholder="Select status (optional)"
-                value={manualStatus}
-                onChange={(e) => setManualStatus(e.target.value)}
-              >
-                <option value="PRESENT">Present</option>
-                <option value="LATE">Late</option>
-                <option value="HALF_DAY">Half Day</option>
-                <option value="LEAVE">Leave</option>
+          <ModalBody>
+            <Flex direction="column" gap={3}>
+              <SimpleGrid columns={2} spacing={2}>
+                <Input type="time" value={manualCheckIn} onChange={(e) => setManualCheckIn(e.target.value)} />
+                <Input type="time" value={manualCheckOut} onChange={(e) => setManualCheckOut(e.target.value)} />
+              </SimpleGrid>
+              <Select placeholder="Optional status" value={manualStatus} onChange={(e) => setManualStatus(e.target.value as AttendanceStatusType | "")}>
+                {FILTER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_COLORS[s].label}</option>)}
               </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="sm" fontWeight="500">Reason</FormLabel>
-              <Textarea
-                size="sm"
-                borderRadius="lg"
-                rows={3}
-                placeholder="Reason for manual entry..."
-                value={manualReason}
-                onChange={(e) => setManualReason(e.target.value)}
-              />
-            </FormControl>
+              <Textarea rows={3} placeholder="Reason" value={manualReason} onChange={(e) => setManualReason(e.target.value)} />
+            </Flex>
           </ModalBody>
           <ModalFooter gap={2}>
-            <Button size="sm" variant="ghost" onClick={onManualClose}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              bg="brand.400"
-              color="white"
-              _hover={{ bg: "brand.500" }}
-              isLoading={manualLoading}
-              onClick={handleManualEntry}
-            >
-              Save Entry
-            </Button>
+            <Button variant="ghost" onClick={manualModal.onClose}>Cancel</Button>
+            <Button bg="brand.500" color="white" _hover={{ bg: "brand.600" }} onClick={handleManualEntry} isLoading={actionLoading}>Save</Button>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={accessOverrideModal.isOpen} onClose={accessOverrideModal.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md">Employee Access Override</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Flex direction="column" gap={3}>
+              <Select placeholder="Select employee" value={overrideEmployeeId} onChange={(e) => setOverrideEmployeeId(e.target.value)}>
+                {employeeOptions.map((emp) => <option key={emp.userId} value={emp.userId}>{emp.firstName} {emp.lastName} {emp.empId ? `(${emp.empId})` : ""}</option>)}
+              </Select>
+              <Select value={overridePolicyForm.overrideMode} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, overrideMode: e.target.value as typeof p.overrideMode }))}>
+                <option value="ORG_DEFAULT">Use Organization Default</option>
+                <option value="GEO_FENCE_ONLY">Geo-fence Only</option>
+                <option value="REMOTE_ALLOWED">Remote Allowed</option>
+                <option value="HYBRID">Hybrid</option>
+              </Select>
+              <Select value={overridePolicyForm.remotePunchAllowed} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, remotePunchAllowed: e.target.value as typeof p.remotePunchAllowed }))}>
+                <option value="INHERIT">Remote Punch: Inherit</option>
+                <option value="YES">Remote Punch: Allowed</option>
+                <option value="NO">Remote Punch: Blocked</option>
+              </Select>
+              <HStack justify="space-between"><Text fontSize="sm">Geo-fence exempt</Text><Switch isChecked={overridePolicyForm.geoFenceExempt} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, geoFenceExempt: e.target.checked }))} /></HStack>
+              <SimpleGrid columns={2} spacing={2}>
+                <Input type="date" value={overridePolicyForm.effectiveFrom} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, effectiveFrom: e.target.value }))} />
+                <Input type="date" value={overridePolicyForm.effectiveUntil} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, effectiveUntil: e.target.value }))} />
+              </SimpleGrid>
+              <Textarea rows={3} placeholder="Reason" value={overridePolicyForm.reason} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, reason: e.target.value }))} />
+              <HStack justify="space-between"><Text fontSize="sm">Override Active</Text><Switch isChecked={overridePolicyForm.active} onChange={(e) => setOverridePolicyForm((p) => ({ ...p, active: e.target.checked }))} /></HStack>
+            </Flex>
+          </ModalBody>
+          <ModalFooter gap={2}>
+            <Button variant="ghost" onClick={accessOverrideModal.onClose}>Cancel</Button>
+            <Button bg="brand.500" color="white" _hover={{ bg: "brand.600" }} onClick={saveAccessOverride} isLoading={actionLoading} isDisabled={!overrideEmployeeId}>Save</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={monthlyModal.isOpen} onClose={monthlyModal.onClose} size="lg" isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md">{monthlyEmployeeName || "Employee"} Monthly Summary</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {!monthly ? <Spinner size="sm" /> : (
+              <SimpleGrid columns={{ base: 2, md: 4 }} spacing={2}>
+                {monthly.metrics && Object.entries(monthly.metrics).map(([key, val]) => (
+                  <Box key={key} border="1px solid" borderColor="surface.border" borderRadius="md" px={3} py={2}>
+                    <Text fontSize="10px" textTransform="uppercase" color="text.muted">{key.replace(/([A-Z])/g, " $1")}</Text>
+                    <Text fontSize="sm" fontWeight="700">{val}</Text>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            )}
+          </ModalBody>
         </ModalContent>
       </Modal>
     </Box>

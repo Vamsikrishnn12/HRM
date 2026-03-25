@@ -21,6 +21,7 @@ import leaveRoutes from './routes/leave.routes';
 import payrollRoutes from './routes/payroll.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import profileRoutes from './routes/profile.routes';
+import employeeSalaryStructureRoutes from './routes/employeeSalaryStructure.routes';
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/salary-structures', employeeSalaryStructureRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.resolve('uploads')));

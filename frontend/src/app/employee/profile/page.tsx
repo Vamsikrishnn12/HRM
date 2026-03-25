@@ -17,20 +17,15 @@ import {
   useToast,
   Avatar,
   Badge,
-  Divider,
 } from "@chakra-ui/react";
 import {
   User,
   Briefcase,
   Phone,
-  MapPin,
-  Shield,
   Lock,
   Eye,
   EyeOff,
-  Calendar,
   Heart,
-  Globe,
 } from "lucide-react";
 import SectionCard from "@/components/ui/SectionCard";
 import PageHeader from "@/components/ui/PageHeader";

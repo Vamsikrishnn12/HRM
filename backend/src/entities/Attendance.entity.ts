@@ -9,6 +9,7 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from './User.entity';
+import { AttendanceDayType } from '../attendance/attendance.enums';
 
 export enum AttendanceStatus {
   PRESENT = 'PRESENT',
@@ -20,6 +21,12 @@ export enum AttendanceStatus {
   WEEK_OFF = 'WEEK_OFF',
   NOT_STARTED = 'NOT_STARTED',
   MISSED_CHECK_IN = 'MISSED_CHECK_IN',
+  PERMISSION = 'PERMISSION',
+  REGULARIZED = 'REGULARIZED',
+  LOP = 'LOP',
+  MISSING_PUNCH = 'MISSING_PUNCH',
+  EARLY_OUT = 'EARLY_OUT',
+  OVERTIME = 'OVERTIME',
 }
 
 @Entity('attendance')
@@ -43,11 +50,54 @@ export class Attendance {
   @Column({ type: 'int', default: 0 })
   totalWorkMinutes: number;
 
+  @Column({ type: 'int', default: 0 })
+  totalBreakMinutes: number;
+
+  @Column({ type: 'int', default: 0 })
+  earlyOutMinutes: number;
+
+  @Column({ type: 'int', default: 0 })
+  overtimeMinutes: number;
+
+  @Column({ type: 'int', default: 0 })
+  punchSessionsCount: number;
+
   @Column({ type: 'enum', enum: AttendanceStatus, default: AttendanceStatus.ABSENT })
   status: AttendanceStatus;
 
   @Column({ type: 'int', default: 0 })
   lateMinutes: number;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: AttendanceDayType.WORKING,
+  })
+  dayType: AttendanceDayType | string;
+
+  @Column({ type: 'boolean', default: false })
+  missingPunch: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  geoFenceIssue: boolean;
+
+  @Column({ type: 'int', default: 0 })
+  permissionMinutesApplied: number;
+
+  @Column({ type: 'boolean', default: false })
+  regularized: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  appliedPolicyId: string | null;
+
+  @Column({ type: 'int', default: 1 })
+  policyVersion: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  statusReason: string | null;
+
+  @Column({ type: 'jsonb', default: {} })
+  derivedSummary: Record<string, unknown>;
 
   @Column({ type: 'boolean', default: false })
   isManualOverride: boolean;
@@ -84,6 +134,9 @@ export class Attendance {
 
   @Column({ type: 'timestamp', nullable: true })
   overrideSetAt: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  isAutoClosed: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

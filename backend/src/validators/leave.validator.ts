@@ -53,16 +53,30 @@ export const applyLeaveSchema = z
       return true;
     },
     { message: 'date, fromTime and toTime are required for permission', path: ['date'] },
+  )
+  .refine(
+    (data) => {
+      if (data.requestMode === 'PERMISSION') {
+        return data.leaveType === 'PERMISSION';
+      }
+      return data.leaveType !== 'PERMISSION';
+    },
+    {
+      message: 'leaveType must be PERMISSION for permission mode and non-PERMISSION for day leaves',
+      path: ['leaveType'],
+    },
   );
 
 export const adminActionSchema = z.object({
   remarks: z.string().max(1000).optional(),
+  approvedLeaveType: z.enum(['CL', 'SL', 'EL', 'LOP', 'PERMISSION']).optional(),
 });
 
 export const adminOverrideSchema = z.object({
   status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']),
   remarks: z.string().max(1000).optional(),
   leaveType: z.enum(['CL', 'SL', 'EL', 'LOP', 'PERMISSION']).optional(),
+  approvedLeaveType: z.enum(['CL', 'SL', 'EL', 'LOP', 'PERMISSION']).optional(),
 });
 
 export const updatePolicySchema = z.object({
@@ -71,6 +85,8 @@ export const updatePolicySchema = z.object({
   allowHalfDayLeave: z.boolean().optional(),
   allowPermissionHours: z.boolean().optional(),
   maxPermissionHoursPerMonth: z.number().min(0).max(100).optional(),
+  maxPermissionRequestsPerMonth: z.number().int().min(0).max(100).optional(),
+  maxRegularizationsPerMonth: z.number().int().min(0).max(100).optional(),
   slabs: z
     .array(
       z.object({

@@ -1,9 +1,9 @@
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { PayrollRun, PayrollRunStatus } from '../entities/PayrollRun.entity';
 import { PayrollRecord, PayrollRecordStatus } from '../entities/PayrollRecord.entity';
 import { PayslipDocument } from '../entities/PayslipDocument.entity';
-import { PayrollImportJob, ImportJobStatus } from '../entities/PayrollImportJob.entity';
+import { PayrollImportJob } from '../entities/PayrollImportJob.entity';
 
 export class PayrollRepository {
   private runRepo: Repository<PayrollRun>;

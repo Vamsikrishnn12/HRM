@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Flex, Text, Spinner, VStack, Box } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 import type { AuthStatus } from "@/context/AuthContext";
+import BrandMark from "@/components/ui/BrandMark";
 
 const messages: Record<string, string[]> = {
   idle: ["Verifying your session..."],
@@ -57,20 +58,14 @@ export default function AuthLoader({ status }: AuthLoaderProps) {
       zIndex={9999}
     >
       <VStack spacing={5}>
-        {/* Logo */}
-        <Flex
-          w={14}
-          h={14}
-          borderRadius="2xl"
-          bgGradient="linear(to-br, brand.400, accent.400)"
-          align="center"
-          justify="center"
-          shadow="lg"
-        >
-          <Text fontSize="xl" fontWeight="800" color="white">
-            HR
-          </Text>
-        </Flex>
+        <BrandMark
+          logoSize="56px"
+          nameFontSize="xl"
+          nameColor="text.heading"
+          logoRadius="2xl"
+          logoShadow="lg"
+          priority
+        />
 
         {/* Spinner / Checkmark */}
         {isSuccess ? (

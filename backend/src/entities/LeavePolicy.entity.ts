@@ -30,6 +30,12 @@ export class LeavePolicy {
   @Column({ type: 'decimal', precision: 4, scale: 1, default: 2 })
   maxPermissionHoursPerMonth: number;
 
+  @Column({ type: 'int', default: 4 })
+  maxPermissionRequestsPerMonth: number;
+
+  @Column({ type: 'int', default: 4 })
+  maxRegularizationsPerMonth: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -10,9 +10,9 @@ import {
   LeaveStatus,
   LeaveRequest,
 } from '../entities/LeaveRequest.entity';
-import { LeavePolicy } from '../entities/LeavePolicy.entity';
 import { LeavePolicySlab } from '../entities/LeavePolicySlab.entity';
-import { UserRepository } from '../repositories/user.repository';
+import { AttendanceService } from './attendance.service';
+import { AlternateSaturdayRule } from '../entities/OrgSettings.entity';
 
 // ── Input types ──
 
@@ -32,15 +32,15 @@ export class LeaveService {
   private leaveRepo: LeaveRepository;
   private employeeRepo: EmployeeRepository;
   private settingsRepo: SettingsRepository;
-  private userRepo: UserRepository;
   private emailService: EmailService;
+  private attendanceService: AttendanceService;
 
   constructor() {
     this.leaveRepo = new LeaveRepository();
     this.employeeRepo = new EmployeeRepository();
     this.settingsRepo = new SettingsRepository();
-    this.userRepo = new UserRepository();
     this.emailService = new EmailService();
+    this.attendanceService = new AttendanceService();
   }
 
   // ══════════════════════════════════════════════════════
@@ -103,6 +103,62 @@ export class LeaveService {
     return Math.max(0, (toMinutes - fromMinutes) / 60);
   }
 
+  private listDatesInRange(startDate: string, endDate: string): string[] {
+    const result: string[] = [];
+    const cursor = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    while (cursor.getTime() <= end.getTime()) {
+      result.push(cursor.toISOString().split('T')[0]);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return result;
+  }
+
+  private isWeeklyOffDate(
+    dateStr: string,
+    weekOffDaysRaw: string,
+    alternateSaturdayOffRule: AlternateSaturdayRule,
+  ): boolean {
+    const date = new Date(`${dateStr}T00:00:00`);
+    const configuredDays = (weekOffDaysRaw || '')
+      .split(',')
+      .map((day) => day.trim().toUpperCase())
+      .filter(Boolean);
+
+    const dayName = [
+      'SUNDAY',
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
+    ][date.getDay()];
+
+    if (dayName === 'SATURDAY' && alternateSaturdayOffRule !== AlternateSaturdayRule.NONE) {
+      const saturdayOrder = Math.floor((date.getDate() - 1) / 7) + 1;
+      if (alternateSaturdayOffRule === AlternateSaturdayRule.SECOND_FOURTH) {
+        return saturdayOrder === 2 || saturdayOrder === 4;
+      }
+      if (alternateSaturdayOffRule === AlternateSaturdayRule.FIRST_THIRD) {
+        return saturdayOrder === 1 || saturdayOrder === 3;
+      }
+    }
+
+    return configuredDays.includes(dayName);
+  }
+
+  private getRequestRange(request: LeaveRequest): { startDate: string; endDate: string } {
+    if (request.requestMode === RequestMode.FULL_DAY) {
+      return { startDate: request.startDate!, endDate: request.endDate! };
+    }
+    return { startDate: request.date!, endDate: request.date! };
+  }
+
+  private getEffectiveLeaveType(request: LeaveRequest): LeaveType {
+    return request.approvedLeaveType ?? request.leaveType;
+  }
+
   // ══════════════════════════════════════════════════════
   //  Employee: Get Summary
   // ══════════════════════════════════════════════════════
@@ -128,7 +184,7 @@ export class LeaveService {
     let usedCL = 0, usedSL = 0, usedEL = 0, usedLOP = 0;
     for (const req of approved) {
       const days = Number(req.totalDays ?? 0);
-      switch (req.leaveType) {
+      switch (this.getEffectiveLeaveType(req)) {
         case LeaveType.CL: usedCL += days; break;
         case LeaveType.SL: usedSL += days; break;
         case LeaveType.EL: usedEL += days; break;
@@ -166,6 +222,8 @@ export class LeaveService {
       allowHalfDayLeave: policy.allowHalfDayLeave,
       allowPermissionHours: policy.allowPermissionHours,
       maxPermissionHoursPerMonth: Number(policy.maxPermissionHoursPerMonth),
+      maxPermissionRequestsPerMonth: Number(policy.maxPermissionRequestsPerMonth),
+      maxRegularizationsPerMonth: Number(policy.maxRegularizationsPerMonth),
       entitlement,
       used: { cl: usedCL, sl: usedSL, el: usedEL, lop: usedLOP },
       balance: {
@@ -202,6 +260,8 @@ export class LeaveService {
       allowHalfDayLeave: false,
       allowPermissionHours: false,
       maxPermissionHoursPerMonth: 0,
+      maxPermissionRequestsPerMonth: 0,
+      maxRegularizationsPerMonth: 0,
       entitlement: { cl: 0, sl: 0, el: 0 },
       used: { cl: 0, sl: 0, el: 0, lop: 0 },
       balance: { cl: 0, sl: 0, el: 0 },
@@ -239,6 +299,8 @@ export class LeaveService {
         allowHalfDayLeave: policy.allowHalfDayLeave,
         allowPermissionHours: policy.allowPermissionHours,
         maxPermissionHoursPerMonth: Number(policy.maxPermissionHoursPerMonth),
+        maxPermissionRequestsPerMonth: Number(policy.maxPermissionRequestsPerMonth),
+        maxRegularizationsPerMonth: Number(policy.maxRegularizationsPerMonth),
       },
       slabs: (policy.slabs ?? []).map((s) => ({
         minYears: s.minYearsOfService,
@@ -270,34 +332,28 @@ export class LeaveService {
     const policy = await this.leaveRepo.getPolicyWithSlabs();
     if (!policy) throw ApiError.badRequest('Leave policy not configured', 'LEAVE_POLICY_NOT_FOUND');
 
-    const leaveType = input.leaveType as LeaveType;
     const requestMode = input.requestMode as RequestMode;
+    const leaveType =
+      requestMode === RequestMode.PERMISSION
+        ? LeaveType.PERMISSION
+        : (input.leaveType as LeaveType);
     const inProbation = this.isInProbation(profile.dateOfJoining, policy.probationPeriodMonths);
 
-    // ── Probation check ──
-    if (inProbation && !policy.probationLeaveAllowed && leaveType !== LeaveType.LOP) {
-      throw ApiError.badRequest(
-        'Paid leave is not available during probation. Your leave request will be treated as Loss of Pay. Please apply as LOP.',
-        'LEAVE_PROBATION_NO_LEAVE',
-      );
-    }
-
-    // ── Half-day check ──
     if (requestMode === RequestMode.HALF_DAY && !policy.allowHalfDayLeave) {
       throw ApiError.badRequest('Half-day leave is not allowed', 'LEAVE_HALF_DAY_NOT_ALLOWED');
     }
-
-    // ── Permission check ──
     if (requestMode === RequestMode.PERMISSION) {
       if (!policy.allowPermissionHours) {
         throw ApiError.badRequest('Permission hours are not allowed', 'LEAVE_PERMISSION_NOT_ALLOWED');
       }
       if (!input.fromTime || !input.toTime || !input.date) {
-        throw ApiError.badRequest('Permission requires date, fromTime and toTime', 'LEAVE_PERMISSION_MISSING_FIELDS');
+        throw ApiError.badRequest(
+          'Permission requires date, fromTime and toTime',
+          'LEAVE_PERMISSION_MISSING_FIELDS',
+        );
       }
     }
 
-    // ── Calculate totals ──
     let totalDays: number | null = null;
     let totalHours: number | null = null;
     let checkStartDate: string;
@@ -305,7 +361,10 @@ export class LeaveService {
 
     if (requestMode === RequestMode.FULL_DAY) {
       if (!input.startDate || !input.endDate) {
-        throw ApiError.badRequest('Full day leave requires startDate and endDate', 'LEAVE_DATES_REQUIRED');
+        throw ApiError.badRequest(
+          'Full day leave requires startDate and endDate',
+          'LEAVE_DATES_REQUIRED',
+        );
       }
       if (input.startDate > input.endDate) {
         throw ApiError.badRequest('End date cannot be before start date', 'LEAVE_INVALID_DATE_RANGE');
@@ -321,16 +380,15 @@ export class LeaveService {
       checkStartDate = input.date;
       checkEndDate = input.date;
     } else {
-      // PERMISSION
       totalHours = this.calculatePermissionHours(input.fromTime!, input.toTime!);
       if (totalHours <= 0) {
         throw ApiError.badRequest('Invalid permission time range', 'LEAVE_INVALID_PERMISSION_TIME');
       }
-
-      // Check monthly limit
-      const now = new Date();
+      const permissionDate = new Date(`${input.date!}T00:00:00`);
       const permissions = await this.leaveRepo.findPermissionsByEmployeeAndMonth(
-        userId, now.getFullYear(), now.getMonth() + 1,
+        userId,
+        permissionDate.getFullYear(),
+        permissionDate.getMonth() + 1,
       );
       const usedHours = permissions.reduce((s, p) => s + Number(p.totalHours ?? 0), 0);
       if (usedHours + totalHours > Number(policy.maxPermissionHoursPerMonth)) {
@@ -343,8 +401,49 @@ export class LeaveService {
       checkEndDate = input.date!;
     }
 
-    // ── Balance check (for paid leave types) ──
-    if (leaveType !== LeaveType.LOP && leaveType !== LeaveType.PERMISSION && totalDays) {
+    if (checkStartDate < profile.dateOfJoining) {
+      throw ApiError.badRequest(
+        'Leave cannot be applied for dates before joining date',
+        'LEAVE_BEFORE_JOINING_DATE',
+      );
+    }
+
+    const settings = await this.settingsRepo.getSettings();
+    const datesToValidate = this.listDatesInRange(checkStartDate, checkEndDate);
+    const holidayRows = await Promise.all(
+      datesToValidate.map((date) => this.settingsRepo.findHolidayByDate(date)),
+    );
+    const holidayHit = holidayRows.find((row) => Boolean(row));
+    if (holidayHit) {
+      throw ApiError.badRequest(
+        `Leave cannot be applied on holiday (${holidayHit.name} - ${holidayHit.date})`,
+        'LEAVE_HOLIDAY_NOT_ALLOWED',
+      );
+    }
+    if (
+      settings &&
+      datesToValidate.some((date) =>
+        this.isWeeklyOffDate(date, settings.weekOffDays, settings.alternateSaturdayOffRule),
+      )
+    ) {
+      throw ApiError.badRequest(
+        'Leave cannot be applied on configured weekly-off days',
+        'LEAVE_WEEKLY_OFF_NOT_ALLOWED',
+      );
+    }
+
+    const probationForcesLop =
+      inProbation &&
+      !policy.probationLeaveAllowed &&
+      leaveType !== LeaveType.LOP &&
+      leaveType !== LeaveType.PERMISSION;
+
+    if (
+      !probationForcesLop &&
+      leaveType !== LeaveType.LOP &&
+      leaveType !== LeaveType.PERMISSION &&
+      totalDays
+    ) {
       const summary = await this.getEmployeeSummary(userId);
       const balanceKey = leaveType.toLowerCase() as 'cl' | 'sl' | 'el';
       const available = summary.balance[balanceKey] ?? 0;
@@ -356,7 +455,6 @@ export class LeaveService {
       }
     }
 
-    // ── Overlap check ──
     const overlapping = await this.leaveRepo.findOverlapping(userId, checkStartDate, checkEndDate);
     if (overlapping.length > 0) {
       throw ApiError.conflict(
@@ -365,7 +463,11 @@ export class LeaveService {
       );
     }
 
-    // ── Build policy snapshot ──
+    const suggestedLeaveType = probationForcesLop ? LeaveType.LOP : leaveType;
+    const treatmentNote = probationForcesLop
+      ? 'Employee is in probation and paid leave is disabled by policy. Suggested treatment is LOP unless admin overrides.'
+      : null;
+
     const yearsOfService = this.getYearsOfService(profile.dateOfJoining);
     const slab = this.getApplicableSlab(policy.slabs ?? [], yearsOfService);
     const policySnapshot = {
@@ -373,15 +475,20 @@ export class LeaveService {
       probationLeaveAllowed: policy.probationLeaveAllowed,
       inProbation,
       yearsOfService,
+      suggestedLeaveType,
+      treatmentNote,
       slab: slab
         ? { cl: slab.casualLeavePerYear, sl: slab.sickLeavePerYear, el: slab.earnedLeavePerYear }
         : null,
     };
 
-    // ── Create request ──
     const request = await this.leaveRepo.createRequest({
       employeeId: userId,
       leaveType,
+      approvedLeaveType: null,
+      finalAttendanceCode: null,
+      suggestedLeaveType,
+      treatmentNote,
       requestMode,
       startDate: requestMode === RequestMode.FULL_DAY ? input.startDate! : null,
       endDate: requestMode === RequestMode.FULL_DAY ? input.endDate! : null,
@@ -396,7 +503,6 @@ export class LeaveService {
       policySnapshot,
     });
 
-    // ── Send emails ──
     this.sendLeaveAppliedEmails(profile.user, request).catch((err) =>
       console.error('Failed to send leave applied email', (err as Error).message),
     );
@@ -471,11 +577,20 @@ export class LeaveService {
     // Apply search filter client-side
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      return enriched.filter(
+      const filtered = enriched.filter(
         (r) =>
           r.employeeName?.toLowerCase().includes(search) ||
           r.employeeCode?.toLowerCase().includes(search),
       );
+      return {
+        requests: filtered,
+        summary: {
+          total: filtered.length,
+          pending: filtered.filter((r) => r.status === LeaveStatus.PENDING).length,
+          approved: filtered.filter((r) => r.status === LeaveStatus.APPROVED).length,
+          rejected: filtered.filter((r) => r.status === LeaveStatus.REJECTED).length,
+        },
+      };
     }
 
     // Count summary
@@ -497,22 +612,96 @@ export class LeaveService {
     return this.isInProbation(profile.dateOfJoining, policy.probationPeriodMonths);
   }
 
+
+  private isPaidLeaveType(type: LeaveType): boolean {
+    return type === LeaveType.CL || type === LeaveType.SL || type === LeaveType.EL;
+  }
+
+  private async resolveFinalApprovalLeaveType(
+    request: LeaveRequest,
+    overrideLeaveType?: LeaveType,
+  ): Promise<LeaveType> {
+    if (overrideLeaveType) return overrideLeaveType;
+    if (request.requestMode === RequestMode.PERMISSION || request.leaveType === LeaveType.PERMISSION) {
+      return LeaveType.PERMISSION;
+    }
+
+    const profile = await this.employeeRepo.findByUserId(request.employeeId);
+    const policy = await this.leaveRepo.getPolicy();
+    if (!profile || !policy) {
+      return request.suggestedLeaveType ?? request.leaveType;
+    }
+
+    const inProbation = this.isInProbation(profile.dateOfJoining, policy.probationPeriodMonths);
+    if (inProbation && !policy.probationLeaveAllowed && request.leaveType !== LeaveType.LOP) {
+      return LeaveType.LOP;
+    }
+    return request.leaveType;
+  }
+
+  private async validateBalanceForApprovedTreatment(
+    request: LeaveRequest,
+    finalLeaveType: LeaveType,
+  ): Promise<void> {
+    if (!this.isPaidLeaveType(finalLeaveType) || !request.totalDays) return;
+    const summary = await this.getEmployeeSummary(request.employeeId);
+    const balanceKey = finalLeaveType.toLowerCase() as 'cl' | 'sl' | 'el';
+    const available = summary.balance[balanceKey] ?? 0;
+    if (Number(request.totalDays) > available) {
+      throw ApiError.badRequest(
+        `Insufficient ${finalLeaveType} balance for approval. Available: ${available}, Requested: ${Number(request.totalDays)}`,
+        'LEAVE_INSUFFICIENT_BALANCE_APPROVAL',
+      );
+    }
+  }
+
+  private async syncAttendanceForLeaveRequest(request: LeaveRequest) {
+    const { startDate, endDate } = this.getRequestRange(request);
+    await this.attendanceService.recomputeEmployeeDateRange(request.employeeId, startDate, endDate);
+  }
+
   // ══════════════════════════════════════════════════════
   //  Admin: Approve / Reject / Override
   // ══════════════════════════════════════════════════════
 
-  async approveRequest(requestId: string, adminId: string, remarks?: string) {
+  async approveRequest(
+    requestId: string,
+    adminId: string,
+    remarks?: string,
+    approvedLeaveTypeInput?: string,
+  ) {
     const request = await this.leaveRepo.findRequestById(requestId);
     if (!request) throw ApiError.notFound('Leave request not found', 'LEAVE_NOT_FOUND');
     if (request.status !== LeaveStatus.PENDING) {
       throw ApiError.badRequest('Only pending requests can be approved', 'LEAVE_NOT_PENDING');
     }
 
+    const approvedLeaveType = await this.resolveFinalApprovalLeaveType(
+      request,
+      approvedLeaveTypeInput as LeaveType | undefined,
+    );
+    if (request.requestMode !== RequestMode.PERMISSION && approvedLeaveType === LeaveType.PERMISSION) {
+      throw ApiError.badRequest(
+        'Permission treatment can only be used for permission requests',
+        'LEAVE_INVALID_FINAL_TREATMENT',
+      );
+    }
+    if (request.requestMode === RequestMode.PERMISSION && approvedLeaveType !== LeaveType.PERMISSION) {
+      throw ApiError.badRequest(
+        'Permission requests can only be approved as permission',
+        'LEAVE_INVALID_FINAL_TREATMENT',
+      );
+    }
+    await this.validateBalanceForApprovedTreatment(request, approvedLeaveType);
+
     request.status = LeaveStatus.APPROVED;
+    request.approvedLeaveType = approvedLeaveType;
+    request.finalAttendanceCode = approvedLeaveType;
     request.approvedBy = adminId;
     request.approvedAt = new Date();
     if (remarks) request.adminRemarks = remarks;
     await this.leaveRepo.saveRequest(request);
+    await this.syncAttendanceForLeaveRequest(request);
 
     // Send email
     const profile = await this.employeeRepo.findByUserId(request.employeeId);
@@ -533,10 +722,13 @@ export class LeaveService {
     }
 
     request.status = LeaveStatus.REJECTED;
+    request.approvedLeaveType = null;
+    request.finalAttendanceCode = null;
     request.approvedBy = adminId;
     request.approvedAt = new Date();
     if (remarks) request.adminRemarks = remarks;
     await this.leaveRepo.saveRequest(request);
+    await this.syncAttendanceForLeaveRequest(request);
 
     const profile = await this.employeeRepo.findByUserId(request.employeeId);
     if (profile?.user) {
@@ -551,17 +743,51 @@ export class LeaveService {
   async overrideRequest(
     requestId: string,
     adminId: string,
-    data: { status: string; remarks?: string; leaveType?: string },
+    data: { status: string; remarks?: string; leaveType?: string; approvedLeaveType?: string },
   ) {
     const request = await this.leaveRepo.findRequestById(requestId);
     if (!request) throw ApiError.notFound('Leave request not found', 'LEAVE_NOT_FOUND');
 
     request.status = data.status as LeaveStatus;
-    request.approvedBy = adminId;
-    request.approvedAt = new Date();
+    request.approvedBy = request.status === LeaveStatus.PENDING ? null : adminId;
+    request.approvedAt = request.status === LeaveStatus.PENDING ? null : new Date();
     if (data.remarks) request.adminRemarks = data.remarks;
-    if (data.leaveType) request.leaveType = data.leaveType as LeaveType;
+    const overrideTypeInput = (data.approvedLeaveType ?? data.leaveType) as LeaveType | undefined;
+
+    if (request.status === LeaveStatus.APPROVED) {
+      const approvedLeaveType = await this.resolveFinalApprovalLeaveType(request, overrideTypeInput);
+      if (request.requestMode !== RequestMode.PERMISSION && approvedLeaveType === LeaveType.PERMISSION) {
+        throw ApiError.badRequest(
+          'Permission treatment can only be used for permission requests',
+          'LEAVE_INVALID_FINAL_TREATMENT',
+        );
+      }
+      if (request.requestMode === RequestMode.PERMISSION && approvedLeaveType !== LeaveType.PERMISSION) {
+        throw ApiError.badRequest(
+          'Permission requests can only be approved as permission',
+          'LEAVE_INVALID_FINAL_TREATMENT',
+        );
+      }
+      await this.validateBalanceForApprovedTreatment(request, approvedLeaveType);
+      request.approvedLeaveType = approvedLeaveType;
+      request.finalAttendanceCode = approvedLeaveType;
+    } else {
+      request.approvedLeaveType = null;
+      request.finalAttendanceCode = null;
+    }
+
     await this.leaveRepo.saveRequest(request);
+    await this.syncAttendanceForLeaveRequest(request);
+
+    if (request.status === LeaveStatus.APPROVED || request.status === LeaveStatus.REJECTED) {
+      const profile = await this.employeeRepo.findByUserId(request.employeeId);
+      if (profile?.user) {
+        const action = request.status === LeaveStatus.APPROVED ? 'approved' : 'rejected';
+        this.sendLeaveStatusEmail(profile.user, request, action).catch((err) =>
+          console.error('Failed to send override status email', (err as Error).message),
+        );
+      }
+    }
 
     return this.formatRequest(request);
   }
@@ -582,6 +808,8 @@ export class LeaveService {
         allowHalfDayLeave: policy.allowHalfDayLeave,
         allowPermissionHours: policy.allowPermissionHours,
         maxPermissionHoursPerMonth: Number(policy.maxPermissionHoursPerMonth),
+        maxPermissionRequestsPerMonth: Number(policy.maxPermissionRequestsPerMonth),
+        maxRegularizationsPerMonth: Number(policy.maxRegularizationsPerMonth),
       },
       slabs: (policy.slabs ?? [])
         .sort((a, b) => a.minYearsOfService - b.minYearsOfService)
@@ -602,6 +830,8 @@ export class LeaveService {
     allowHalfDayLeave?: boolean;
     allowPermissionHours?: boolean;
     maxPermissionHoursPerMonth?: number;
+    maxPermissionRequestsPerMonth?: number;
+    maxRegularizationsPerMonth?: number;
     slabs?: Array<{
       minYearsOfService: number;
       maxYearsOfService: number | null;
@@ -651,10 +881,13 @@ export class LeaveService {
       {
         firstName: user.firstName,
         leaveType: request.leaveType,
+        requestedLeaveType: request.leaveType,
+        suggestedLeaveType: request.suggestedLeaveType ?? request.leaveType,
         requestMode: request.requestMode.replace('_', ' '),
         dateRange,
         daysOrHours,
         reason: request.reason,
+        treatmentNote: request.treatmentNote || 'Request will follow organization leave policy during approval.',
         status: 'PENDING',
         year: new Date().getFullYear().toString(),
       },
@@ -674,10 +907,14 @@ export class LeaveService {
       {
         firstName: user.firstName,
         leaveType: request.leaveType,
+        requestedLeaveType: request.leaveType,
+        approvedLeaveType: request.approvedLeaveType ?? '-',
+        finalAttendanceCode: request.finalAttendanceCode ?? '-',
         requestMode: request.requestMode.replace('_', ' '),
         dateRange,
         daysOrHours,
         status: action.toUpperCase(),
+        statusClass: action,
         adminRemarks: request.adminRemarks || 'No remarks',
         year: new Date().getFullYear().toString(),
       },
@@ -707,6 +944,11 @@ export class LeaveService {
       employeeName: user ? `${user.firstName} ${user.lastName}` : null,
       employeeCode: user?.empId ?? null,
       leaveType: r.leaveType,
+      requestedLeaveType: r.leaveType,
+      approvedLeaveType: r.approvedLeaveType,
+      finalAttendanceCode: r.finalAttendanceCode,
+      suggestedLeaveType: r.suggestedLeaveType,
+      treatmentNote: r.treatmentNote,
       requestMode: r.requestMode,
       startDate: r.startDate,
       endDate: r.endDate,

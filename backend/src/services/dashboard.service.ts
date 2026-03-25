@@ -1,38 +1,18 @@
 import { AppDataSource } from '../config/database';
 import { AttendanceRepository } from '../repositories/attendance.repository';
-import { EmployeeRepository } from '../repositories/employee.repository';
 import { LeaveRepository } from '../repositories/leave.repository';
 import { PayrollRepository } from '../repositories/payroll.repository';
 import { SettingsRepository } from '../repositories/settings.repository';
-import { PersonalDetailsRepository } from '../repositories/personalDetails.repository';
-import { LeaveStatus, LeaveType } from '../entities/LeaveRequest.entity';
+import { LeaveStatus } from '../entities/LeaveRequest.entity';
 import { PayrollRecordStatus } from '../entities/PayrollRecord.entity';
-import { User, UserRole } from '../entities/User.entity';
+import { UserRole } from '../entities/User.entity';
 import { EmployeeProfile } from '../entities/EmployeeProfile.entity';
 import { PersonalDetails } from '../entities/PersonalDetails.entity';
 
 const attendanceRepo = new AttendanceRepository();
-const employeeRepo = new EmployeeRepository();
 const leaveRepo = new LeaveRepository();
 const payrollRepo = new PayrollRepository();
 const settingsRepo = new SettingsRepository();
-
-// Leave type labels for chart
-const LEAVE_TYPE_LABELS: Record<string, string> = {
-  CL: 'Casual Leave',
-  SL: 'Sick Leave',
-  EL: 'Earned Leave',
-  LOP: 'Loss of Pay',
-  PERMISSION: 'Permission',
-};
-
-const LEAVE_TYPE_COLORS: Record<string, string> = {
-  CL: '#8B5CF6',
-  SL: '#6D28D9',
-  EL: '#A785FA',
-  LOP: '#64748B',
-  PERMISSION: '#C4ADFC',
-};
 
 export class DashboardService {
   async getSummary() {
@@ -41,88 +21,170 @@ export class DashboardService {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
 
-    // Run all independent queries in parallel
     const [
       activeEmployees,
       todaySummary,
       pendingLeaveCount,
-      openRequestCount,
       payrollRecords,
+      payrollRuns,
       holidays,
       todayAttendance,
       departmentHeadcount,
-      leaveDistribution,
       attendanceTrend,
     ] = await Promise.all([
       attendanceRepo.findAllActiveEmployees(),
       attendanceRepo.getDateSummary(today),
       leaveRepo.countByStatus(LeaveStatus.PENDING),
-      leaveRepo.countByStatus(LeaveStatus.PENDING), // same as pending leaves for "open requests"
       payrollRepo.findRecords({ year: currentYear, month: currentMonth }),
+      payrollRepo.findRuns({ year: currentYear, month: currentMonth }),
       settingsRepo.findAllHolidays(),
       attendanceRepo.findByDateFiltered(today),
       this.getDepartmentHeadcount(),
-      this.getLeaveDistribution(currentYear),
       this.getAttendanceTrend(14),
     ]);
 
-    // ── KPI Stats ──
     const totalEmployees = activeEmployees.length;
     const presentToday = todaySummary.PRESENT + todaySummary.LATE;
-    const presentPct = totalEmployees > 0
-      ? ((presentToday / totalEmployees) * 100).toFixed(1) + '%'
-      : '0%';
+    const presentPct = totalEmployees > 0 ? (presentToday / totalEmployees) * 100 : 0;
     const lateArrivals = todaySummary.LATE;
 
-    // Payroll summary for current month — query actual PayrollRecord rows
-    const generatedRecords = payrollRecords.filter(
-      r => r.status === PayrollRecordStatus.GENERATED || r.status === PayrollRecordStatus.EMAILED,
+    const completedRecords = payrollRecords.filter(
+      (r) => r.status === PayrollRecordStatus.GENERATED || r.status === PayrollRecordStatus.EMAILED,
     );
-    const totalPayout = generatedRecords.reduce((sum, r) => sum + Number(r.netPay), 0);
+    const failedRecords = payrollRecords.filter((r) => r.status === PayrollRecordStatus.FAILED);
+    const draftRecords = payrollRecords.filter((r) => r.status === PayrollRecordStatus.DRAFT);
+    const emailedRecords = payrollRecords.filter((r) => r.status === PayrollRecordStatus.EMAILED);
+    const latestPayrollRun = payrollRuns[0] ?? null;
+    const totalPayout = completedRecords.reduce((sum, r) => sum + Number(r.netPay), 0);
+
+    let payrollStatus: 'NOT_RUN' | 'PENDING' | 'PARTIAL' | 'COMPLETED' = 'NOT_RUN';
+    if (completedRecords.length === 0 && payrollRecords.length === 0 && !latestPayrollRun) {
+      payrollStatus = 'NOT_RUN';
+    } else if (completedRecords.length === 0) {
+      payrollStatus = 'PENDING';
+    } else if (totalEmployees > 0 && completedRecords.length < totalEmployees) {
+      payrollStatus = 'PARTIAL';
+    } else {
+      payrollStatus = 'COMPLETED';
+    }
+
+    const runProcessedCount =
+      latestPayrollRun && latestPayrollRun.processedCount > 0 ? latestPayrollRun.processedCount : 0;
+    const progressNumerator = runProcessedCount > 0 ? runProcessedCount : completedRecords.length;
+    const payrollProgressPercent =
+      totalEmployees > 0 && progressNumerator > 0
+        ? Math.min(100, Math.round((progressNumerator / totalEmployees) * 100))
+        : null;
+
+    const payrollStatusLabelMap: Record<typeof payrollStatus, string> = {
+      NOT_RUN: 'Not Run',
+      PENDING: 'Pending',
+      PARTIAL: 'Partially Processed',
+      COMPLETED: 'Completed',
+    };
+
     const monthLabel = now.toLocaleString('en', { month: 'short' });
+    const payrollMonth = `${monthLabel} ${currentYear}`;
 
     const payrollProcessed = {
+      status: payrollStatus,
+      statusLabel: payrollStatusLabelMap[payrollStatus],
+      progressPercent:
+        payrollStatus === 'PARTIAL' || payrollStatus === 'COMPLETED' ? payrollProgressPercent : null,
+      expectedEmployees: totalEmployees,
       totalRecords: payrollRecords.length,
-      generatedCount: generatedRecords.length,
+      generatedCount: completedRecords.length,
+      failedCount: failedRecords.length,
+      draftCount: draftRecords.length,
+      emailedCount: emailedRecords.length,
       totalPayout,
       month: monthLabel,
       year: currentYear,
-      isRun: generatedRecords.length > 0,
+      isRun: payrollStatus !== 'NOT_RUN',
+      latestRunStatus: latestPayrollRun?.status ?? null,
     };
 
-    const payrollProcessedLabel = payrollProcessed.isRun
-      ? `\u20B9${totalPayout.toLocaleString('en-IN')}`
-      : 'Not run';
-    const payrollMonth = `${monthLabel} ${currentYear}`;
+    const payrollMeta =
+      totalEmployees > 0
+        ? `${payrollProcessed.generatedCount}/${totalEmployees} employees`
+        : 'No active employees';
 
     const kpiStats = [
-      { label: 'Total Employees', value: String(totalEmployees), change: '', changeType: 'neutral' as const, icon: 'Users' },
-      { label: 'Present Today', value: String(presentToday), change: presentPct, changeType: 'up' as const, icon: 'UserCheck' },
-      { label: 'Pending Leaves', value: String(pendingLeaveCount), change: '', changeType: pendingLeaveCount > 0 ? 'down' as const : 'neutral' as const, icon: 'CalendarOff' },
-      { label: 'Payroll Processed', value: payrollProcessedLabel, change: payrollMonth, changeType: 'neutral' as const, icon: 'Wallet' },
-      { label: 'Late Arrivals', value: String(lateArrivals), change: '', changeType: lateArrivals > 0 ? 'down' as const : 'up' as const, icon: 'Clock' },
-      { label: 'Open Requests', value: String(openRequestCount), change: '', changeType: openRequestCount > 0 ? 'down' as const : 'neutral' as const, icon: 'FileText' },
+      {
+        label: 'Total Employees',
+        value: String(totalEmployees),
+        change: `${departmentHeadcount.length} departments`,
+        changeType: 'neutral' as const,
+        icon: 'Users',
+        progress: null,
+        caption: 'Active workforce',
+      },
+      {
+        label: 'Present Today',
+        value: String(presentToday),
+        change: `${presentPct.toFixed(1)}% attendance`,
+        changeType: presentToday > 0 ? ('up' as const) : ('neutral' as const),
+        icon: 'UserCheck',
+        progress: totalEmployees > 0 ? Math.round(presentPct) : null,
+        caption: `${todaySummary.LATE} late arrivals`,
+      },
+      {
+        label: 'Payroll Processed',
+        value: payrollProcessed.statusLabel,
+        change: payrollMeta,
+        changeType:
+          payrollStatus === 'COMPLETED'
+            ? ('up' as const)
+            : payrollStatus === 'NOT_RUN'
+              ? ('neutral' as const)
+              : ('down' as const),
+        icon: 'Wallet',
+        progress: payrollProcessed.progressPercent,
+        caption: payrollMonth,
+      },
+      {
+        label: 'Late Arrivals',
+        value: String(lateArrivals),
+        change:
+          totalEmployees > 0 ? `${((lateArrivals / totalEmployees) * 100).toFixed(1)}% of workforce` : '',
+        changeType: lateArrivals > 0 ? ('down' as const) : ('up' as const),
+        icon: 'Clock',
+        progress: null,
+        caption: today,
+      },
     ];
 
-    // ── Recent Attendance (today, max 10) ──
-    const recentAttendance = todayAttendance.slice(0, 10).map(a => {
+    const attendanceBreakdown = {
+      present: todaySummary.PRESENT + todaySummary.LATE,
+      halfDay: todaySummary.HALF_DAY,
+      leave: todaySummary.LEAVE,
+      lop: todaySummary.LOP,
+      weekOff: todaySummary.WEEK_OFF,
+      holiday: todaySummary.HOLIDAY,
+      absent: todaySummary.ABSENT,
+      late: todaySummary.LATE,
+      total: Object.values(todaySummary).reduce((sum, value) => sum + Number(value || 0), 0),
+      date: today,
+    };
+
+    const recentAttendance = todayAttendance.slice(0, 10).map((a) => {
       const emp = a.employee;
       const checkIn = a.firstCheckInAt
         ? new Date(a.firstCheckInAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-        : '—';
+        : '-';
       const checkOut = a.lastCheckOutAt
         ? new Date(a.lastCheckOutAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-        : '—';
+        : '-';
 
-      // Map backend status to frontend label
       const statusMap: Record<string, string> = {
         PRESENT: 'Present',
         LATE: 'Late',
         ABSENT: 'Absent',
         HALF_DAY: 'Half Day',
-        LEAVE: 'Absent',
-        HOLIDAY: 'Present',
-        WEEK_OFF: 'Absent',
+        LEAVE: 'Leave',
+        HOLIDAY: 'Holiday',
+        WEEK_OFF: 'Week Off',
+        LOP: 'LOP',
         NOT_STARTED: 'Absent',
         MISSED_CHECK_IN: 'Absent',
       };
@@ -130,7 +192,7 @@ export class DashboardService {
       return {
         id: emp?.empId ?? a.employeeId.slice(0, 8),
         name: emp ? `${emp.firstName} ${emp.lastName}` : 'Unknown',
-        department: '', // will be filled below
+        department: '',
         date: new Date(today).toLocaleDateString('en', { month: 'short', day: '2-digit' }),
         checkIn,
         checkOut,
@@ -138,7 +200,6 @@ export class DashboardService {
       };
     });
 
-    // Fill department info from employee profiles
     if (recentAttendance.length > 0) {
       const profileRepo = AppDataSource.getRepository(EmployeeProfile);
       const profiles = await profileRepo.find({ relations: ['user'] });
@@ -147,9 +208,8 @@ export class DashboardService {
         profileMap.set(p.userId, p);
       }
       for (const rec of recentAttendance) {
-        // Find profile by matching attendance employeeId to userId
-        const att = todayAttendance.find(a =>
-          (a.employee?.empId === rec.id) || (a.employeeId.slice(0, 8) === rec.id)
+        const att = todayAttendance.find(
+          (a) => a.employee?.empId === rec.id || a.employeeId.slice(0, 8) === rec.id,
         );
         if (att) {
           const profile = profileMap.get(att.employeeId);
@@ -158,12 +218,11 @@ export class DashboardService {
       }
     }
 
-    // ── Upcoming Holidays (from today onward) ──
     const upcomingHolidays = holidays
-      .filter(h => h.date >= today)
+      .filter((h) => h.date >= today)
       .slice(0, 4)
-      .map(h => {
-        const d = new Date(h.date + 'T00:00:00');
+      .map((h) => {
+        const d = new Date(`${h.date}T00:00:00`);
         return {
           name: h.name,
           date: d.toLocaleDateString('en', { month: 'short', day: '2-digit' }),
@@ -171,9 +230,8 @@ export class DashboardService {
         };
       });
 
-    // ── Announcements (static for now, can be entity-driven later) ──
-    const announcements = upcomingHolidays.slice(0, 2).map(h => ({
-      title: `Holiday — ${h.name}`,
+    const announcements = upcomingHolidays.slice(0, 2).map((h) => ({
+      title: `Holiday - ${h.name}`,
       date: h.date,
       type: 'holiday' as const,
     }));
@@ -183,14 +241,13 @@ export class DashboardService {
       payrollProcessed,
       attendanceTrend,
       departmentData: departmentHeadcount,
-      leaveTypesData: leaveDistribution,
+      attendanceBreakdown,
+      pendingLeaveCount,
       recentAttendance,
       announcements,
       upcomingHolidays,
     };
   }
-
-  // ── Helpers ──
 
   private async getAttendanceTrend(days: number) {
     const results: { date: string; present: number; absent: number; late: number }[] = [];
@@ -226,45 +283,16 @@ export class DashboardService {
       .orderBy('count', 'DESC')
       .getRawMany();
 
-    return rows.map(r => ({
+    return rows.map((r) => ({
       department: r.department,
       count: parseInt(r.count, 10),
     }));
   }
 
-  private async getLeaveDistribution(year: number) {
-    const repo = AppDataSource.getRepository(
-      (await import('../entities/LeaveRequest.entity')).LeaveRequest,
-    );
-
-    const rows: { leaveType: string; count: string }[] = await repo
-      .createQueryBuilder('lr')
-      .select('lr.leaveType', 'leaveType')
-      .addSelect('COUNT(*)', 'count')
-      .where('lr.status IN (:...statuses)', {
-        statuses: [LeaveStatus.APPROVED, LeaveStatus.PENDING],
-      })
-      .andWhere(
-        '(EXTRACT(YEAR FROM lr.startDate) = :year OR EXTRACT(YEAR FROM lr.date) = :year)',
-        { year },
-      )
-      .groupBy('lr.leaveType')
-      .getRawMany();
-
-    return rows.map(r => ({
-      name: LEAVE_TYPE_LABELS[r.leaveType] ?? r.leaveType,
-      value: parseInt(r.count, 10),
-      color: LEAVE_TYPE_COLORS[r.leaveType] ?? '#94A3B8',
-    }));
-  }
-
-  // ── Public: Upcoming Birthdays ──
-
   async getUpcomingBirthdays(days = 30) {
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
 
-    // Get all personal details with user + profile
     const personalRepo = AppDataSource.getRepository(PersonalDetails);
     const records = await personalRepo
       .createQueryBuilder('pd')
@@ -294,16 +322,15 @@ export class DashboardService {
       const raw = records.raw[i];
       if (!pd.dateOfBirth) continue;
 
-      const dob = new Date(pd.dateOfBirth + 'T00:00:00');
+      const dob = new Date(`${pd.dateOfBirth}T00:00:00`);
       let bday = new Date(currentYear, dob.getMonth(), dob.getDate());
 
-      // If birthday has already passed this year, check next year
       if (bday.toISOString().slice(0, 10) < todayStr) {
         bday = new Date(currentYear + 1, dob.getMonth(), dob.getDate());
       }
 
       const bdayStr = bday.toISOString().slice(0, 10);
-      const diffMs = bday.getTime() - new Date(todayStr + 'T00:00:00').getTime();
+      const diffMs = bday.getTime() - new Date(`${todayStr}T00:00:00`).getTime();
       const daysLeft = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
       if (daysLeft > days) continue;
@@ -324,18 +351,16 @@ export class DashboardService {
     return results;
   }
 
-  // ── Public: Upcoming Holidays ──
-
   async getUpcomingHolidays(limit = 4) {
     const today = new Date().toISOString().slice(0, 10);
     const holidays = await settingsRepo.findAllHolidays();
 
     return holidays
-      .filter(h => h.date >= today)
+      .filter((h) => h.date >= today)
       .slice(0, limit)
-      .map(h => {
-        const d = new Date(h.date + 'T00:00:00');
-        const diffMs = d.getTime() - new Date(today + 'T00:00:00').getTime();
+      .map((h) => {
+        const d = new Date(`${h.date}T00:00:00`);
+        const diffMs = d.getTime() - new Date(`${today}T00:00:00`).getTime();
         const daysLeft = Math.round(diffMs / (1000 * 60 * 60 * 24));
         return {
           id: h.id,

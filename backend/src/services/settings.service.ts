@@ -14,6 +14,8 @@ interface UpdateSettingsInput {
   officeLatitude?: number | null;
   officeLongitude?: number | null;
   officeRadiusMeters?: number | null;
+  geoFenceRequired?: boolean;
+  allowRemoteAttendance?: boolean;
 }
 
 interface HolidayInput {
@@ -37,6 +39,47 @@ export class SettingsService {
   }
 
   async updateSettings(input: UpdateSettingsInput) {
+    const existing = await this.repo.getSettings();
+    const merged = {
+      ...(existing ?? {}),
+      ...input,
+    } as Partial<UpdateSettingsInput>;
+
+    const isAccessUpdate =
+      Object.prototype.hasOwnProperty.call(input, 'officeLatitude') ||
+      Object.prototype.hasOwnProperty.call(input, 'officeLongitude') ||
+      Object.prototype.hasOwnProperty.call(input, 'officeRadiusMeters') ||
+      Object.prototype.hasOwnProperty.call(input, 'geoFenceRequired') ||
+      Object.prototype.hasOwnProperty.call(input, 'allowRemoteAttendance');
+
+    if (isAccessUpdate) {
+      const geoFenceRequired = Boolean(merged.geoFenceRequired);
+      const allowRemoteAttendance = Boolean(merged.allowRemoteAttendance);
+
+      if (!geoFenceRequired && !allowRemoteAttendance) {
+        throw ApiError.badRequest(
+          'At least one attendance access mode must be enabled (Geo-fence or Remote)',
+          'ATTENDANCE_ACCESS_MODE_REQUIRED',
+        );
+      }
+
+      if (geoFenceRequired) {
+        const hasValidLatitude =
+          merged.officeLatitude != null && Number.isFinite(Number(merged.officeLatitude));
+        const hasValidLongitude =
+          merged.officeLongitude != null && Number.isFinite(Number(merged.officeLongitude));
+        const hasValidRadius =
+          merged.officeRadiusMeters != null && Number(merged.officeRadiusMeters) > 0;
+
+        if (!hasValidLatitude || !hasValidLongitude || !hasValidRadius) {
+          throw ApiError.badRequest(
+            'Latitude, longitude, and radius are required when geo-fence is enabled',
+            'GEOFENCE_LOCATION_REQUIRED',
+          );
+        }
+      }
+    }
+
     const settings = await this.repo.upsertSettings(input as any);
     return this.formatSettings(settings);
   }
@@ -103,9 +146,11 @@ export class SettingsService {
       fullDayMinMinutes: s.fullDayMinMinutes,
       weekOffDays: s.weekOffDays,
       alternateSaturdayOffRule: s.alternateSaturdayOffRule,
-      officeLatitude: s.officeLatitude ? parseFloat(s.officeLatitude) : null,
-      officeLongitude: s.officeLongitude ? parseFloat(s.officeLongitude) : null,
+      officeLatitude: s.officeLatitude != null ? parseFloat(s.officeLatitude) : null,
+      officeLongitude: s.officeLongitude != null ? parseFloat(s.officeLongitude) : null,
       officeRadiusMeters: s.officeRadiusMeters,
+      geoFenceRequired: s.geoFenceRequired ?? true,
+      allowRemoteAttendance: s.allowRemoteAttendance ?? false,
       updatedAt: s.updatedAt,
     };
   }

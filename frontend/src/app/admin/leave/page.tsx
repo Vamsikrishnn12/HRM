@@ -76,6 +76,7 @@ export default function AdminLeavePage() {
   const [actionRemarks, setActionRemarks] = useState("");
   const [overrideStatus, setOverrideStatus] = useState<LeaveStatusType>("APPROVED");
   const [overrideType, setOverrideType] = useState<LeaveType>("CL");
+  const [approveType, setApproveType] = useState<LeaveType>("CL");
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchRequests = useCallback(async () => {
@@ -113,7 +114,9 @@ export default function AdminLeavePage() {
     setActionType(action);
     setActionRemarks("");
     setOverrideStatus("APPROVED");
-    setOverrideType(req.leaveType as LeaveType);
+    const defaultTreatment = (req.suggestedLeaveType ?? req.approvedLeaveType ?? req.leaveType) as LeaveType;
+    setOverrideType(defaultTreatment);
+    setApproveType(defaultTreatment);
     onOpen();
   };
 
@@ -122,14 +125,17 @@ export default function AdminLeavePage() {
     setActionLoading(true);
     try {
       if (actionType === "approve") {
-        await leaveApi.approveRequest(selectedReq.id, actionRemarks || undefined);
+        await leaveApi.approveRequest(selectedReq.id, {
+          remarks: actionRemarks || undefined,
+          approvedLeaveType: approveType,
+        });
       } else if (actionType === "reject") {
         await leaveApi.rejectRequest(selectedReq.id, actionRemarks || undefined);
       } else {
         await leaveApi.overrideRequest(selectedReq.id, {
           status: overrideStatus,
           remarks: actionRemarks || undefined,
-          leaveType: overrideType,
+          approvedLeaveType: overrideType,
         });
       }
       toast({
@@ -230,7 +236,7 @@ export default function AdminLeavePage() {
             <Thead>
               <Tr>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Employee</Th>
-                <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Type</Th>
+                <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Requested / Final</Th>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Mode</Th>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Date / Range</Th>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Days/Hrs</Th>
@@ -263,8 +269,11 @@ export default function AdminLeavePage() {
                       </Td>
                       <Td borderColor="surface.border">
                         <Badge px={2} py={0.5} borderRadius="full" bg="#EDE9F5" color="#7548b9" fontSize="xs" fontWeight="600">
-                          {req.leaveType}
+                          {req.requestedLeaveType}
                         </Badge>
+                        <Text fontSize="2xs" color="text.muted" mt={1}>
+                          Final: {req.approvedLeaveType ?? req.suggestedLeaveType ?? "-"}
+                        </Text>
                       </Td>
                       <Td fontSize="xs" color="text.body" borderColor="surface.border">
                         {req.requestMode.replace("_", " ")}
@@ -285,6 +294,11 @@ export default function AdminLeavePage() {
                       </Td>
                       <Td fontSize="xs" color="text.muted" borderColor="surface.border" maxW="160px">
                         <Text noOfLines={2}>{req.reason}</Text>
+                        {req.treatmentNote && (
+                          <Text noOfLines={2} mt={1} color="orange.700">
+                            {req.treatmentNote}
+                          </Text>
+                        )}
                       </Td>
                       <Td borderColor="surface.border">
                         {req.status === "PENDING" && (
@@ -350,14 +364,44 @@ export default function AdminLeavePage() {
                         value={overrideType}
                         onChange={(e) => setOverrideType(e.target.value as LeaveType)}
                       >
-                        <option value="CL">Casual Leave</option>
-                        <option value="SL">Sick Leave</option>
-                        <option value="EL">Earned Leave</option>
-                        <option value="LOP">Loss of Pay</option>
-                        <option value="PERMISSION">Permission</option>
+                        {selectedReq?.requestMode === "PERMISSION" ? (
+                          <option value="PERMISSION">Permission</option>
+                        ) : (
+                          <>
+                            <option value="CL">Casual Leave</option>
+                            <option value="SL">Sick Leave</option>
+                            <option value="EL">Earned Leave</option>
+                            <option value="LOP">Loss of Pay</option>
+                          </>
+                        )}
                       </Select>
                     </Box>
                   </>
+                )}
+
+                {actionType === "approve" && (
+                  <Box>
+                    <Text fontSize="sm" fontWeight="600" color="text.heading" mb={1}>Final Treatment</Text>
+                    <Select
+                      size="sm" borderRadius="lg" bg="surface.bg" border="1px solid" borderColor="surface.border" fontSize="sm"
+                      value={approveType}
+                      onChange={(e) => setApproveType(e.target.value as LeaveType)}
+                    >
+                      {selectedReq?.requestMode === "PERMISSION" ? (
+                        <option value="PERMISSION">Permission</option>
+                      ) : (
+                        <>
+                          <option value="CL">Casual Leave</option>
+                          <option value="SL">Sick Leave</option>
+                          <option value="EL">Earned Leave</option>
+                          <option value="LOP">Loss of Pay</option>
+                        </>
+                      )}
+                    </Select>
+                    {selectedReq?.treatmentNote && (
+                      <Text fontSize="xs" color="orange.700" mt={1}>{selectedReq.treatmentNote}</Text>
+                    )}
+                  </Box>
                 )}
 
                 <Box>

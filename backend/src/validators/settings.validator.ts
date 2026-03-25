@@ -23,6 +23,8 @@ export const updateSettingsSchema = z.object({
   officeLatitude: z.number().min(-90).max(90).nullable().optional(),
   officeLongitude: z.number().min(-180).max(180).nullable().optional(),
   officeRadiusMeters: z.number().int().positive().nullable().optional(),
+  geoFenceRequired: z.boolean().optional(),
+  allowRemoteAttendance: z.boolean().optional(),
 });
 
 export const createHolidaySchema = z.object({

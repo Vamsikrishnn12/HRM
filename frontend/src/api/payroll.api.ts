@@ -28,6 +28,14 @@ export interface PayrollPreview {
   presentDays: number;
   leaveDays: number;
   lopDays: number;
+  weekOffDays?: number;
+  holidayDays?: number;
+  totalWorkedMinutes?: number;
+  totalBreakMinutes?: number;
+  totalLateMinutes?: number;
+  permissionHours?: number;
+  permissionCount?: number;
+  regularizationCount?: number;
   bankAccount: string;
   uan: string;
   pfEmployeeContribution: number;
@@ -74,12 +82,23 @@ export interface PayrollRun {
   month: number;
   year: number;
   status: string;
+  runType?: "BULK_UPLOAD" | "SYSTEM_BULK";
   totalEmployees: number;
   successCount: number;
   failedCount: number;
+  skippedCount?: number;
+  processedCount?: number;
+  emailedCount?: number;
+  portalPublishedCount?: number;
+  errorSummary?: Array<{ employeeId?: string; employeeCode?: string; message: string }>;
+  resultSummary?: Record<string, unknown>;
   createdBy: string | null;
   completedAt: string | null;
   createdAt: string;
+}
+
+export interface PayrollRunDetail extends PayrollRun {
+  records: PayrollRecord[];
 }
 
 export interface ImportJobStatus {
@@ -103,6 +122,21 @@ export interface PayrollSummary {
   draft: number;
   failed: number;
   totalPayout: number;
+}
+
+export interface BulkGenerateResponse {
+  runId: string;
+  totalEmployees: number;
+  status: string;
+}
+
+export interface DispatchRunResponse {
+  runId: string;
+  totalRecords: number;
+  emailed: number;
+  portalPublished: number;
+  failed: number;
+  errors: Array<{ employeeId?: string; employeeCode?: string; message: string }>;
 }
 
 // ─── API ───
@@ -148,6 +182,20 @@ export const payrollApi = {
     return api.get<PayrollRun[]>(`${BASE}/runs${qs ? `?${qs}` : ""}`);
   },
 
+  runDetail: (runId: string) => api.get<PayrollRunDetail>(`${BASE}/runs/${runId}`),
+
+  bulkGenerate: (data: {
+    month: number;
+    year: number;
+    employeeIds?: string[];
+    overwriteExisting?: boolean;
+  }) => api.post<BulkGenerateResponse>(`${BASE}/runs/system-generate`, data),
+
+  dispatchRun: (
+    runId: string,
+    data: { sendEmail: boolean; publishToPortal: boolean; retryFailedOnly?: boolean },
+  ) => api.post<DispatchRunResponse>(`${BASE}/runs/${runId}/dispatch`, data),
+
   listRecords: (filters?: { month?: number; year?: number; status?: string; search?: string }) => {
     const params = new URLSearchParams();
     if (filters?.month) params.set("month", String(filters.month));
@@ -166,6 +214,18 @@ export const payrollApi = {
 
   downloadTemplateFile: () =>
     api.downloadBlob(`${BASE}/template`, 'payroll_template.xlsx'),
+
+  downloadAttendanceReport: (params: { employeeId: string; month: number; year: number }) =>
+    api.downloadBlob(
+      `${BASE}/reports/attendance?employeeId=${params.employeeId}&month=${params.month}&year=${params.year}`,
+      `attendance_report_${params.year}_${String(params.month).padStart(2, "0")}.xlsx`,
+    ),
+
+  downloadSalaryReport: (params: { month: number; year: number }) =>
+    api.downloadBlob(
+      `${BASE}/reports/salary?month=${params.month}&year=${params.year}`,
+      `salary_report_${params.year}_${String(params.month).padStart(2, "0")}.xlsx`,
+    ),
 
   downloadPayslipUrl: (id: string) =>
     `${API_BASE}${BASE}/records/${id}/download`,

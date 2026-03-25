@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { adminRoutes, employeeRoutes, type RouteItem } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebar } from "@/context/SidebarContext";
+import BrandMark from "@/components/ui/BrandMark";
 
 function NavItem({
   route,
@@ -209,41 +210,14 @@ function SidebarContent({
         borderColor="surface.border"
         flexShrink={0}
       >
-        {!collapsed && (
-          <Flex align="center" gap={2.5}>
-            <Flex
-              w={9}
-              h={9}
-              borderRadius="xl"
-              bgGradient="linear(135deg, #7548b9, #359de9)"
-              align="center"
-              justify="center"
-              shadow="soft"
-            >
-              <Text fontSize="sm" fontWeight="800" color="white">
-                HR
-              </Text>
-            </Flex>
-            <Text fontSize="lg" fontWeight="800" color="text.heading" letterSpacing="-0.02em">
-              HRMS
-            </Text>
-          </Flex>
-        )}
-        {collapsed && (
-          <Flex
-            w={9}
-            h={9}
-            borderRadius="xl"
-            bgGradient="linear(135deg, #7548b9, #359de9)"
-            align="center"
-            justify="center"
-            shadow="soft"
-          >
-            <Text fontSize="sm" fontWeight="800" color="white">
-              HR
-            </Text>
-          </Flex>
-        )}
+        <BrandMark
+          showName={!collapsed}
+          logoSize="36px"
+          nameFontSize="lg"
+          nameColor="text.heading"
+          logoRadius="xl"
+          logoShadow="soft"
+        />
       </Flex>
 
       {/* Collapse toggle (desktop only) */}

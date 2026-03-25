@@ -1,7 +1,7 @@
-import { Repository, Between, In } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Attendance, AttendanceStatus } from '../entities/Attendance.entity';
-import { AttendancePunch, PunchType } from '../entities/AttendancePunch.entity';
+import { AttendancePunch } from '../entities/AttendancePunch.entity';
 import { User, UserRole } from '../entities/User.entity';
 import { LeaveRequest, LeaveStatus, RequestMode } from '../entities/LeaveRequest.entity';
 
@@ -55,7 +55,7 @@ export class AttendanceRepository {
   }
 
   async updateAttendance(id: string, data: Partial<Attendance>): Promise<void> {
-    await this.attendanceRepo.update(id, data);
+    await this.attendanceRepo.update(id, data as any);
   }
 
   async saveAttendance(attendance: Attendance): Promise<Attendance> {
@@ -77,6 +77,7 @@ export class AttendanceRepository {
       ABSENT: 0,
       HALF_DAY: 0,
       LEAVE: 0,
+      LOP: 0,
       HOLIDAY: 0,
       WEEK_OFF: 0,
     };

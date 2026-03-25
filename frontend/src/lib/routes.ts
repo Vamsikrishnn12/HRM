@@ -5,10 +5,10 @@ import {
   UserCog,
   Banknote,
   FileText,
-  Eye,
   CalendarCheck,
   CalendarOff,
   Wallet,
+  FileSpreadsheet,
   Settings,
   UserCircle,
   type LucideIcon,
@@ -38,6 +38,7 @@ export const adminRoutes: RouteItem[] = [
   { label: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
   { label: "Leave", href: "/admin/leave", icon: CalendarOff },
   { label: "Payroll", href: "/admin/payroll", icon: Wallet },
+  { label: "Reports", href: "/admin/reports", icon: FileSpreadsheet },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -48,4 +49,3 @@ export const employeeRoutes: RouteItem[] = [
   { label: "Payroll", href: "/employee/payroll", icon: Wallet },
   { label: "Profile", href: "/employee/profile", icon: UserCircle },
 ];
-

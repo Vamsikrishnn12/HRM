@@ -1,5 +1,5 @@
 export { authApi } from "./auth.api";
-export { employeeApi, personalDetailsApi, salaryDetailsApi, documentsApi } from "./employee.api";
+export { employeeApi, personalDetailsApi, salaryDetailsApi, salaryStructureApi, documentsApi } from "./employee.api";
 export { settingsApi } from "./settings.api";
 export { attendanceApi } from "./attendance.api";
 export { leaveApi } from "./leave.api";
@@ -14,13 +14,21 @@ export type {
   PayrollPreview,
   PayrollRecord as PayrollRecordType,
   PayrollRun,
+  PayrollRunDetail,
   ImportJobStatus as ImportJobStatusType,
   PayrollSummary,
+  BulkGenerateResponse,
+  DispatchRunResponse,
 } from "./payroll.api";
 export type {
   AttendanceStatusType,
+  AttendancePolicy,
   AttendanceRecord,
   TodayAttendanceResponse,
   AdminAttendanceRecord,
   AdminAttendanceResponse,
+  MonthlyAttendanceResponse,
+  RegularizationRequest,
+  PermissionRequest,
+  AttendanceSessionSummary,
 } from "./attendance.api";

@@ -12,7 +12,6 @@ import React, {
 import { useRouter } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
 import {
-  api,
   API_BASE,
   setAccessToken,
   clearAccessToken,

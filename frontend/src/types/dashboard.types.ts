@@ -7,7 +7,7 @@ export interface AttendanceRecord {
   date: string;
   checkIn: string;
   checkOut: string;
-  status: "Present" | "Absent" | "Late" | "Half Day";
+  status: "Present" | "Absent" | "Late" | "Half Day" | "Leave" | "Holiday" | "Week Off" | "LOP";
 }
 
 export interface Employee {
@@ -47,9 +47,11 @@ export interface PayrollRecord {
 export interface KpiStat {
   label: string;
   value: string;
-  change: string;
+  change?: string;
   changeType: "up" | "down" | "neutral";
   icon: string;
+  progress?: number | null;
+  caption?: string;
 }
 
 export interface Announcement {
@@ -64,12 +66,6 @@ export interface Holiday {
   day: string;
 }
 
-export interface LeaveTypeData {
-  name: string;
-  value: number;
-  color: string;
-}
-
 export interface DepartmentData {
   department: string;
   count: number;
@@ -80,4 +76,17 @@ export interface AttendanceTrend {
   present: number;
   absent: number;
   late: number;
+}
+
+export interface AttendanceBreakdown {
+  present: number;
+  halfDay: number;
+  leave: number;
+  lop: number;
+  weekOff: number;
+  holiday: number;
+  absent: number;
+  late: number;
+  total: number;
+  date: string;
 }

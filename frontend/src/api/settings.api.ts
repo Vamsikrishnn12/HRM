@@ -1,4 +1,10 @@
 import { api } from "@/lib/api";
+import type {
+  OrganizationSalaryConfig,
+  SalaryComputation,
+  SalaryConfigVersion,
+  SalaryPreviewInput,
+} from "@/types";
 
 export interface OrgSettings {
   id: string;
@@ -12,6 +18,8 @@ export interface OrgSettings {
   officeLatitude: number | null;
   officeLongitude: number | null;
   officeRadiusMeters: number | null;
+  geoFenceRequired: boolean;
+  allowRemoteAttendance: boolean;
   updatedAt: string;
 }
 
@@ -40,4 +48,19 @@ export const settingsApi = {
 
   deleteHoliday: (id: string) =>
     api.delete(`/settings/holidays/${id}`),
+
+  getSalaryConfig: () =>
+    api.get<OrganizationSalaryConfig>("/settings/salary-config"),
+
+  listSalaryConfigVersions: () =>
+    api.get<SalaryConfigVersion[]>("/settings/salary-config/versions"),
+
+  saveSalaryConfig: (payload: Omit<OrganizationSalaryConfig, "id" | "organizationId" | "version" | "active" | "createdAt" | "updatedAt">) =>
+    api.put<OrganizationSalaryConfig>("/settings/salary-config", payload),
+
+  previewSalaryConfig: (payload: {
+    configInput?: Omit<OrganizationSalaryConfig, "id" | "organizationId" | "version" | "active" | "createdAt" | "updatedAt">;
+    previewInput: SalaryPreviewInput;
+  }) => api.post<SalaryComputation>("/settings/salary-config/preview", payload),
+
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Flex, Text } from "@chakra-ui/react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -18,6 +19,28 @@ interface DepartmentChartProps {
 
 export default function DepartmentChart({ data: rawData }: DepartmentChartProps) {
   const data = useMemo(() => rawData ?? [], [rawData]);
+  if (data.length === 0) {
+    return (
+      <Flex
+        h="280px"
+        borderRadius="xl"
+        border="1px dashed"
+        borderColor="surface.border"
+        bg="surface.bg"
+        align="center"
+        justify="center"
+        direction="column"
+        gap={1.5}
+      >
+        <Text fontSize="sm" fontWeight="700" color="text.heading">
+          No department data available
+        </Text>
+        <Text fontSize="xs" color="text.muted" fontWeight="500">
+          Headcount distribution will appear once departments are assigned.
+        </Text>
+      </Flex>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height={280}>

@@ -22,6 +22,8 @@ export interface LeaveSummary {
   allowHalfDayLeave: boolean;
   allowPermissionHours: boolean;
   maxPermissionHoursPerMonth: number;
+  maxPermissionRequestsPerMonth: number;
+  maxRegularizationsPerMonth: number;
   entitlement: { cl: number; sl: number; el: number };
   used: { cl: number; sl: number; el: number; lop: number };
   balance: { cl: number; sl: number; el: number };
@@ -41,6 +43,11 @@ export interface LeaveRequestRecord {
   employeeName: string | null;
   employeeCode: string | null;
   leaveType: LeaveType;
+  requestedLeaveType: LeaveType;
+  approvedLeaveType: LeaveType | null;
+  finalAttendanceCode: string | null;
+  suggestedLeaveType: LeaveType | null;
+  treatmentNote: string | null;
   requestMode: RequestMode;
   startDate: string | null;
   endDate: string | null;
@@ -69,6 +76,8 @@ export interface LeavePolicyData {
   allowHalfDayLeave: boolean;
   allowPermissionHours: boolean;
   maxPermissionHoursPerMonth: number;
+  maxPermissionRequestsPerMonth: number;
+  maxRegularizationsPerMonth: number;
 }
 
 export interface LeaveSlabData {
@@ -92,6 +101,8 @@ export interface EmployeePoliciesResponse {
     allowHalfDayLeave: boolean;
     allowPermissionHours: boolean;
     maxPermissionHoursPerMonth: number;
+    maxPermissionRequestsPerMonth: number;
+    maxRegularizationsPerMonth: number;
   } | null;
   slabs: Array<{
     minYears: number;
@@ -169,13 +180,16 @@ export const leaveApi = {
   getAdminRequestDetail: (id: string) =>
     api.get<LeaveRequestRecord>(`/leave/admin/requests/${id}`),
 
-  approveRequest: (id: string, remarks?: string) =>
-    api.patch<LeaveRequestRecord>(`/leave/admin/requests/${id}/approve`, { remarks }),
+  approveRequest: (id: string, data?: { remarks?: string; approvedLeaveType?: LeaveType }) =>
+    api.patch<LeaveRequestRecord>(`/leave/admin/requests/${id}/approve`, data ?? {}),
 
   rejectRequest: (id: string, remarks?: string) =>
     api.patch<LeaveRequestRecord>(`/leave/admin/requests/${id}/reject`, { remarks }),
 
-  overrideRequest: (id: string, data: { status: string; remarks?: string; leaveType?: string }) =>
+  overrideRequest: (
+    id: string,
+    data: { status: string; remarks?: string; leaveType?: string; approvedLeaveType?: LeaveType },
+  ) =>
     api.patch<LeaveRequestRecord>(`/leave/admin/requests/${id}/override`, data),
 
   // Policy
@@ -187,6 +201,8 @@ export const leaveApi = {
     allowHalfDayLeave?: boolean;
     allowPermissionHours?: boolean;
     maxPermissionHoursPerMonth?: number;
+    maxPermissionRequestsPerMonth?: number;
+    maxRegularizationsPerMonth?: number;
     slabs?: Array<{
       minYearsOfService: number;
       maxYearsOfService: number | null;

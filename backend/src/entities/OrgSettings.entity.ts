@@ -64,6 +64,12 @@ export class OrgSettings {
   @Column({ type: 'int', nullable: true })
   officeRadiusMeters: number | null;
 
+  @Column({ type: 'boolean', default: true })
+  geoFenceRequired: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  allowRemoteAttendance: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -8,7 +8,6 @@ if (!fs.existsSync(PAYSLIP_DIR)) {
   fs.mkdirSync(PAYSLIP_DIR, { recursive: true });
 }
 
-// Try common Chrome locations
 function findChrome(): string {
   const candidates = [
     process.env.CHROME_PATH,
@@ -25,12 +24,10 @@ function findChrome(): string {
 }
 
 export interface PayslipData {
-  // Company
   companyName: string;
   companyAddress: string;
   companyLogo?: string;
 
-  // Employee
   employeeName: string;
   employeeCode: string;
   designation: string;
@@ -38,48 +35,76 @@ export interface PayslipData {
   dateOfJoining: string;
   bankAccount: string;
   uan: string;
+  pfNo?: string;
+  esiNo?: string;
 
-  // Period
   month: number;
   year: number;
   payDate?: string;
 
-  // Attendance
   workingDays: number;
   eligibleWorkingDays: number;
   payableDays: number;
   presentDays: number;
   leaveDays: number;
   lopDays: number;
+  weekOffDays?: number;
+  holidayDays?: number;
 
-  // Components
   earnings: PayrollComponent[];
   deductions: PayrollComponent[];
   grossEarnings: number;
   totalDeductions: number;
   netPay: number;
 
-  // Optional informational
   pfEmployerContribution?: number;
 }
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 function numberToWords(num: number): string {
   if (num === 0) return 'Zero';
-  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
-    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen',
-    'Eighteen', 'Nineteen'];
+  const ones = [
+    '',
+    'One',
+    'Two',
+    'Three',
+    'Four',
+    'Five',
+    'Six',
+    'Seven',
+    'Eight',
+    'Nine',
+    'Ten',
+    'Eleven',
+    'Twelve',
+    'Thirteen',
+    'Fourteen',
+    'Fifteen',
+    'Sixteen',
+    'Seventeen',
+    'Eighteen',
+    'Nineteen',
+  ];
   const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
   const scales = ['', 'Thousand', 'Lakh', 'Crore'];
 
   const absNum = Math.abs(Math.floor(num));
   if (absNum === 0) return 'Zero';
 
-  // Indian numbering: ones(3), then pairs of 2 digits
   const parts: number[] = [];
   let remaining = absNum;
   parts.push(remaining % 1000);
@@ -98,7 +123,10 @@ function numberToWords(num: number): string {
       w += ones[Math.floor(p / 100)] + ' Hundred';
       const r = p % 100;
       if (r > 0) {
-        w += r < 20 ? ' ' + ones[r] : ' ' + tens[Math.floor(r / 10)] + (r % 10 ? ' ' + ones[r % 10] : '');
+        w +=
+          r < 20
+            ? ' ' + ones[r]
+            : ' ' + tens[Math.floor(r / 10)] + (r % 10 ? ' ' + ones[r % 10] : '');
       }
     } else if (p < 20) {
       w = ones[p];
@@ -112,7 +140,10 @@ function numberToWords(num: number): string {
   const paise = Math.round((num - Math.floor(num)) * 100);
   let result = 'Rupees ' + words.join(' ');
   if (paise > 0) {
-    const paiseW = paise < 20 ? ones[paise] : tens[Math.floor(paise / 10)] + (paise % 10 ? ' ' + ones[paise % 10] : '');
+    const paiseW =
+      paise < 20
+        ? ones[paise]
+        : tens[Math.floor(paise / 10)] + (paise % 10 ? ' ' + ones[paise % 10] : '');
     result += ' and ' + paiseW + ' Paise';
   }
   result += ' Only';
@@ -120,31 +151,39 @@ function numberToWords(num: number): string {
 }
 
 function fmt(n: number): string {
-  return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Number(n).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function buildPayslipHtml(data: PayslipData): string {
   const monthYear = `${MONTH_NAMES[data.month - 1]} ${data.year}`;
-  const payDate = data.payDate || `${new Date(data.year, data.month, 0).getDate()}/${String(data.month).padStart(2, '0')}/${data.year}`;
-  const payPeriod = `01/${String(data.month).padStart(2, '0')}/${data.year} - ${new Date(data.year, data.month, 0).getDate()}/${String(data.month).padStart(2, '0')}/${data.year}`;
+  const payDate =
+    data.payDate ||
+    `${new Date(data.year, data.month, 0).getDate()}/${String(data.month).padStart(2, '0')}/${data.year}`;
 
   const earningsFiltered = data.earnings.filter((e) => e.amount > 0);
   const deductionsFiltered = data.deductions.filter((d) => d.amount > 0);
-  const maxRows = Math.max(earningsFiltered.length, deductionsFiltered.length);
+  const maxRows = Math.max(earningsFiltered.length, deductionsFiltered.length, 4);
 
   let salaryTableRows = '';
   for (let i = 0; i < maxRows; i++) {
     const e = earningsFiltered[i];
     const d = deductionsFiltered[i];
     salaryTableRows += `<tr>
-      <td class="comp-name">${e ? esc(e.name) : ''}</td>
-      <td class="comp-amt">${e ? fmt(e.amount) : ''}</td>
-      <td class="comp-name">${d ? esc(d.name) : ''}</td>
-      <td class="comp-amt">${d ? fmt(d.amount) : ''}</td>
+      <td>${e ? esc(e.name) : ''}</td>
+      <td class="amount">${e ? '&#8377; ' + fmt(e.amount) : ''}</td>
+      <td>${d ? esc(d.name) : ''}</td>
+      <td class="amount">${d ? '&#8377; ' + fmt(d.amount) : ''}</td>
     </tr>`;
   }
 
@@ -152,7 +191,7 @@ function buildPayslipHtml(data: PayslipData): string {
     ? data.bankAccount.length > 4
       ? 'XXXX' + data.bankAccount.slice(-4)
       : data.bankAccount
-    : '—';
+    : '-';
 
   return `<!DOCTYPE html>
 <html>
@@ -160,147 +199,113 @@ function buildPayslipHtml(data: PayslipData): string {
 <meta charset="utf-8">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 11px; color: #222; background: #fff; }
-  .page { max-width: 780px; margin: 0 auto; padding: 28px 32px; }
-
-  /* ── Header ── */
-  .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 2px solid #444; margin-bottom: 0; }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .logo-circle { width: 44px; height: 44px; border-radius: 50%; background: #4F46E5; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 18px; flex-shrink: 0; }
-  .company-name { font-size: 18px; font-weight: 700; color: #1a1a2e; letter-spacing: 0.3px; }
-  .company-address { font-size: 9.5px; color: #666; margin-top: 2px; max-width: 320px; }
-  .header-right { text-align: right; }
-  .payslip-title { font-size: 16px; font-weight: 700; color: #1a1a2e; letter-spacing: 1px; }
-  .payslip-period { font-size: 11px; color: #555; font-weight: 600; margin-top: 2px; }
-
-  /* ── Employee Summary ── */
-  .emp-section { display: grid; grid-template-columns: 1fr 1fr; border-left: 1px solid #ccc; border-right: 1px solid #ccc; }
-  .emp-section .emp-row { display: flex; justify-content: space-between; padding: 5px 14px; border-bottom: 1px solid #e5e5e5; font-size: 10.5px; }
-  .emp-section .emp-row:nth-child(odd) { background: #fafafa; }
-  .emp-col { border-right: 1px solid #ccc; }
-  .emp-col:last-child { border-right: none; }
-  .emp-label { color: #777; font-weight: 500; }
-  .emp-value { font-weight: 600; color: #222; }
-
-  /* ── Salary Table ── */
-  .salary-section { margin-top: 16px; }
-  .salary-table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; }
-  .salary-table thead th { padding: 8px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; border-bottom: 2px solid #bbb; background: #f2f2f2; color: #444; }
-  .salary-table thead th.earn-h { text-align: left; }
-  .salary-table thead th.ded-h { text-align: left; border-left: 1px solid #ccc; }
-  .salary-table thead th.amt-h { text-align: right; width: 110px; }
-  .salary-table tbody td { padding: 5px 14px; font-size: 10.5px; border-bottom: 1px solid #eee; }
-  .salary-table tbody td.comp-name { color: #444; }
-  .salary-table tbody td.comp-amt { text-align: right; font-weight: 600; color: #222; font-variant-numeric: tabular-nums; }
-  .salary-table tbody td:nth-child(3) { border-left: 1px solid #ccc; }
-  .salary-table tfoot td { padding: 8px 14px; font-weight: 700; font-size: 11px; border-top: 2px solid #bbb; background: #f2f2f2; }
-  .salary-table tfoot td.total-label { color: #444; }
-  .salary-table tfoot td.total-amt { text-align: right; color: #222; font-variant-numeric: tabular-nums; }
-  .salary-table tfoot td.ded-border { border-left: 1px solid #ccc; }
-
-  /* ── Net Row ── */
-  .net-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid #ccc; border-top: none; background: #f7f7f7; }
-  .net-row-label { font-size: 12px; font-weight: 700; color: #1a1a2e; }
-  .net-row-amount { font-size: 14px; font-weight: 800; color: #1a1a2e; }
-
-  /* ── Amount In Words ── */
-  .words-row { padding: 8px 14px; border: 1px solid #ccc; border-top: none; font-size: 10px; color: #555; font-style: italic; }
-
-  /* ── Employer Info (optional) ── */
-  .employer-info { margin-top: 12px; padding: 8px 14px; border: 1px dashed #ccc; border-radius: 4px; font-size: 9.5px; color: #888; }
-
-  /* ── Footer ── */
-  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #ddd; text-align: center; }
-  .footer-text { font-size: 9px; color: #999; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1f2937; background: #fff; padding: 20px; }
+  .sheet { width: 100%; border: 1px solid #d6d3e1; }
+  .title-wrap { text-align: center; border-bottom: 2px solid #7548b9; padding: 12px 8px 10px; }
+  .title-wrap h1 { font-size: 22px; color: #7548b9; margin-bottom: 2px; }
+  .title-wrap .address { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+  .title-wrap .sub { font-size: 16px; font-weight: 700; color: #111827; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  td, th { border: 1px solid #d6d3e1; padding: 6px 8px; vertical-align: middle; }
+  th { background: #f4effb; color: #3f2a63; font-weight: 700; text-align: left; }
+  .label { color: #6b7280; width: 22%; }
+  .value { font-weight: 600; color: #111827; width: 28%; }
+  .summary-label { color: #4b5563; font-weight: 600; }
+  .summary-value { font-weight: 700; text-align: right; }
+  .amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .total-row td { background: #f8f5fd; font-weight: 700; }
+  .net-row td { background: #efe7fb; font-size: 14px; font-weight: 800; color: #3f2a63; }
+  .muted { color: #6b7280; font-style: italic; }
+  .footer { margin-top: 12px; font-size: 9px; color: #9ca3af; text-align: center; }
 </style>
 </head>
 <body>
-<div class="page">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-left">
-      <div class="logo-circle">${esc(data.companyName.charAt(0))}</div>
-      <div>
-        <div class="company-name">${esc(data.companyName)}</div>
-        <div class="company-address">${esc(data.companyAddress)}</div>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="payslip-title">PAYSLIP</div>
-      <div class="payslip-period">${monthYear}</div>
-    </div>
+<div class="sheet">
+  <div class="title-wrap">
+    <h1>${esc(data.companyName)}</h1>
+    <div class="address">${esc(data.companyAddress || '-')}</div>
+    <div class="sub">Pay Slip for ${monthYear}</div>
   </div>
 
-  <!-- Employee Summary -->
-  <div class="emp-section">
-    <div class="emp-col">
-      <div class="emp-row"><span class="emp-label">Employee Name</span><span class="emp-value">${esc(data.employeeName)}</span></div>
-      <div class="emp-row"><span class="emp-label">Employee ID</span><span class="emp-value">${esc(data.employeeCode)}</span></div>
-      <div class="emp-row"><span class="emp-label">Designation</span><span class="emp-value">${esc(data.designation || '—')}</span></div>
-      <div class="emp-row"><span class="emp-label">Pay Period</span><span class="emp-value">${payPeriod}</span></div>
-    </div>
-    <div class="emp-col">
-      <div class="emp-row"><span class="emp-label">Department</span><span class="emp-value">${esc(data.department || '—')}</span></div>
-      <div class="emp-row"><span class="emp-label">Date of Joining</span><span class="emp-value">${esc(data.dateOfJoining || '—')}</span></div>
-      <div class="emp-row"><span class="emp-label">Bank Account</span><span class="emp-value">${maskedBank}</span></div>
-      <div class="emp-row"><span class="emp-label">Pay Date</span><span class="emp-value">${payDate}</span></div>
-    </div>
-  </div>
+  <table>
+    <tr>
+      <td class="label">Employee ID</td><td class="value">${esc(data.employeeCode || '-')}</td>
+      <td class="label">UAN</td><td class="value">${esc(data.uan || '-')}</td>
+    </tr>
+    <tr>
+      <td class="label">Employee Name</td><td class="value">${esc(data.employeeName || '-')}</td>
+      <td class="label">PF No</td><td class="value">${esc(data.pfNo || '-')}</td>
+    </tr>
+    <tr>
+      <td class="label">Designation</td><td class="value">${esc(data.designation || '-')}</td>
+      <td class="label">ESI No</td><td class="value">${esc(data.esiNo || '-')}</td>
+    </tr>
+    <tr>
+      <td class="label">Department</td><td class="value">${esc(data.department || '-')}</td>
+      <td class="label">Bank Account</td><td class="value">${esc(maskedBank || '-')}</td>
+    </tr>
+    <tr>
+      <td class="label">Date of Joining</td><td class="value">${esc(data.dateOfJoining || '-')}</td>
+      <td class="label">Pay Date</td><td class="value">${esc(payDate)}</td>
+    </tr>
+  </table>
 
-  <!-- Attendance -->
-  <div style="display:grid;grid-template-columns:repeat(6,1fr);border:1px solid #ccc;border-top:2px solid #444;font-size:9.5px;text-align:center;">
-    <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Working Days</span><br><strong>${data.workingDays}</strong></div>
-    <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Eligible Days</span><br><strong>${data.eligibleWorkingDays}</strong></div>
-    <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Present Days</span><br><strong>${data.presentDays}</strong></div>
-    <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Leave Days</span><br><strong>${data.leaveDays}</strong></div>
-    <div style="padding:6px 4px;border-right:1px solid #eee;"><span style="color:#888;">Paid Days</span><br><strong>${data.payableDays}</strong></div>
-    <div style="padding:6px 4px;"><span style="color:#888;">LOP Days</span><br><strong>${data.lopDays}</strong></div>
-  </div>
+  <table>
+    <tr>
+      <td class="summary-label">Gross Wages</td>
+      <td class="summary-value">&#8377; ${fmt(data.grossEarnings)}</td>
+      <td class="summary-label">Week Off</td>
+      <td class="summary-value">${data.weekOffDays ?? '-'}</td>
+    </tr>
+    <tr>
+      <td class="summary-label">Total Working Days</td>
+      <td class="summary-value">${data.eligibleWorkingDays || data.workingDays}</td>
+      <td class="summary-label">Holidays</td>
+      <td class="summary-value">${data.holidayDays ?? '-'}</td>
+    </tr>
+    <tr>
+      <td class="summary-label">LOP Days</td>
+      <td class="summary-value">${data.lopDays}</td>
+      <td class="summary-label">Paid Days</td>
+      <td class="summary-value">${data.payableDays}</td>
+    </tr>
+  </table>
 
-  <!-- Earnings & Deductions Table -->
-  <div class="salary-section">
-    <table class="salary-table">
-      <thead>
-        <tr>
-          <th class="earn-h">Earnings</th>
-          <th class="amt-h">Amount (&#8377;)</th>
-          <th class="ded-h">Deductions</th>
-          <th class="amt-h">Amount (&#8377;)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${salaryTableRows || '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:10px;">No components</td></tr>'}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td class="total-label">Gross Earnings</td>
-          <td class="total-amt">&#8377; ${fmt(data.grossEarnings)}</td>
-          <td class="total-label ded-border">Total Deductions</td>
-          <td class="total-amt">&#8377; ${fmt(data.totalDeductions)}</td>
-        </tr>
-      </tfoot>
-    </table>
+  <table>
+    <thead>
+      <tr>
+        <th colspan="2">Earnings</th>
+        <th colspan="2">Deductions</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${salaryTableRows}
+      <tr class="total-row">
+        <td>Total Earnings</td>
+        <td class="amount">&#8377; ${fmt(data.grossEarnings)}</td>
+        <td>Total Deductions</td>
+        <td class="amount">&#8377; ${fmt(data.totalDeductions)}</td>
+      </tr>
+      <tr class="net-row">
+        <td colspan="3">Net Salary</td>
+        <td class="amount">&#8377; ${fmt(data.netPay)}</td>
+      </tr>
+    </tbody>
+  </table>
 
-    <!-- Net -->
-    <div class="net-row">
-      <span class="net-row-label">Net Pay (Gross Earnings - Total Deductions)</span>
-      <span class="net-row-amount">&#8377; ${fmt(data.netPay)}</span>
-    </div>
+  <table>
+    <tr>
+      <td class="muted"><strong>Amount in Words:</strong> ${numberToWords(data.netPay)}</td>
+    </tr>
+  </table>
 
-    <!-- Amount in words -->
-    <div class="words-row"><strong>Amount in Words:</strong> ${numberToWords(data.netPay)}</div>
-  </div>
-
-  ${data.pfEmployerContribution && data.pfEmployerContribution > 0 ? `
-  <div class="employer-info">
-    <strong>Note:</strong> Employer PF Contribution: &#8377; ${fmt(data.pfEmployerContribution)} (This amount is contributed by the employer and does not reduce your net salary.)
-  </div>` : ''}
-
-  <!-- Footer -->
-  <div class="footer">
-    <span class="footer-text">This is a system-generated payslip and does not require a signature.</span>
-  </div>
+  ${
+    data.pfEmployerContribution && data.pfEmployerContribution > 0
+      ? `<table><tr><td class="muted"><strong>Employer PF Contribution:</strong> &#8377; ${fmt(data.pfEmployerContribution)} (informational only)</td></tr></table>`
+      : ''
+  }
 </div>
+<div class="footer">This is a system-generated payslip.</div>
 </body>
 </html>`;
 }

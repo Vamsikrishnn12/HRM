@@ -7,7 +7,7 @@ import { ApiError } from '../utils/apiError';
  */
 export const errorMiddleware = (
   err: Error,
-  req: Request,
+  _req: Request,
   res: Response,
   _next: NextFunction,
 ): void => {

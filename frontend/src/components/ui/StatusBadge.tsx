@@ -7,6 +7,7 @@ type StatusType =
   | "Absent"
   | "Late"
   | "Half Day"
+  | "Leave"
   | "Active"
   | "On Leave"
   | "Inactive"
@@ -27,7 +28,8 @@ type StatusType =
   | "DRAFT"
   | "GENERATED"
   | "EMAILED"
-  | "FAILED";
+  | "FAILED"
+  | "LOP";
 
 const variantMap: Record<StatusType, string> = {
   Present: "success",
@@ -40,6 +42,7 @@ const variantMap: Record<StatusType, string> = {
   "On Hold": "warning",
   Late: "warning",
   Absent: "danger",
+  Leave: "info",
   Inactive: "danger",
   Rejected: "danger",
   Holiday: "success",
@@ -55,6 +58,7 @@ const variantMap: Record<StatusType, string> = {
   GENERATED: "success",
   EMAILED: "info",
   FAILED: "danger",
+  LOP: "danger",
 };
 
 interface StatusBadgeProps {

@@ -3,14 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "clean:next": "node -e \"const fs=require('fs');for(const d of ['.next','.next-cache']){try{fs.rmSync(d,{recursive:true,force:true});}catch(_){}}\"",
+    "predev": "npm run clean:next",
     "dev": "next dev",
+    "prebuild": "npm run clean:next",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@chakra-ui/next-js": "^2.4.2",
-    "@chakra-ui/react": "^2.8.2",
+    "@chakra-ui/react": "^2.8.2", 
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@hookform/resolvers": "^3.9.0",

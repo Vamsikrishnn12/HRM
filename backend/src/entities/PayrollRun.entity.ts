@@ -16,6 +16,11 @@ export enum PayrollRunStatus {
   PARTIAL_SUCCESS = 'PARTIAL_SUCCESS',
 }
 
+export enum PayrollRunType {
+  BULK_UPLOAD = 'BULK_UPLOAD',
+  SYSTEM_BULK = 'SYSTEM_BULK',
+}
+
 @Entity('payroll_runs')
 export class PayrollRun {
   @PrimaryGeneratedColumn('uuid')
@@ -30,6 +35,9 @@ export class PayrollRun {
   @Column({ type: 'enum', enum: PayrollRunStatus, default: PayrollRunStatus.DRAFT })
   status: PayrollRunStatus;
 
+  @Column({ type: 'enum', enum: PayrollRunType, default: PayrollRunType.SYSTEM_BULK })
+  runType: PayrollRunType;
+
   @Column({ type: 'int', default: 0 })
   totalEmployees: number;
 
@@ -38,6 +46,24 @@ export class PayrollRun {
 
   @Column({ type: 'int', default: 0 })
   failedCount: number;
+
+  @Column({ type: 'int', default: 0 })
+  skippedCount: number;
+
+  @Column({ type: 'int', default: 0 })
+  processedCount: number;
+
+  @Column({ type: 'int', default: 0 })
+  emailedCount: number;
+
+  @Column({ type: 'int', default: 0 })
+  portalPublishedCount: number;
+
+  @Column({ type: 'jsonb', default: [] })
+  errorSummary: Array<{ employeeId?: string; employeeCode?: string; message: string }>;
+
+  @Column({ type: 'jsonb', default: {} })
+  resultSummary: Record<string, unknown>;
 
   @Column({ type: 'uuid', nullable: true })
   createdBy: string | null;

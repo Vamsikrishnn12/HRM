@@ -7,9 +7,13 @@ import {
   previewPayrollSchema,
   generateManualSchema,
   bulkImportSchema,
+  bulkGenerateSchema,
+  runDispatchSchema,
   listRecordsSchema,
   listPayslipsSchema,
   summarySchema,
+  attendanceReportSchema,
+  salaryReportSchema,
 } from '../validators/payroll.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
@@ -100,6 +104,38 @@ export class PayrollController {
     ApiResponse.success(res, 'Payroll runs', result);
   }
 
+  static async runDetail(req: Request, res: Response): Promise<void> {
+    const result = await payrollService.getRunDetails(req.params.id as string);
+    ApiResponse.success(res, 'Payroll run detail', result);
+  }
+
+  static async bulkGenerate(req: Request, res: Response): Promise<void> {
+    const parsed = bulkGenerateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw ApiError.badRequest(
+        parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
+        'VALIDATION_ERROR',
+      );
+    }
+    const result = await payrollService.startSystemBulkGenerate({
+      ...parsed.data,
+      adminId: (req as any).user?.id,
+    });
+    ApiResponse.success(res, 'Bulk payroll generation started', result, 202);
+  }
+
+  static async dispatchRun(req: Request, res: Response): Promise<void> {
+    const parsed = runDispatchSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      throw ApiError.badRequest(
+        parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
+        'VALIDATION_ERROR',
+      );
+    }
+    const result = await payrollService.dispatchRun(req.params.id as string, parsed.data);
+    ApiResponse.success(res, 'Payslip dispatch completed', result);
+  }
+
   // ─── Admin: List records ───
   static async listRecords(req: Request, res: Response): Promise<void> {
     const parsed = listRecordsSchema.safeParse(req.query);
@@ -134,6 +170,47 @@ export class PayrollController {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename=payroll_template.xlsx');
     res.send(buffer);
+  }
+
+  static async attendanceReport(req: Request, res: Response): Promise<void> {
+    const parsed = attendanceReportSchema.safeParse(req.query);
+    if (!parsed.success) {
+      throw ApiError.badRequest(
+        parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
+        'VALIDATION_ERROR',
+      );
+    }
+    const result = await payrollService.exportAttendanceReport(
+      parsed.data.employeeId,
+      parsed.data.month,
+      parsed.data.year,
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=${result.fileName}`);
+    res.send(result.buffer);
+  }
+
+  static async salaryReport(req: Request, res: Response): Promise<void> {
+    const parsed = salaryReportSchema.safeParse(req.query);
+    if (!parsed.success) {
+      throw ApiError.badRequest(
+        parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
+        'VALIDATION_ERROR',
+      );
+    }
+    const result = await payrollService.exportSalaryReport(
+      parsed.data.month,
+      parsed.data.year,
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename=${result.fileName}`);
+    res.send(result.buffer);
   }
 
   // ─── Admin/Employee: Download payslip PDF ───

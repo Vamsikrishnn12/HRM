@@ -54,10 +54,9 @@ export class EmailService {
       });
       console.log('Credentials email sent', { email, empId });
     } else {
-      console.log('SMTP not configured — credentials for new employee:', {
+      console.log('SMTP not configured - credentials generated for new employee (password redacted):', {
         email,
         empId,
-        password,
       });
     }
   }
@@ -79,7 +78,10 @@ export class EmailService {
       });
       console.log(`Email sent: ${subject}`, { to });
     } else {
-      console.log(`SMTP not configured — ${subject}:`, { to, variables });
+      console.log(`SMTP not configured - ${subject}:`, {
+        to,
+        templateName,
+      });
     }
   }
 }

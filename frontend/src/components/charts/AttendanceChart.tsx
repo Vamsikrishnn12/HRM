@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Flex, Text } from "@chakra-ui/react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -18,6 +19,28 @@ interface AttendanceChartProps {
 
 export default function AttendanceChart({ data: rawData }: AttendanceChartProps) {
   const data = useMemo(() => rawData ?? [], [rawData]);
+  if (data.length === 0) {
+    return (
+      <Flex
+        h="280px"
+        borderRadius="xl"
+        border="1px dashed"
+        borderColor="surface.border"
+        bg="surface.bg"
+        align="center"
+        justify="center"
+        direction="column"
+        gap={1.5}
+      >
+        <Text fontSize="sm" fontWeight="700" color="text.heading">
+          No attendance trend available
+        </Text>
+        <Text fontSize="xs" color="text.muted" fontWeight="500">
+          Trend will appear after attendance records are available.
+        </Text>
+      </Flex>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height={280}>

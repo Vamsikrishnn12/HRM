@@ -78,7 +78,12 @@ export class LeaveController {
     if (!parsed.success) {
       throw ApiError.badRequest('Invalid input', 'VALIDATION_ERROR');
     }
-    const result = await leaveService.approveRequest(id, req.user!.userId, parsed.data.remarks);
+    const result = await leaveService.approveRequest(
+      id,
+      req.user!.userId,
+      parsed.data.remarks,
+      parsed.data.approvedLeaveType,
+    );
     ApiResponse.success(res, 'Leave request approved', result);
   }
 

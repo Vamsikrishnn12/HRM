@@ -1,623 +1,1390 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Badge,
   Box,
-  Flex,
-  Text,
-  SimpleGrid,
   Divider,
-  Checkbox,
-  useToast,
-  IconButton,
+  Flex,
   HStack,
+  IconButton,
   Input,
   InputGroup,
   InputLeftElement,
-  Badge,
-  Spinner,
   Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
   ModalBody,
   ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+  SimpleGrid,
+  Spinner,
+  Switch,
+  Text,
   useDisclosure,
+  useToast,
+  VStack,
 } from "@chakra-ui/react";
-import { Edit2, Eye, Search, Plus, Trash2 } from "lucide-react";
-import { salaryDetailsApi } from "@/api";
+import { Edit2, Eye, Info, Lock, Plus, RefreshCw, Search, Trash2, XCircle } from "lucide-react";
+import { salaryStructureApi, settingsApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
-import type { SalaryForm, SalaryDetailsRow, SalaryComponentForm } from "@/types";
+import { formatInrCurrency } from "@/lib/formatters";
+import type {
+  EmployeeSalaryStructureRow,
+  OrganizationSalaryConfig,
+  SalaryComputation,
+  SalaryTemplateComponent,
+  SaveEmployeeSalaryStructureInput,
+} from "@/types";
 
-const emptyEarning: SalaryComponentForm = { name: "", amount: "" };
-const emptyDeduction: SalaryComponentForm = { name: "", amount: "" };
+type PageView = "list" | "add" | "edit";
 
-const emptyForm: SalaryForm = {
-  ctc: "",
-  earnings: [{ name: "Basic", amount: "" }, { name: "HRA", amount: "" }, { name: "Allowances", amount: "" }],
-  deductions: [],
-  pfApplicable: true,
-  pfEmployeeContribution: "",
-  pfEmployerContribution: "",
-  taxRegime: "New",
+type CustomComponentForm = {
+  componentName: string;
+  category: "EARNING" | "DEDUCTION";
+  amount: string;
+};
+
+type BankingForm = {
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+  panNumber: string;
+  uanNumber: string;
+};
+
+const emptyCustom: CustomComponentForm = {
+  componentName: "",
+  category: "EARNING",
+  amount: "",
+};
+
+const emptyBanking: BankingForm = {
   bankName: "",
   accountNumber: "",
   ifscCode: "",
   branchName: "",
+  panNumber: "",
   uanNumber: "",
 };
 
-function formatCurrency(val: number) {
-  if (!val) return "—";
-  return `₹${val.toLocaleString("en-IN")}`;
+const formatCurrency = formatInrCurrency;
+
+function SummaryTile({ title, value }: { title: string; value: string }) {
+  return (
+    <Box border="1px solid" borderColor="surface.border" borderRadius="lg" p={3} bg="surface.bg">
+      <Text fontSize="xs" color="text.muted">{title}</Text>
+      <Text fontSize="sm" fontWeight="700" color="text.heading">{value}</Text>
+    </Box>
+  );
 }
 
-/* ── View Modal ─────────────────────────────────────────────────── */
-function ViewModal({
-  isOpen,
-  onClose,
-  record,
+const humanizeToken = (value?: string | null): string => {
+  if (!value) return "Template rules";
+  return value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const getComponentSourceLabel = (component: SalaryTemplateComponent): string => {
+  if (component.sourceType === "AUTO_STATUTORY") {
+    return "Statutory deduction from organization rules";
+  }
+  if (component.calculationType === "PERCENTAGE") {
+    return `${component.value ?? 0}% of ${humanizeToken(component.percentageOf)}`;
+  }
+  if (component.calculationType === "FIXED") {
+    return `Fixed ${formatCurrency(Number(component.value ?? 0))} from template`;
+  }
+  if (component.calculationType === "FORMULA") {
+    return component.formulaExpression ? `Formula: ${component.formulaExpression}` : "Formula-based component";
+  }
+  if (component.calculationType === "RESIDUAL") {
+    return "Residual component auto-balanced by template";
+  }
+  return "Calculated from template";
+};
+
+function GuidedStepHeader({
+  step,
+  title,
+  subtitle,
+  status,
 }: {
-  isOpen: boolean;
-  onClose: () => void;
-  record: SalaryDetailsRow | null;
+  step: number;
+  title: string;
+  subtitle: string;
+  status: "done" | "active" | "pending";
 }) {
-  if (!record) return null;
-  const InfoRow = ({ label, value }: { label: string; value: string }) => (
-    <Flex justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.50">
-      <Text fontSize="sm" color="text.muted" fontWeight="500">{label}</Text>
-      <Text fontSize="sm" color="text.body" fontWeight="500">{value || "—"}</Text>
+  return (
+    <Flex justify="space-between" align={{ base: "start", md: "center" }} mb={3} direction={{ base: "column", md: "row" }} gap={2}>
+      <Flex align="center" gap={3}>
+        <Flex
+          w={8}
+          h={8}
+          borderRadius="full"
+          align="center"
+          justify="center"
+          fontSize="sm"
+          fontWeight="700"
+          bg={status === "done" ? "green.500" : status === "active" ? "brand.500" : "gray.100"}
+          color={status === "pending" ? "gray.600" : "white"}
+        >
+          {step}
+        </Flex>
+        <Box>
+          <Text fontSize="md" fontWeight="800" color="text.heading">
+            {title}
+          </Text>
+          <Text fontSize="xs" color="text.muted">
+            {subtitle}
+          </Text>
+        </Box>
+      </Flex>
+      <Badge
+        borderRadius="full"
+        px={2.5}
+        py={1}
+        colorScheme={status === "done" ? "green" : status === "active" ? "purple" : "gray"}
+        textTransform="none"
+      >
+        {status === "done" ? "Completed" : status === "active" ? "In Progress" : "Pending"}
+      </Badge>
     </Flex>
   );
+}
+
+function AutoCalculationBanner({
+  hasEmployee,
+  hasCtc,
+  isAutoCalculating,
+  lastPreviewAt,
+  autoPreviewError,
+  onRecalculate,
+  previewing,
+}: {
+  hasEmployee: boolean;
+  hasCtc: boolean;
+  isAutoCalculating: boolean;
+  lastPreviewAt: string;
+  autoPreviewError: string | null;
+  onRecalculate: () => void;
+  previewing: boolean;
+}) {
+  const bg = !hasEmployee || !hasCtc ? "gray.50" : autoPreviewError ? "red.50" : "brand.50";
+  const borderColor = !hasEmployee || !hasCtc ? "gray.200" : autoPreviewError ? "red.200" : "brand.100";
+  return (
+    <Box border="1px solid" borderColor={borderColor} bg={bg} borderRadius="xl" px={4} py={3}>
+      <Flex align={{ base: "start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap={3}>
+        <HStack align="start" spacing={2.5}>
+          <Box mt={0.5}>
+            {isAutoCalculating ? <Spinner size="sm" color="brand.400" /> : <Info size={16} color={autoPreviewError ? "#e53e3e" : "#7548b9"} />}
+          </Box>
+          <Box>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">
+              {isAutoCalculating
+                ? "Calculating salary structure..."
+                : !hasEmployee
+                  ? "Select an employee to start salary calculation."
+                  : !hasCtc
+                    ? "Enter Annual CTC to auto-generate Monthly CTC and all components."
+                    : autoPreviewError
+                      ? "Could not refresh preview automatically."
+                      : "Salary structure is auto-generated from the active salary template."}
+            </Text>
+            <Text fontSize="xs" color="text.muted">
+              {autoPreviewError
+                ? autoPreviewError
+                : lastPreviewAt
+                  ? `Last updated at ${lastPreviewAt}.`
+                  : "Changes in CTC or overrides refresh preview automatically."}
+            </Text>
+          </Box>
+        </HStack>
+        <SecondaryButton size="xs" leftIcon={<RefreshCw size={13} />} onClick={onRecalculate} isLoading={previewing}>
+          Recalculate
+        </SecondaryButton>
+      </Flex>
+    </Box>
+  );
+}
+
+function LiveSalarySummary({
+  preview,
+  emptyHint,
+}: {
+  preview: SalaryComputation | null;
+  emptyHint: string;
+}) {
+  return (
+    <SectionCard
+      title="Live Salary Summary"
+      bgGradient="linear(180deg, #ffffff 0%, #faf7ff 100%)"
+      borderColor="brand.100"
+    >
+      {preview ? (
+        <VStack spacing={3} align="stretch">
+          <SimpleGrid columns={1} spacing={2}>
+            <SummaryTile title="Gross Earnings" value={formatCurrency(preview.summary.grossSalary)} />
+            <SummaryTile title="Employee Deductions" value={formatCurrency(preview.summary.employeeDeductions)} />
+            <SummaryTile title="Net Pay" value={formatCurrency(preview.summary.netPay)} />
+            <SummaryTile title="Employer Contribution" value={formatCurrency(preview.summary.employerContributions)} />
+            <SummaryTile title="Total Employer Cost" value={formatCurrency(preview.summary.employerCostImpact)} />
+          </SimpleGrid>
+          <Text fontSize="xs" color="text.muted">
+            Monthly CTC: {formatCurrency(preview.monthlyCtc)} | Annual CTC: {formatCurrency(preview.annualCtc)}
+          </Text>
+        </VStack>
+      ) : (
+        <Box border="1px dashed" borderColor="surface.border" borderRadius="lg" p={4} bg="white">
+          <Text fontSize="sm" fontWeight="600" color="text.heading" mb={1}>
+            Waiting for salary input
+          </Text>
+          <Text fontSize="xs" color="text.muted">
+            {emptyHint}
+          </Text>
+        </Box>
+      )}
+    </SectionCard>
+  );
+}
+
+function ComponentOverrideRow({
+  component,
+  enabled,
+  onEnabledChange,
+  allowManualOverride,
+  manualOverrideEnabled,
+  onManualOverrideChange,
+  overrideValue,
+  onOverrideValueChange,
+  onClearOverride,
+  previewAmount,
+  overrideModeEnabled,
+  invalidOverride,
+}: {
+  component: SalaryTemplateComponent;
+  enabled: boolean;
+  onEnabledChange: (next: boolean) => void;
+  allowManualOverride: boolean;
+  manualOverrideEnabled: boolean;
+  onManualOverrideChange: (next: boolean) => void;
+  overrideValue: string;
+  onOverrideValueChange: (value: string) => void;
+  onClearOverride: () => void;
+  previewAmount?: number;
+  overrideModeEnabled: boolean;
+  invalidOverride: boolean;
+}) {
+  const statusLabel = !allowManualOverride
+    ? "Template Locked"
+    : manualOverrideEnabled
+      ? "Manual Override"
+      : "Auto";
+  const statusColor = !allowManualOverride
+    ? "gray"
+    : manualOverrideEnabled
+      ? "orange"
+      : "green";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+    <Box border="1px solid" borderColor={manualOverrideEnabled ? "orange.200" : "surface.border"} borderRadius="xl" p={3.5} bg="white">
+      <Flex justify="space-between" align={{ base: "start", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
+        <Box>
+          <HStack spacing={2} mb={1.5} flexWrap="wrap">
+            <Text fontSize="sm" fontWeight="700" color="text.heading">
+              {component.componentName}
+            </Text>
+            <Badge borderRadius="full" colorScheme={component.category === "EARNING" ? "green" : "red"} textTransform="none">
+              {component.category === "EARNING" ? "Earning" : "Deduction"}
+            </Badge>
+            <Badge borderRadius="full" colorScheme={statusColor} textTransform="none">
+              {statusLabel}
+            </Badge>
+          </HStack>
+          <Text fontSize="xs" color="text.muted">
+            {component.componentCode} - {getComponentSourceLabel(component)}
+          </Text>
+          {!allowManualOverride ? (
+            <HStack spacing={1} mt={1}>
+              <Lock size={13} color="#718096" />
+              <Text fontSize="xs" color="text.muted">
+                This component is locked by template (not editable per employee).
+              </Text>
+            </HStack>
+          ) : null}
+        </Box>
+        <Box textAlign={{ base: "left", md: "right" }}>
+          <Text fontSize="xs" color="text.muted">
+            Auto-calculated value
+          </Text>
+          <Text fontSize="sm" fontWeight="800" color="text.heading">
+            {previewAmount != null ? formatCurrency(previewAmount) : "--"}
+          </Text>
+        </Box>
+      </Flex>
+
+      <Divider my={3} />
+
+      <Flex align={{ base: "start", md: "center" }} justify="space-between" gap={2} direction={{ base: "column", md: "row" }}>
+        <HStack spacing={2}>
+          <Switch size="sm" isChecked={enabled} onChange={(e) => onEnabledChange(e.target.checked)} />
+          <Text fontSize="xs" color="text.muted">
+            Include component in this structure
+          </Text>
+        </HStack>
+        {allowManualOverride ? (
+          <HStack spacing={2}>
+            <Switch
+              size="sm"
+              colorScheme="orange"
+              isChecked={manualOverrideEnabled}
+              onChange={(e) => onManualOverrideChange(e.target.checked)}
+              isDisabled={!overrideModeEnabled}
+            />
+            <Text fontSize="xs" color={overrideModeEnabled ? "text.muted" : "gray.400"}>
+              {overrideModeEnabled ? "Enable manual override" : "Enable 'Allow manual overrides' first"}
+            </Text>
+          </HStack>
+        ) : null}
+      </Flex>
+
+      {allowManualOverride && manualOverrideEnabled ? (
+        <Flex mt={3} gap={2} align="center">
+          <StyledInput
+            type="number"
+            maxW="220px"
+            value={overrideValue}
+            onChange={(e) => onOverrideValueChange(e.target.value)}
+            placeholder="Enter override amount"
+            borderColor={invalidOverride ? "red.300" : undefined}
+          />
+          <IconButton
+            aria-label={`Clear override for ${component.componentName}`}
+            icon={<XCircle size={14} />}
+            size="sm"
+            variant="ghost"
+            color="red.500"
+            onClick={onClearOverride}
+          />
+          {invalidOverride ? (
+            <Text fontSize="xs" color="red.500">
+              Enter a valid non-negative amount.
+            </Text>
+          ) : (
+            <Text fontSize="xs" color="text.muted">
+              Manual value is used in live preview and final save.
+            </Text>
+          )}
+        </Flex>
+      ) : null}
+    </Box>
+  );
+}
+
+function ViewModal({
+  row,
+  isOpen,
+  onClose,
+}: {
+  row: EmployeeSalaryStructureRow | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!row) return null;
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
       <ModalOverlay />
       <ModalContent borderRadius="xl">
         <ModalHeader borderBottom="1px solid" borderColor="surface.border">
-          <Text fontWeight="700">Salary & Banking — {record.employeeName}</Text>
-          <Text fontSize="xs" color="text.muted">{record.empId} · {record.email}</Text>
+          <Text fontWeight="700">Salary Structure - {row.employeeName}</Text>
+          <Text fontSize="xs" color="text.muted">{row.employeeCode} - {row.email}</Text>
         </ModalHeader>
         <ModalCloseButton />
-        <ModalBody py={5}>
-          {/* CTC */}
-          <Text fontWeight="700" mb={2} color="text.heading">Salary Structure</Text>
-          <InfoRow label="CTC" value={formatCurrency(record.ctc)} />
+        <ModalBody py={4}>
+          <SimpleGrid columns={{ base: 1, md: 4 }} spacing={3}>
+            <SummaryTile title="Monthly CTC" value={formatCurrency(row.monthlyCtc)} />
+            <SummaryTile title="Gross" value={formatCurrency(row.summary.grossSalary)} />
+            <SummaryTile title="Net Pay" value={formatCurrency(row.summary.netPay)} />
+            <SummaryTile title="Employer Cost" value={formatCurrency(row.summary.employerCostImpact)} />
+          </SimpleGrid>
 
-          {/* Earnings */}
-          <Text fontWeight="700" fontSize="sm" mt={4} mb={1} color="text.heading">Earnings</Text>
-          {(record.earnings ?? []).map((e, i) => (
-            <InfoRow key={i} label={e.name} value={formatCurrency(e.amount)} />
-          ))}
-          <Flex justify="space-between" py={1.5} bg="surface.bg" px={2} borderRadius="md" mt={1}>
-            <Text fontSize="sm" fontWeight="700" color="text.heading">Total Earnings</Text>
-            <Text fontSize="sm" fontWeight="700" color="text.heading">{formatCurrency(record.totalEarnings)}</Text>
-          </Flex>
-
-          {/* Deductions */}
-          <Text fontWeight="700" fontSize="sm" mt={4} mb={1} color="text.heading">Deductions</Text>
-          {(record.deductions ?? []).map((d, i) => (
-            <InfoRow key={i} label={d.name} value={formatCurrency(d.amount)} />
-          ))}
-          <Flex justify="space-between" py={1.5} bg="surface.bg" px={2} borderRadius="md" mt={1}>
-            <Text fontSize="sm" fontWeight="700" color="text.heading">Total Deductions</Text>
-            <Text fontSize="sm" fontWeight="700" color="text.heading">{formatCurrency(record.totalDeductions)}</Text>
-          </Flex>
-
-          {/* Net */}
-          <Flex justify="space-between" py={2} bg="surface.bg" px={2} borderRadius="md" mt={2}>
-            <Text fontSize="sm" fontWeight="800" color="text.heading">Net Pay</Text>
-            <Text fontSize="sm" fontWeight="800" color="text.heading">{formatCurrency(record.netPay)}</Text>
-          </Flex>
-
-          {/* PF & Tax */}
           <Divider my={4} />
-          <Text fontWeight="700" mb={2} color="text.heading">PF & Tax</Text>
-          <InfoRow label="PF Applicable" value={record.pfApplicable ? "Yes" : "No"} />
-          {record.pfApplicable && (
-            <>
-              <InfoRow label="PF Employee Contribution" value={formatCurrency(record.pfEmployeeContribution)} />
-              <InfoRow label="PF Employer Contribution" value={formatCurrency(record.pfEmployerContribution)} />
-            </>
-          )}
-          <InfoRow label="Tax Regime" value={record.taxRegime} />
 
-          {/* Banking */}
-          <Divider my={4} />
-          <Text fontWeight="700" mb={2} color="text.heading">Banking Information</Text>
-          <InfoRow label="Bank Name" value={record.bankName} />
-          <InfoRow label="Account Number" value={record.accountNumber} />
-          <InfoRow label="IFSC Code" value={record.ifscCode} />
-          <InfoRow label="Branch Name" value={record.branchName} />
-          <InfoRow label="UAN Number" value={record.uanNumber} />
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+            <Box>
+              <Text fontSize="sm" fontWeight="700" mb={2}>Earnings</Text>
+              {row.earnings.map((item) => (
+                <Flex key={item.id} justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.50">
+                  <Text fontSize="sm">{item.componentName}</Text>
+                  <Text fontSize="sm" fontWeight="600">{formatCurrency(item.calculatedAmount)}</Text>
+                </Flex>
+              ))}
+            </Box>
+            <Box>
+              <Text fontSize="sm" fontWeight="700" mb={2}>Deductions</Text>
+              {row.deductions.map((item) => (
+                <Flex key={item.id} justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.50">
+                  <Text fontSize="sm">{item.componentName}</Text>
+                  <Text fontSize="sm" fontWeight="600">{formatCurrency(item.calculatedAmount)}</Text>
+                </Flex>
+              ))}
+            </Box>
+          </SimpleGrid>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
 }
 
-/* ── Salary Form ────────────────────────────────────────────────── */
-function SalaryForm_({
-  onDone,
-  onCancel,
+function SalaryStructureForm({
   initialUserId,
+  onCancel,
+  onDone,
 }: {
-  onDone: () => void;
-  onCancel: () => void;
   initialUserId?: string;
+  onCancel: () => void;
+  onDone: () => void;
 }) {
-  const [selectedUserId, setSelectedUserId] = useState(initialUserId || "");
-  const [existingRecordId, setExistingRecordId] = useState<string | null>(null);
-  const [form, setForm] = useState<SalaryForm>(() => ({
-    ...emptyForm,
-    earnings: emptyForm.earnings.map((e) => ({ ...e })),
-    deductions: [],
-  }));
-  const [saving, setSaving] = useState(false);
-  const [fetching, setFetching] = useState(false);
   const toast = useToast();
+  const [config, setConfig] = useState<OrganizationSalaryConfig | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId || "");
+  const [existingId, setExistingId] = useState<string | null>(null);
+  const [annualCtc, setAnnualCtc] = useState("");
+  const [monthlyCtc, setMonthlyCtc] = useState("");
+  const [taxRegime, setTaxRegime] = useState("New");
+  const [effectiveFrom, setEffectiveFrom] = useState(new Date().toISOString().slice(0, 10));
+  const [overrideEnabled, setOverrideEnabled] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [componentStates, setComponentStates] = useState<Record<string, boolean>>({});
+  const [componentOverrides, setComponentOverrides] = useState<Record<string, string>>({});
+  const [componentOverrideEnabled, setComponentOverrideEnabled] = useState<Record<string, boolean>>({});
+  const [customComponents, setCustomComponents] = useState<CustomComponentForm[]>([]);
+  const [banking, setBanking] = useState<BankingForm>(emptyBanking);
+  const [showCustomComponents, setShowCustomComponents] = useState(false);
+  const [showBankingInfo, setShowBankingInfo] = useState(false);
+  const [preview, setPreview] = useState<SalaryComputation | null>(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [loadingExisting, setLoadingExisting] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [isAutoCalculating, setIsAutoCalculating] = useState(false);
+  const [autoPreviewError, setAutoPreviewError] = useState<string | null>(null);
+  const [lastPreviewAt, setLastPreviewAt] = useState("");
+  const [monthlyEdited, setMonthlyEdited] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const previewSequenceRef = useRef(0);
 
-  const isEditMode = !!existingRecordId;
+  const activeComponents: SalaryTemplateComponent[] = useMemo(
+    () => (config?.components || []).filter((c) => c.status === "ACTIVE").sort((a, b) => a.displayOrder - b.displayOrder),
+    [config],
+  );
+  const hasEmployee = Boolean(selectedUserId);
+  const hasCtcInput = Number(annualCtc || 0) > 0 || Number(monthlyCtc || 0) > 0;
+  const templateReady = Boolean(config && activeComponents.length > 0);
 
-  const resetForm = useCallback(() => {
-    setForm({
-      ...emptyForm,
-      earnings: emptyForm.earnings.map((e) => ({ ...e })),
-      deductions: [],
-    });
-    setExistingRecordId(null);
-  }, []);
-
-  const populateForm = useCallback((record: SalaryDetailsRow) => {
-    setExistingRecordId(record.id);
-    setForm({
-      ctc: record.ctc?.toString() || "",
-      earnings: (record.earnings ?? []).length > 0
-        ? record.earnings.map((e) => ({ name: e.name, amount: e.amount.toString() }))
-        : [
-            { name: "Basic", amount: (record.basic || 0).toString() },
-            { name: "HRA", amount: (record.hra || 0).toString() },
-            { name: "Allowances", amount: (record.allowances || 0).toString() },
-          ].filter((e) => parseFloat(e.amount) > 0),
-      deductions: (record.deductions ?? []).map((d) => ({ name: d.name, amount: d.amount.toString() })),
-      pfApplicable: record.pfApplicable ?? true,
-      pfEmployeeContribution: record.pfEmployeeContribution?.toString() || "",
-      pfEmployerContribution: record.pfEmployerContribution?.toString() || "",
-      taxRegime: record.taxRegime || "New",
-      bankName: record.bankName || "",
-      accountNumber: record.accountNumber || "",
-      ifscCode: record.ifscCode || "",
-      branchName: record.branchName || "",
-      uanNumber: record.uanNumber || "",
-    });
-  }, []);
-
-  // Fetch existing data when employee changes
   useEffect(() => {
-    if (!selectedUserId) {
-      resetForm();
-      return;
-    }
-    let cancelled = false;
-    const fetchData = async () => {
-      setFetching(true);
-      resetForm();
+    const loadConfig = async () => {
       try {
-        const data = await salaryDetailsApi.getByUserId(selectedUserId);
-        if (cancelled) return;
-        if (data) {
-          populateForm(data);
+        setLoadingConfig(true);
+        const cfg = await settingsApi.getSalaryConfig();
+        setConfig(cfg);
+        setTaxRegime(cfg.taxRegimeDefaults || "New");
+        const defaultStates: Record<string, boolean> = {};
+        for (const c of (cfg.components || []).filter((item) => item.status === "ACTIVE")) {
+          defaultStates[c.componentCode] = c.defaultEnabled;
         }
+        setComponentStates(defaultStates);
       } catch {
-        // No existing data — keep empty form
+        toast({ title: "Failed to load salary config", status: "error", duration: 3000, isClosable: true });
       } finally {
-        if (!cancelled) setFetching(false);
+        setLoadingConfig(false);
       }
     };
-    fetchData();
-    return () => { cancelled = true; };
-  }, [selectedUserId, resetForm, populateForm]);
+    loadConfig();
+  }, [toast]);
 
-  /* ── Earnings helpers ── */
-  const addEarning = () => setForm((p) => ({ ...p, earnings: [...p.earnings, { ...emptyEarning }] }));
-  const removeEarning = (idx: number) => setForm((p) => ({ ...p, earnings: p.earnings.filter((_, i) => i !== idx) }));
-  const updateEarning = (idx: number, field: keyof SalaryComponentForm, value: string) =>
-    setForm((p) => ({ ...p, earnings: p.earnings.map((e, i) => (i === idx ? { ...e, [field]: value } : e)) }));
+  useEffect(() => {
+    if (!selectedUserId || !config) return;
+    let cancelled = false;
+    const loadExisting = async () => {
+      try {
+        setLoadingExisting(true);
+        const row = await salaryStructureApi.getByUserId(selectedUserId);
+        if (cancelled) return;
+        const baseStates: Record<string, boolean> = {};
+        for (const c of activeComponents) baseStates[c.componentCode] = c.defaultEnabled;
+        if (!row) {
+          setExistingId(null);
+          setTaxRegime(config.taxRegimeDefaults || "New");
+          setAnnualCtc("");
+          setMonthlyCtc("");
+          setMonthlyEdited(false);
+          setEffectiveFrom(new Date().toISOString().slice(0, 10));
+          setOverrideEnabled(false);
+          setNotes("");
+          setComponentStates(baseStates);
+          setComponentOverrides({});
+          setComponentOverrideEnabled({});
+          setCustomComponents([]);
+          setShowCustomComponents(false);
+          setBanking(emptyBanking);
+          setShowBankingInfo(false);
+          setPreview(null);
+          setAutoPreviewError(null);
+          setLastPreviewAt("");
+          return;
+        }
+        setExistingId(row.id);
+        setAnnualCtc(row.annualCtc ? String(row.annualCtc) : "");
+        setMonthlyCtc(row.monthlyCtc ? String(row.monthlyCtc) : "");
+        setMonthlyEdited(Boolean(row.overrideEnabled));
+        setTaxRegime(row.taxRegime || config.taxRegimeDefaults || "New");
+        setEffectiveFrom(row.effectiveFrom || new Date().toISOString().slice(0, 10));
+        setOverrideEnabled(Boolean(row.overrideEnabled));
+        setNotes(row.notes || "");
+        const nextStates: Record<string, boolean> = {};
+        for (const c of activeComponents) nextStates[c.componentCode] = c.defaultEnabled;
+        for (const i of [...row.earnings, ...row.deductions]) nextStates[i.componentCode] = true;
+        setComponentStates(nextStates);
+        const nextOverrides: Record<string, string> = {};
+        for (const i of [...row.earnings, ...row.deductions]) {
+          if (i.isOverride && i.sourceType !== "EMPLOYEE_CUSTOM") {
+            nextOverrides[i.componentCode] = String(i.calculatedAmount);
+          }
+        }
+        setComponentOverrides(nextOverrides);
+        const nextOverrideEnabled: Record<string, boolean> = {};
+        Object.keys(nextOverrides).forEach((code) => {
+          nextOverrideEnabled[code] = true;
+        });
+        setComponentOverrideEnabled(nextOverrideEnabled);
+        setCustomComponents([
+          ...row.earnings.filter((i) => i.sourceType === "EMPLOYEE_CUSTOM").map((i) => ({
+            componentName: i.componentName,
+            category: "EARNING" as const,
+            amount: String(i.calculatedAmount),
+          })),
+          ...row.deductions.filter((i) => i.sourceType === "EMPLOYEE_CUSTOM").map((i) => ({
+            componentName: i.componentName,
+            category: "DEDUCTION" as const,
+            amount: String(i.calculatedAmount),
+          })),
+        ]);
+        setShowCustomComponents(
+          row.earnings.some((i) => i.sourceType === "EMPLOYEE_CUSTOM")
+            || row.deductions.some((i) => i.sourceType === "EMPLOYEE_CUSTOM"),
+        );
+        setBanking({
+          bankName: row.bankingInfo?.bankName || "",
+          accountNumber: row.bankingInfo?.accountNumber || "",
+          ifscCode: row.bankingInfo?.ifscCode || "",
+          branchName: row.bankingInfo?.branchName || "",
+          panNumber: row.bankingInfo?.panNumber || "",
+          uanNumber: row.bankingInfo?.uanNumber || "",
+        });
+        setShowBankingInfo(Boolean(
+          row.bankingInfo?.bankName
+          || row.bankingInfo?.accountNumber
+          || row.bankingInfo?.ifscCode
+          || row.bankingInfo?.branchName
+          || row.bankingInfo?.panNumber
+          || row.bankingInfo?.uanNumber,
+        ));
+      } finally {
+        if (!cancelled) setLoadingExisting(false);
+      }
+    };
+    loadExisting();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUserId, config, activeComponents]);
 
-  /* ── Deductions helpers ── */
-  const addDeduction = () => setForm((p) => ({ ...p, deductions: [...p.deductions, { ...emptyDeduction }] }));
-  const removeDeduction = (idx: number) => setForm((p) => ({ ...p, deductions: p.deductions.filter((_, i) => i !== idx) }));
-  const updateDeduction = (idx: number, field: keyof SalaryComponentForm, value: string) =>
-    setForm((p) => ({ ...p, deductions: p.deductions.map((d, i) => (i === idx ? { ...d, [field]: value } : d)) }));
+  useEffect(() => {
+    if (!annualCtc.trim()) {
+      if (!overrideEnabled || !monthlyEdited) setMonthlyCtc("");
+      return;
+    }
+    const annualValue = Number(annualCtc);
+    if (!Number.isFinite(annualValue) || annualValue <= 0) return;
+    if (!overrideEnabled || !monthlyEdited) {
+      setMonthlyCtc((annualValue / 12).toFixed(2));
+    }
+  }, [annualCtc, overrideEnabled, monthlyEdited]);
 
-  /* ── Totals ── */
-  const totalEarnings = form.earnings.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-  const totalDeductions = form.deductions.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
-  const netPay = totalEarnings - totalDeductions;
+  useEffect(() => {
+    if (!overrideEnabled) {
+      setMonthlyEdited(false);
+    }
+  }, [overrideEnabled]);
 
-  const buildPayload = () => ({
-    ctc: parseFloat(form.ctc) || 0,
-    earnings: form.earnings
-      .filter((e) => e.name.trim() && parseFloat(e.amount) > 0)
-      .map((e) => ({ name: e.name.trim(), amount: parseFloat(e.amount) || 0 })),
-    deductions: form.deductions
-      .filter((d) => d.name.trim() && parseFloat(d.amount) > 0)
-      .map((d) => ({ name: d.name.trim(), amount: parseFloat(d.amount) || 0 })),
-    pfApplicable: form.pfApplicable,
-    pfEmployeeContribution: parseFloat(form.pfEmployeeContribution) || 0,
-    pfEmployerContribution: parseFloat(form.pfEmployerContribution) || 0,
-    taxRegime: form.taxRegime,
-    bankName: form.bankName,
-    accountNumber: form.accountNumber,
-    ifscCode: form.ifscCode,
-    branchName: form.branchName,
-    uanNumber: form.uanNumber,
-  });
+  const previewComponentMap = useMemo(() => {
+    const map: Record<string, SalaryComputation["earnings"][number]> = {};
+    if (!preview) return map;
+    for (const item of [...preview.earnings, ...preview.deductions]) {
+      map[item.componentCode] = item;
+    }
+    return map;
+  }, [preview]);
 
-  const handleSave = async () => {
+  const invalidOverrideCodes = useMemo(() => {
+    if (!overrideEnabled) return [] as string[];
+    return Object.entries(componentOverrideEnabled)
+      .filter(([, enabled]) => enabled)
+      .map(([code]) => code)
+      .filter((code) => {
+        const value = componentOverrides[code];
+        if (value == null || value.trim() === "") return true;
+        const parsed = Number(value);
+        return !Number.isFinite(parsed) || parsed < 0;
+      });
+  }, [overrideEnabled, componentOverrideEnabled, componentOverrides]);
+
+  const buildPayload = useCallback((): SaveEmployeeSalaryStructureInput => {
+    const parsedOverrides: Record<string, number> = {};
+    if (overrideEnabled) {
+      for (const [key, enabled] of Object.entries(componentOverrideEnabled)) {
+        if (!enabled) continue;
+        const value = componentOverrides[key];
+        if (value == null || value.trim() === "") continue;
+        const parsed = Number(value);
+        if (Number.isFinite(parsed) && parsed >= 0) parsedOverrides[key] = parsed;
+      }
+    }
+    return {
+      annualCtc: annualCtc ? Number(annualCtc) : undefined,
+      monthlyCtc: monthlyCtc ? Number(monthlyCtc) : undefined,
+      taxRegime,
+      effectiveFrom,
+      overrideEnabled,
+      notes,
+      componentStates,
+      componentOverrides: parsedOverrides,
+      customComponents: customComponents
+        .filter((i) => i.componentName.trim() && Number(i.amount) > 0)
+        .map((i) => ({
+          componentName: i.componentName.trim(),
+          category: i.category,
+          amount: Number(i.amount),
+        })),
+      bankingInfo: {
+        bankName: banking.bankName,
+        accountNumber: banking.accountNumber,
+        ifscCode: banking.ifscCode,
+        branchName: banking.branchName,
+        panNumber: banking.panNumber,
+        uanNumber: banking.uanNumber,
+      },
+    };
+  }, [
+    annualCtc,
+    monthlyCtc,
+    taxRegime,
+    effectiveFrom,
+    overrideEnabled,
+    notes,
+    componentStates,
+    componentOverrides,
+    componentOverrideEnabled,
+    customComponents,
+    banking,
+  ]);
+
+  const runPreview = useCallback(async (showToastOnError: boolean) => {
+    if (!templateReady) {
+      setPreview(null);
+      setAutoPreviewError("No active salary template found.");
+      if (showToastOnError) {
+        toast({ title: "No active salary template found", status: "warning", duration: 2500, isClosable: true });
+      }
+      return;
+    }
+
     if (!selectedUserId) {
-      toast({ title: "Please select an employee", status: "warning", duration: 3000, isClosable: true });
+      setPreview(null);
+      setAutoPreviewError("Select an employee to generate salary structure.");
+      if (showToastOnError) {
+        toast({ title: "Select an employee", status: "warning", duration: 2500, isClosable: true });
+      }
+      return;
+    }
+
+    if (Number(annualCtc || 0) <= 0 && Number(monthlyCtc || 0) <= 0) {
+      setPreview(null);
+      setAutoPreviewError("Enter Annual CTC to auto-calculate salary structure.");
+      if (showToastOnError) {
+        toast({ title: "Enter annual or monthly CTC", status: "warning", duration: 2500, isClosable: true });
+      }
+      return;
+    }
+
+    if (invalidOverrideCodes.length > 0) {
+      const message = "Fix invalid override values before recalculation.";
+      setAutoPreviewError(message);
+      if (showToastOnError) {
+        toast({ title: message, status: "warning", duration: 2500, isClosable: true });
+      }
+      return;
+    }
+
+    const requestId = ++previewSequenceRef.current;
+    if (showToastOnError) setPreviewing(true);
+    setIsAutoCalculating(!showToastOnError);
+    try {
+      const result = await salaryStructureApi.preview(buildPayload());
+      if (requestId !== previewSequenceRef.current) return;
+      setPreview(result);
+      setAutoPreviewError(null);
+      setLastPreviewAt(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    } catch (err: any) {
+      if (requestId !== previewSequenceRef.current) return;
+      const message = err?.message || "Failed to run preview";
+      setAutoPreviewError(message);
+      if (showToastOnError) {
+        toast({ title: message, status: "error", duration: 3000, isClosable: true });
+      }
+    } finally {
+      if (requestId === previewSequenceRef.current) {
+        setPreviewing(false);
+        setIsAutoCalculating(false);
+      }
+    }
+  }, [
+    annualCtc,
+    monthlyCtc,
+    selectedUserId,
+    buildPayload,
+    invalidOverrideCodes,
+    templateReady,
+    toast,
+  ]);
+
+  useEffect(() => {
+    if (loadingConfig || loadingExisting) return;
+    const timer = setTimeout(() => {
+      void runPreview(false);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [loadingConfig, loadingExisting, runPreview]);
+
+  const saveStructure = async () => {
+    if (!selectedUserId) {
+      toast({ title: "Select an employee", status: "warning", duration: 2500, isClosable: true });
+      return;
+    }
+    if (invalidOverrideCodes.length > 0) {
+      toast({ title: "Fix invalid override values before saving", status: "warning", duration: 2500, isClosable: true });
       return;
     }
     try {
       setSaving(true);
-      await salaryDetailsApi.save(selectedUserId, buildPayload());
-      toast({ title: `Salary details ${isEditMode ? "updated" : "saved"}`, status: "success", duration: 3000, isClosable: true });
+      await salaryStructureApi.save(selectedUserId, buildPayload());
+      toast({
+        title: existingId ? "Salary structure updated" : "Salary structure created",
+        status: "success",
+        duration: 2500,
+        isClosable: true,
+      });
       onDone();
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed to save", status: "error", duration: 4000, isClosable: true });
+      toast({ title: err?.message || "Failed to save salary structure", status: "error", duration: 3000, isClosable: true });
     } finally {
       setSaving(false);
     }
   };
 
+  if (loadingConfig) {
+    return <Flex justify="center" py={12}><Spinner color="brand.400" /></Flex>;
+  }
+
+  if (!config) {
+    return (
+      <SectionCard>
+        <Text fontSize="md" fontWeight="700" color="text.heading" mb={1}>
+          Salary template is not available
+        </Text>
+        <Text fontSize="sm" color="text.muted" mb={4}>
+          Configure an active salary template before creating employee salary structures.
+        </Text>
+        <PrimaryButton
+          size="sm"
+          onClick={() => {
+            window.location.assign("/admin/settings");
+          }}
+        >
+          Open Salary Configuration
+        </PrimaryButton>
+      </SectionCard>
+    );
+  }
+
+  const stepStatuses: Array<"done" | "active" | "pending"> = [
+    hasEmployee ? "done" : "active",
+    hasEmployee && hasCtcInput ? "done" : hasEmployee ? "active" : "pending",
+    preview ? "done" : hasEmployee && hasCtcInput ? "active" : "pending",
+    preview && (overrideEnabled || customComponents.length > 0) ? "done" : preview ? "active" : "pending",
+    preview ? "active" : "pending",
+  ];
+  const customizedFromTemplate = (
+    overrideEnabled
+    && Object.values(componentOverrideEnabled).some(Boolean)
+  ) || customComponents.length > 0;
+
   return (
     <Box>
       <Flex justify="space-between" align="center" mb={4}>
-        <Text fontSize="lg" fontWeight="700" color="text.heading">
-          {isEditMode ? "Edit Salary & Banking" : "Add Salary & Banking"}
-        </Text>
+        <Text fontSize="lg" fontWeight="700">{existingId ? "Edit Salary Structure" : "Create Salary Structure"}</Text>
         <SecondaryButton size="sm" onClick={onCancel}>Back to List</SecondaryButton>
       </Flex>
 
-      <SectionCard mb={4}>
-        <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} />
-        {fetching && (
-          <Flex align="center" gap={2} mt={-3} mb={2}>
-            <Spinner size="sm" color="brand.400" />
-            <Text fontSize="sm" color="text.muted">Loading employee data...</Text>
-          </Flex>
-        )}
-        {selectedUserId && !fetching && isEditMode && (
-          <Badge colorScheme="green" fontSize="xs" mt={-3} mb={2}>Existing record found — editing</Badge>
-        )}
-        {selectedUserId && !fetching && !isEditMode && (
-          <Badge colorScheme="blue" fontSize="xs" mt={-3} mb={2}>No existing record — creating new</Badge>
-        )}
-      </SectionCard>
-
-      {/* ─── Salary Structure ─── */}
-      <SectionCard mb={4}>
-        <Text fontWeight="800" color="text.heading" mb={3}>Salary Structure</Text>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5}>
-          <Field label="CTC (Annual)">
-            <StyledInput placeholder="e.g., 600000" value={form.ctc} onChange={(e) => setForm((p) => ({ ...p, ctc: e.target.value }))} />
-          </Field>
-        </SimpleGrid>
-
-        <Divider my={5} />
-
-        {/* Earnings */}
-        <Flex justify="space-between" align="center" mb={3}>
-          <Text fontWeight="800" color="text.heading">Earnings</Text>
-          <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addEarning}>Add Earning</SecondaryButton>
-        </Flex>
-        {form.earnings.length > 0 && (
-          <SimpleGrid columns={2} spacing={3} mb={1} display={{ base: "none", md: "grid" }}>
-            <Text fontSize="xs" fontWeight="600" color="text.muted">Component Name</Text>
-            <Text fontSize="xs" fontWeight="600" color="text.muted">Amount (₹)</Text>
-          </SimpleGrid>
-        )}
-        {form.earnings.map((e, i) => (
-          <Flex key={i} gap={3} mb={2} align="center">
-            <Box flex={1}>
-              <StyledInput placeholder="e.g., Basic" value={e.name} onChange={(ev) => updateEarning(i, "name", ev.target.value)} />
-            </Box>
-            <Box flex={1}>
-              <StyledInput placeholder="0" value={e.amount} onChange={(ev) => updateEarning(i, "amount", ev.target.value)} />
-            </Box>
-            <IconButton
-              aria-label="Remove"
-              icon={<Trash2 size={14} />}
-              size="sm"
-              variant="ghost"
-              color="text.muted"
-              _hover={{ color: "red.500", bg: "red.50" }}
-              onClick={() => removeEarning(i)}
-            />
-          </Flex>
+      <SimpleGrid columns={{ base: 1, md: 5 }} spacing={2} mb={4}>
+        {[
+          "Select Employee",
+          "Enter Annual CTC",
+          "Auto-Generate Structure",
+          "Review / Override Components",
+          "Review & Save",
+        ].map((label, index) => (
+          <Box key={label} border="1px solid" borderColor="surface.border" borderRadius="xl" px={3} py={2.5} bg="white">
+            <Text fontSize="10px" color="text.muted" textTransform="uppercase" letterSpacing="widest">
+              Step {index + 1}
+            </Text>
+            <Text fontSize="xs" fontWeight="700" color={stepStatuses[index] === "pending" ? "text.muted" : "text.heading"}>
+              {label}
+            </Text>
+          </Box>
         ))}
-        {form.earnings.length === 0 && (
-          <Text fontSize="sm" color="text.muted" py={2}>No earnings added. Click &quot;Add Earning&quot; to add a component.</Text>
-        )}
-        <Flex justify="flex-end" mt={2}>
-          <Text fontSize="sm" fontWeight="700" color="text.heading">Total Earnings: {formatCurrency(totalEarnings)}</Text>
-        </Flex>
+      </SimpleGrid>
 
-        <Divider my={5} />
-
-        {/* Deductions */}
-        <Flex justify="space-between" align="center" mb={3}>
-          <Text fontWeight="800" color="text.heading">Deductions</Text>
-          <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addDeduction}>Add Deduction</SecondaryButton>
-        </Flex>
-        {form.deductions.length > 0 && (
-          <SimpleGrid columns={2} spacing={3} mb={1} display={{ base: "none", md: "grid" }}>
-            <Text fontSize="xs" fontWeight="600" color="text.muted">Component Name</Text>
-            <Text fontSize="xs" fontWeight="600" color="text.muted">Amount (₹)</Text>
-          </SimpleGrid>
-        )}
-        {form.deductions.map((d, i) => (
-          <Flex key={i} gap={3} mb={2} align="center">
-            <Box flex={1}>
-              <StyledInput placeholder="e.g., Professional Tax" value={d.name} onChange={(ev) => updateDeduction(i, "name", ev.target.value)} />
-            </Box>
-            <Box flex={1}>
-              <StyledInput placeholder="0" value={d.amount} onChange={(ev) => updateDeduction(i, "amount", ev.target.value)} />
-            </Box>
-            <IconButton
-              aria-label="Remove"
-              icon={<Trash2 size={14} />}
-              size="sm"
-              variant="ghost"
-              color="text.muted"
-              _hover={{ color: "red.500", bg: "red.50" }}
-              onClick={() => removeDeduction(i)}
+      <Flex gap={4} direction={{ base: "column", xl: "row" }} align="start">
+        <Box flex={1} minW={0}>
+          <SectionCard mb={4}>
+            <GuidedStepHeader
+              step={1}
+              title="Select Employee"
+              subtitle="Pick the employee whose salary structure you want to build."
+              status={stepStatuses[0]}
             />
-          </Flex>
-        ))}
-        {form.deductions.length === 0 && (
-          <Text fontSize="sm" color="text.muted" py={2}>No deductions added. Click &quot;Add Deduction&quot; to add a component.</Text>
-        )}
-        <Flex justify="flex-end" mt={2}>
-          <Text fontSize="sm" fontWeight="700" color="text.heading">Total Deductions: {formatCurrency(totalDeductions)}</Text>
-        </Flex>
+            <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} />
+            {loadingExisting ? (
+              <HStack spacing={2} mt={2}>
+                <Spinner size="sm" color="brand.400" />
+                <Text fontSize="xs" color="text.muted">
+                  Loading existing salary structure...
+                </Text>
+              </HStack>
+            ) : hasEmployee ? (
+              <Badge borderRadius="full" colorScheme={existingId ? "blue" : "green"} textTransform="none">
+                {existingId ? "Existing structure loaded for editing" : "New structure will be created"}
+              </Badge>
+            ) : null}
+          </SectionCard>
 
-        <Divider my={5} />
-
-        {/* Summary */}
-        <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4} p={4} bg="surface.bg" borderRadius="lg">
-          <Box>
-            <Text fontSize="xs" color="text.muted" fontWeight="600">Total Earnings</Text>
-            <Text fontSize="lg" fontWeight="800" color="text.heading">{formatCurrency(totalEarnings)}</Text>
-          </Box>
-          <Box>
-            <Text fontSize="xs" color="text.muted" fontWeight="600">Total Deductions</Text>
-            <Text fontSize="lg" fontWeight="800" color="text.heading">{formatCurrency(totalDeductions)}</Text>
-          </Box>
-          <Box>
-            <Text fontSize="xs" color="text.muted" fontWeight="600">Net Pay</Text>
-            <Text fontSize="lg" fontWeight="800" color="text.heading">{formatCurrency(netPay)}</Text>
-          </Box>
-        </SimpleGrid>
-      </SectionCard>
-
-      {/* ─── PF & Tax ─── */}
-      <SectionCard mb={4}>
-        <Text fontWeight="800" color="text.heading" mb={3}>PF & Tax</Text>
-        <Checkbox
-          isChecked={form.pfApplicable}
-          onChange={(e) => setForm((p) => ({ ...p, pfApplicable: e.target.checked }))}
-          colorScheme="brand"
-          mb={4}
-        >
-          PF Applicable
-        </Checkbox>
-
-        {form.pfApplicable && (
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={5}>
-            <Field label="PF Employee Contribution">
-              <StyledInput value={form.pfEmployeeContribution} onChange={(e) => setForm((p) => ({ ...p, pfEmployeeContribution: e.target.value }))} />
+          <SectionCard mb={4}>
+            <GuidedStepHeader
+              step={2}
+              title="Salary Structure Base"
+              subtitle="Annual CTC is the primary input. Monthly CTC and components are auto-derived."
+              status={stepStatuses[1]}
+            />
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+              <Field label="Annual CTC" required>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none" color="text.muted" h="100%" fontSize="sm">
+                    INR
+                  </InputLeftElement>
+                  <StyledInput
+                    type="number"
+                    pl={8}
+                    value={annualCtc}
+                    onChange={(e) => setAnnualCtc(e.target.value)}
+                    borderColor={Number(annualCtc || 0) > 0 ? "brand.300" : undefined}
+                    bg="white"
+                  />
+                </InputGroup>
+                <Text fontSize="xs" color="text.muted" mt={1}>
+                  Primary driver for all salary calculations.
+                </Text>
+              </Field>
+              <Field label="Monthly CTC (Auto-calculated)">
+                <StyledInput
+                  type="number"
+                  value={monthlyCtc}
+                  onChange={(e) => {
+                    setMonthlyEdited(true);
+                    setMonthlyCtc(e.target.value);
+                  }}
+                  isReadOnly={!overrideEnabled}
+                  bg={!overrideEnabled ? "gray.50" : "white"}
+                />
+                <Text fontSize="xs" color="text.muted" mt={1}>
+                  {!overrideEnabled
+                    ? "Auto-calculated from Annual CTC. Enable manual overrides to edit."
+                    : "Override mode enabled. You can edit Monthly CTC manually."}
+                </Text>
+              </Field>
+              <Field label="Salary Template">
+                <StyledInput isReadOnly value={config.defaultTemplateName || ""} bg="gray.50" />
+                <Text fontSize="xs" color="text.muted" mt={1}>
+                  Applied template version: {config.version}
+                </Text>
+              </Field>
+              <Field label="Tax Regime">
+                <StyledSelect value={taxRegime} onChange={(e) => setTaxRegime(e.target.value)}>
+                  <option value="New">New</option>
+                  <option value="Old">Old</option>
+                </StyledSelect>
+              </Field>
+              <Field label="Effective From">
+                <StyledInput type="date" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} />
+              </Field>
+              <Field label="Allow manual overrides">
+                <HStack spacing={2} mt={1.5}>
+                  <Switch
+                    isChecked={overrideEnabled}
+                    onChange={(e) => setOverrideEnabled(e.target.checked)}
+                    colorScheme="purple"
+                  />
+                  <Text fontSize="sm" color="text.muted">
+                    {overrideEnabled ? "Manual overrides enabled" : "Template-driven auto mode"}
+                  </Text>
+                </HStack>
+              </Field>
+            </SimpleGrid>
+            <Field label="Notes">
+              <Input mt={2} value={notes} onChange={(e) => setNotes(e.target.value)} borderRadius="lg" />
             </Field>
-            <Field label="PF Employer Contribution">
-              <StyledInput value={form.pfEmployerContribution} onChange={(e) => setForm((p) => ({ ...p, pfEmployerContribution: e.target.value }))} />
-            </Field>
-          </SimpleGrid>
-        )}
+          </SectionCard>
 
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-          <Field label="Tax Regime">
-            <StyledSelect value={form.taxRegime} onChange={(e) => setForm((p) => ({ ...p, taxRegime: e.target.value }))}>
-              <option value="New">New</option>
-              <option value="Old">Old</option>
-            </StyledSelect>
-          </Field>
-        </SimpleGrid>
-      </SectionCard>
+          <SectionCard mb={4}>
+            <GuidedStepHeader
+              step={3}
+              title="Auto-Generated Structure"
+              subtitle="The system calculates monthly split, earnings, deductions, and statutory values automatically."
+              status={stepStatuses[2]}
+            />
+            <AutoCalculationBanner
+              hasEmployee={hasEmployee}
+              hasCtc={hasCtcInput}
+              isAutoCalculating={isAutoCalculating}
+              lastPreviewAt={lastPreviewAt}
+              autoPreviewError={autoPreviewError}
+              onRecalculate={() => { void runPreview(true); }}
+              previewing={previewing}
+            />
+          </SectionCard>
 
-      {/* ─── Banking ─── */}
-      <SectionCard mb={4}>
-        <Text fontWeight="800" color="text.heading" mb={3}>Banking Information</Text>
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-          <Field label="Bank Name">
-            <StyledInput placeholder="Bank name" value={form.bankName} onChange={(e) => setForm((p) => ({ ...p, bankName: e.target.value }))} />
-          </Field>
-          <Field label="Account Number">
-            <StyledInput placeholder="Bank account number" value={form.accountNumber} onChange={(e) => setForm((p) => ({ ...p, accountNumber: e.target.value }))} />
-          </Field>
-          <Field label="IFSC Code">
-            <StyledInput placeholder="IFSC code" value={form.ifscCode} onChange={(e) => setForm((p) => ({ ...p, ifscCode: e.target.value }))} />
-          </Field>
-          <Field label="Branch Name">
-            <StyledInput placeholder="Branch name" value={form.branchName} onChange={(e) => setForm((p) => ({ ...p, branchName: e.target.value }))} />
-          </Field>
-          <Field label="UAN Number">
-            <StyledInput placeholder="UAN number" value={form.uanNumber} onChange={(e) => setForm((p) => ({ ...p, uanNumber: e.target.value.replace(/\D/g, "") }))} />
-          </Field>
-        </SimpleGrid>
-      </SectionCard>
+          <SectionCard mb={4}>
+            <GuidedStepHeader
+              step={4}
+              title="Review / Override Components"
+              subtitle="See component-wise source and override only fields allowed by template."
+              status={stepStatuses[3]}
+            />
+            {activeComponents.length ? (
+              <Flex direction="column" gap={3}>
+                {activeComponents.map((component) => {
+                  const code = component.componentCode;
+                  const manualEnabled = componentOverrideEnabled[code] ?? false;
+                  return (
+                    <ComponentOverrideRow
+                      key={code}
+                      component={component}
+                      enabled={componentStates[code] ?? component.defaultEnabled}
+                      onEnabledChange={(next) => setComponentStates((prev) => ({ ...prev, [code]: next }))}
+                      allowManualOverride={component.editableForEmployee}
+                      manualOverrideEnabled={manualEnabled}
+                      onManualOverrideChange={(next) => {
+                        setComponentOverrideEnabled((prev) => ({ ...prev, [code]: next }));
+                        if (next) {
+                          if (!componentOverrides[code] && previewComponentMap[code]?.amount != null) {
+                            setComponentOverrides((prev) => ({ ...prev, [code]: String(previewComponentMap[code].amount) }));
+                          }
+                        } else {
+                          setComponentOverrides((prev) => {
+                            const nextOverrides = { ...prev };
+                            delete nextOverrides[code];
+                            return nextOverrides;
+                          });
+                        }
+                      }}
+                      overrideValue={componentOverrides[code] || ""}
+                      onOverrideValueChange={(value) => setComponentOverrides((prev) => ({ ...prev, [code]: value }))}
+                      onClearOverride={() => {
+                        setComponentOverrideEnabled((prev) => ({ ...prev, [code]: false }));
+                        setComponentOverrides((prev) => {
+                          const nextOverrides = { ...prev };
+                          delete nextOverrides[code];
+                          return nextOverrides;
+                        });
+                      }}
+                      previewAmount={previewComponentMap[code]?.amount}
+                      overrideModeEnabled={overrideEnabled}
+                      invalidOverride={invalidOverrideCodes.includes(code)}
+                    />
+                  );
+                })}
+              </Flex>
+            ) : (
+              <Text fontSize="sm" color="text.muted">
+                No active salary components found in the selected template.
+              </Text>
+            )}
 
-      {/* ─── Actions ─── */}
-      <Flex justify="flex-end" gap={3}>
-        <SecondaryButton size="sm" onClick={onCancel}>Cancel</SecondaryButton>
-        <PrimaryButton size="sm" onClick={handleSave} isLoading={saving} isDisabled={!selectedUserId || fetching}>
-          {isEditMode ? "Update Details" : "Save Details"}
-        </PrimaryButton>
+            <Box mt={4} border="1px solid" borderColor="surface.border" borderRadius="xl" p={3.5} bg="surface.bg">
+              <Flex justify="space-between" align={{ base: "start", md: "center" }} gap={2} direction={{ base: "column", md: "row" }}>
+                <Box>
+                  <Text fontSize="sm" fontWeight="700" color="text.heading">
+                    Additional custom components
+                  </Text>
+                  <Text fontSize="xs" color="text.muted">
+                    Add one-off earning or deduction adjustments if needed.
+                  </Text>
+                </Box>
+                <HStack spacing={2}>
+                  <SecondaryButton size="xs" onClick={() => setShowCustomComponents((prev) => !prev)}>
+                    {showCustomComponents ? "Hide" : "Show"}
+                  </SecondaryButton>
+                  <SecondaryButton
+                    size="xs"
+                    leftIcon={<Plus size={14} />}
+                    onClick={() => {
+                      setShowCustomComponents(true);
+                      setCustomComponents((prev) => [...prev, { ...emptyCustom }]);
+                    }}
+                  >
+                    Add
+                  </SecondaryButton>
+                </HStack>
+              </Flex>
+
+              {showCustomComponents ? (
+                <Flex direction="column" gap={2} mt={3}>
+                  {customComponents.map((row, idx) => (
+                    <Flex key={idx} gap={2} align="center" flexWrap="wrap">
+                      <Box flex={2} minW="180px">
+                        <StyledInput
+                          value={row.componentName}
+                          placeholder="Component name"
+                          onChange={(e) => setCustomComponents((prev) => prev.map((item, i) => (i === idx ? { ...item, componentName: e.target.value } : item)))}
+                        />
+                      </Box>
+                      <Box flex={1} minW="140px">
+                        <StyledSelect
+                          value={row.category}
+                          onChange={(e) => setCustomComponents((prev) => prev.map((item, i) => (i === idx ? { ...item, category: e.target.value as "EARNING" | "DEDUCTION" } : item)))}
+                        >
+                          <option value="EARNING">Earning</option>
+                          <option value="DEDUCTION">Deduction</option>
+                        </StyledSelect>
+                      </Box>
+                      <Box flex={1} minW="140px">
+                        <StyledInput
+                          type="number"
+                          value={row.amount}
+                          placeholder="Amount"
+                          onChange={(e) => setCustomComponents((prev) => prev.map((item, i) => (i === idx ? { ...item, amount: e.target.value } : item)))}
+                        />
+                      </Box>
+                      <IconButton
+                        aria-label="Remove custom component"
+                        icon={<Trash2 size={14} />}
+                        size="sm"
+                        variant="ghost"
+                        color="red.500"
+                        onClick={() => setCustomComponents((prev) => prev.filter((_, i) => i !== idx))}
+                      />
+                    </Flex>
+                  ))}
+                  {customComponents.length === 0 ? (
+                    <Text fontSize="sm" color="text.muted">
+                      No custom components added.
+                    </Text>
+                  ) : null}
+                </Flex>
+              ) : null}
+            </Box>
+
+            <Box mt={3} border="1px solid" borderColor="surface.border" borderRadius="xl" p={3.5} bg="surface.bg">
+              <Flex justify="space-between" align={{ base: "start", md: "center" }} gap={2} direction={{ base: "column", md: "row" }}>
+                <Box>
+                  <Text fontSize="sm" fontWeight="700" color="text.heading">
+                    Banking Information (Optional)
+                  </Text>
+                  <Text fontSize="xs" color="text.muted">
+                    Secondary section. Keep this light and fill only if available.
+                  </Text>
+                </Box>
+                <SecondaryButton size="xs" onClick={() => setShowBankingInfo((prev) => !prev)}>
+                  {showBankingInfo ? "Hide" : "Show"}
+                </SecondaryButton>
+              </Flex>
+              {showBankingInfo ? (
+                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3} mt={3}>
+                  <Field label="Bank Name"><StyledInput value={banking.bankName} onChange={(e) => setBanking((p) => ({ ...p, bankName: e.target.value }))} /></Field>
+                  <Field label="Account Number"><StyledInput value={banking.accountNumber} onChange={(e) => setBanking((p) => ({ ...p, accountNumber: e.target.value }))} /></Field>
+                  <Field label="IFSC Code"><StyledInput value={banking.ifscCode} onChange={(e) => setBanking((p) => ({ ...p, ifscCode: e.target.value.toUpperCase() }))} /></Field>
+                  <Field label="Branch Name"><StyledInput value={banking.branchName} onChange={(e) => setBanking((p) => ({ ...p, branchName: e.target.value }))} /></Field>
+                  <Field label="PAN Number"><StyledInput value={banking.panNumber} onChange={(e) => setBanking((p) => ({ ...p, panNumber: e.target.value.toUpperCase() }))} /></Field>
+                  <Field label="UAN Number"><StyledInput value={banking.uanNumber} onChange={(e) => setBanking((p) => ({ ...p, uanNumber: e.target.value.replace(/\D/g, "") }))} /></Field>
+                </SimpleGrid>
+              ) : null}
+            </Box>
+          </SectionCard>
+
+          <SectionCard mb={4}>
+            <GuidedStepHeader
+              step={5}
+              title="Review Final Structure"
+              subtitle="Live summary updates instantly based on CTC and overrides."
+              status={stepStatuses[4]}
+            />
+            {preview ? (
+              <>
+                <SimpleGrid columns={{ base: 1, md: 2, lg: 5 }} spacing={3}>
+                  <SummaryTile title="Gross Earnings" value={formatCurrency(preview.summary.grossSalary)} />
+                  <SummaryTile title="Employee Deductions" value={formatCurrency(preview.summary.employeeDeductions)} />
+                  <SummaryTile title="Net Pay" value={formatCurrency(preview.summary.netPay)} />
+                  <SummaryTile title="Employer Contribution" value={formatCurrency(preview.summary.employerContributions)} />
+                  <SummaryTile title="Total Employer Cost" value={formatCurrency(preview.summary.employerCostImpact)} />
+                </SimpleGrid>
+
+                <Flex justify="space-between" mt={3} align="center" gap={2} flexWrap="wrap">
+                  <Text fontSize="xs" color="text.muted">
+                    Salary Template: {preview.appliedTemplateName} (v{preview.appliedConfigVersion})
+                  </Text>
+                  {customizedFromTemplate ? (
+                    <Badge borderRadius="full" colorScheme="orange" textTransform="none">
+                      Customized from template defaults
+                    </Badge>
+                  ) : (
+                    <Badge borderRadius="full" colorScheme="green" textTransform="none">
+                      Template auto defaults
+                    </Badge>
+                  )}
+                </Flex>
+
+                <Divider my={4} />
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="700" mb={2}>Earnings Breakdown</Text>
+                    {preview.earnings.map((item) => (
+                      <Flex key={`earning-${item.componentCode}`} justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.100">
+                        <Box>
+                          <Text fontSize="sm">{item.componentName}</Text>
+                          <Text fontSize="xs" color="text.muted">
+                            {item.isOverride ? "Manual override applied" : "Calculated from template"}
+                          </Text>
+                        </Box>
+                        <Text fontSize="sm" fontWeight="700">{formatCurrency(item.amount)}</Text>
+                      </Flex>
+                    ))}
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="700" mb={2}>Deductions Breakdown</Text>
+                    {preview.deductions.map((item) => (
+                      <Flex key={`deduction-${item.componentCode}`} justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.100">
+                        <Box>
+                          <Text fontSize="sm">{item.componentName}</Text>
+                          <Text fontSize="xs" color="text.muted">
+                            {item.sourceType === "AUTO_STATUTORY" ? "Statutory deduction" : item.isOverride ? "Manual override applied" : "Calculated from template"}
+                          </Text>
+                        </Box>
+                        <Text fontSize="sm" fontWeight="700">{formatCurrency(item.amount)}</Text>
+                      </Flex>
+                    ))}
+                  </Box>
+                </SimpleGrid>
+
+                {preview.statutoryBreakdowns.length ? (
+                  <>
+                    <Divider my={4} />
+                    <Box>
+                      <Text fontSize="sm" fontWeight="700" mb={2}>Statutory Breakdown</Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                        {preview.statutoryBreakdowns.map((item, idx) => (
+                          <Flex key={`${item.statutoryType}-${idx}`} justify="space-between" border="1px solid" borderColor="surface.border" borderRadius="lg" px={3} py={2}>
+                            <Box>
+                              <Text fontSize="sm" fontWeight="600">{item.componentName}</Text>
+                              <Text fontSize="xs" color="text.muted">
+                                {item.statutoryType} - {item.componentSide}
+                              </Text>
+                            </Box>
+                            <Text fontSize="sm" fontWeight="700">{formatCurrency(item.amount)}</Text>
+                          </Flex>
+                        ))}
+                      </SimpleGrid>
+                    </Box>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <Box border="1px dashed" borderColor="surface.border" borderRadius="lg" p={4}>
+                <Text fontSize="sm" fontWeight="700" color="text.heading" mb={1}>
+                  Final summary will appear here
+                </Text>
+                <Text fontSize="xs" color="text.muted">
+                  Select an employee and enter Annual CTC to generate earnings, deductions, net pay, and employer cost.
+                </Text>
+              </Box>
+            )}
+          </SectionCard>
+        </Box>
+
+        <Box w={{ base: "100%", xl: "360px" }} position={{ xl: "sticky" }} top={{ xl: "84px" }} alignSelf="flex-start">
+          <LiveSalarySummary
+            preview={preview}
+            emptyHint="Once Annual CTC is entered, this panel will show live totals automatically."
+          />
+          <SectionCard mt={4}>
+            <Text fontSize="sm" fontWeight="700" color="text.heading" mb={1}>
+              Save Action
+            </Text>
+            <Text fontSize="xs" color="text.muted" mb={3}>
+              {invalidOverrideCodes.length
+                ? "Fix invalid manual overrides before saving."
+                : "Your latest preview values will be persisted to employee salary structure."}
+            </Text>
+            <VStack align="stretch" spacing={2}>
+              <SecondaryButton
+                size="sm"
+                leftIcon={<RefreshCw size={14} />}
+                isLoading={previewing}
+                onClick={() => { void runPreview(true); }}
+              >
+                Refresh Preview
+              </SecondaryButton>
+              <PrimaryButton
+                size="sm"
+                isLoading={saving}
+                isDisabled={!hasEmployee || !hasCtcInput || invalidOverrideCodes.length > 0}
+                onClick={saveStructure}
+              >
+                {existingId ? "Update Salary Structure" : "Save Salary Structure"}
+              </PrimaryButton>
+              <SecondaryButton size="sm" onClick={onCancel}>Cancel</SecondaryButton>
+            </VStack>
+          </SectionCard>
+        </Box>
       </Flex>
+
+      <Box
+        mt={4}
+        position="sticky"
+        bottom={0}
+        zIndex={6}
+        bg="whiteAlpha.900"
+        backdropFilter="blur(8px)"
+        border="1px solid"
+        borderColor="surface.border"
+        borderRadius="xl"
+        p={3}
+      >
+        <Flex justify="space-between" align={{ base: "start", md: "center" }} direction={{ base: "column", md: "row" }} gap={2}>
+          <Box>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">
+              {existingId ? "Editing salary structure" : "Creating new salary structure"}
+            </Text>
+            <Text fontSize="xs" color="text.muted">
+              {hasEmployee
+                ? hasCtcInput
+                  ? "Auto-calculation is active. Save when the final summary looks correct."
+                  : "Enter Annual CTC to start automatic split calculation."
+                : "Select an employee to begin."}
+            </Text>
+          </Box>
+          <HStack spacing={2}>
+            <SecondaryButton
+              size="sm"
+              leftIcon={<RefreshCw size={14} />}
+              isLoading={previewing}
+              onClick={() => { void runPreview(true); }}
+            >
+              Recalculate
+            </SecondaryButton>
+            <PrimaryButton
+              size="sm"
+              isLoading={saving}
+              isDisabled={!hasEmployee || !hasCtcInput || invalidOverrideCodes.length > 0}
+              onClick={saveStructure}
+            >
+              {existingId ? "Update" : "Save"}
+            </PrimaryButton>
+          </HStack>
+        </Flex>
+      </Box>
     </Box>
   );
 }
 
-/* ── Main Page ──────────────────────────────────────────────────── */
 export default function SalaryBankingPage() {
-  const [records, setRecords] = useState<SalaryDetailsRow[]>([]);
+  const toast = useToast();
+  const viewModal = useDisclosure();
+  const [view, setView] = useState<PageView>("list");
+  const [rows, setRows] = useState<EmployeeSalaryStructureRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState<"list" | "add" | "edit">("list");
-  const [editRecord, setEditRecord] = useState<SalaryDetailsRow | null>(null);
-  const [viewRecord, setViewRecord] = useState<SalaryDetailsRow | null>(null);
-  const viewModal = useDisclosure();
-  const toast = useToast();
+  const [editRow, setEditRow] = useState<EmployeeSalaryStructureRow | null>(null);
+  const [viewRow, setViewRow] = useState<EmployeeSalaryStructureRow | null>(null);
 
-  const fetchRecords = useCallback(async () => {
+  const fetchRows = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await salaryDetailsApi.list();
-      setRecords(res.data);
+      const res = await salaryStructureApi.list();
+      setRows(res.data);
     } catch {
-      toast({ title: "Failed to load salary details", status: "error", duration: 3000, isClosable: true });
+      toast({ title: "Failed to load salary structures", status: "error", duration: 3000, isClosable: true });
     } finally {
       setLoading(false);
     }
   }, [toast]);
 
   useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
+    fetchRows();
+  }, [fetchRows]);
 
-  const filtered = records.filter((r) => {
+  const filtered = rows.filter((row) => {
     const q = search.toLowerCase();
-    return (
-      r.employeeName.toLowerCase().includes(q) ||
-      r.empId.toLowerCase().includes(q) ||
-      r.email.toLowerCase().includes(q) ||
-      r.bankName.toLowerCase().includes(q)
-    );
+    return row.employeeName.toLowerCase().includes(q) || row.employeeCode.toLowerCase().includes(q) || row.email.toLowerCase().includes(q) || row.appliedTemplateName.toLowerCase().includes(q);
   });
 
-  const handleView = (row: SalaryDetailsRow) => {
-    setViewRecord(row);
-    viewModal.onOpen();
-  };
-
-  const handleEdit = (row: SalaryDetailsRow) => {
-    setEditRecord(row);
-    setView("edit");
-  };
-
-  const handleFormDone = () => {
-    setView("list");
-    setEditRecord(null);
-    fetchRecords();
-  };
-
-  const columns: Column<SalaryDetailsRow>[] = [
-    {
-      key: "empId",
-      header: "Emp ID",
-      width: "100px",
-      render: (row) => (
-        <Text fontWeight="600" fontSize="sm" color="brand.500">{row.empId}</Text>
-      ),
-    },
-    {
-      key: "employeeName",
-      header: "Employee Name",
-      render: (row) => (
-        <Box>
-          <Text fontWeight="600" fontSize="sm">{row.employeeName}</Text>
-          <Text fontSize="xs" color="text.muted">{row.email}</Text>
-        </Box>
-      ),
-    },
-    {
-      key: "ctc",
-      header: "CTC",
-      render: (row) => <Text fontSize="sm" fontWeight="600">{formatCurrency(row.ctc)}</Text>,
-    },
-    {
-      key: "totalEarnings",
-      header: "Earnings",
-      render: (row) => <Text fontSize="sm" fontWeight="600" color="green.600">{formatCurrency(row.totalEarnings)}</Text>,
-    },
-    {
-      key: "totalDeductions",
-      header: "Deductions",
-      render: (row) => <Text fontSize="sm" fontWeight="600" color="red.500">{formatCurrency(row.totalDeductions)}</Text>,
-    },
-    {
-      key: "bankName",
-      header: "Bank",
-      render: (row) => <Text fontSize="sm">{row.bankName || "—"}</Text>,
-    },
-    {
-      key: "taxRegime",
-      header: "Tax Regime",
-      width: "100px",
-      render: (row) => (
-        <Badge variant="subtle" colorScheme={row.taxRegime === "New" ? "green" : "orange"} fontSize="xs">
-          {row.taxRegime}
-        </Badge>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      width: "100px",
-      render: (row) => (
-        <HStack spacing={1}>
-          <IconButton
-            aria-label="View"
-            icon={<Eye size={16} />}
-            size="sm"
-            variant="ghost"
-            color="text.muted"
-            _hover={{ color: "brand.400", bg: "brand.50" }}
-            onClick={() => handleView(row)}
-          />
-          <IconButton
-            aria-label="Edit"
-            icon={<Edit2 size={16} />}
-            size="sm"
-            variant="ghost"
-            color="text.muted"
-            _hover={{ color: "blue.500", bg: "blue.50" }}
-            onClick={() => handleEdit(row)}
-          />
-        </HStack>
-      ),
-    },
+  const columns: Column<EmployeeSalaryStructureRow>[] = [
+    { key: "employeeCode", header: "Emp ID", width: "110px", render: (row) => <Text fontSize="sm" fontWeight="700" color="brand.500">{row.employeeCode}</Text> },
+    { key: "employeeName", header: "Employee", render: (row) => <Box><Text fontSize="sm" fontWeight="600">{row.employeeName}</Text><Text fontSize="xs" color="text.muted">{row.email}</Text></Box> },
+    { key: "template", header: "Template", render: (row) => <Box><Text fontSize="sm" fontWeight="600">{row.appliedTemplateName}</Text><Text fontSize="xs" color="text.muted">Version {row.appliedConfigVersion}</Text></Box> },
+    { key: "monthlyCtc", header: "Monthly CTC", render: (row) => <Text fontSize="sm">{formatCurrency(row.monthlyCtc)}</Text> },
+    { key: "netPay", header: "Net Pay", render: (row) => <Text fontSize="sm" fontWeight="700" color="green.600">{formatCurrency(Number(row.summary?.netPay || 0))}</Text> },
+    { key: "employerCost", header: "Employer Cost", render: (row) => <Text fontSize="sm" fontWeight="700" color="blue.600">{formatCurrency(Number(row.summary?.employerCostImpact || 0))}</Text> },
+    { key: "actions", header: "Actions", width: "110px", render: (row) => <HStack spacing={1}><IconButton aria-label="view" icon={<Eye size={16} />} size="sm" variant="ghost" onClick={() => { setViewRow(row); viewModal.onOpen(); }} /><IconButton aria-label="edit" icon={<Edit2 size={16} />} size="sm" variant="ghost" onClick={() => { setEditRow(row); setView("edit"); }} /></HStack> },
   ];
 
   if (view === "add") {
     return (
       <Box>
-        <PageHeader title="Salary & Banking" subtitle="Add or edit salary structure and banking details for an employee." />
-        <SalaryForm_ onDone={handleFormDone} onCancel={() => setView("list")} />
+        <PageHeader title="Salary & Banking" subtitle="Generate salary structures from organization-level salary settings." />
+        <SalaryStructureForm onCancel={() => setView("list")} onDone={() => { setView("list"); fetchRows(); }} />
       </Box>
     );
   }
 
-  if (view === "edit" && editRecord) {
+  if (view === "edit" && editRow) {
     return (
       <Box>
-        <PageHeader title="Salary & Banking" subtitle="Update salary structure and banking details." />
-        <SalaryForm_ onDone={handleFormDone} onCancel={() => { setView("list"); setEditRecord(null); }} initialUserId={editRecord.userId} />
+        <PageHeader title="Salary & Banking" subtitle="Update employee salary structure and banking details." />
+        <SalaryStructureForm initialUserId={editRow.employeeId} onCancel={() => { setEditRow(null); setView("list"); }} onDone={() => { setEditRow(null); setView("list"); fetchRows(); }} />
       </Box>
     );
   }
@@ -626,49 +1393,22 @@ export default function SalaryBankingPage() {
     <Box>
       <PageHeader
         title="Salary & Banking"
-        subtitle="Update salary structure and banking details."
-        actions={
-          <PrimaryButton size="sm" leftIcon={<Plus size={16} />} onClick={() => setView("add")}>
-            Add New
-          </PrimaryButton>
-        }
+        subtitle="Auto-fill earnings, statutory deductions and net pay from organization defaults."
+        actions={<PrimaryButton size="sm" leftIcon={<Plus size={16} />} onClick={() => setView("add")}>Configure Salary</PrimaryButton>}
       />
 
       <SectionCard>
-        <Flex
-          justify="space-between"
-          align={{ base: "stretch", md: "center" }}
-          direction={{ base: "column", md: "row" }}
-          gap={3}
-          mb={4}
-        >
-          <InputGroup maxW={{ base: "100%", md: "320px" }}>
-            <InputLeftElement pointerEvents="none">
-              <Search size={16} color="gray" />
-            </InputLeftElement>
-            <Input
-              placeholder="Search by name, ID, email, bank..."
-              size="md"
-              borderRadius="lg"
-              fontSize="sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <Flex justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3} mb={4}>
+          <InputGroup maxW={{ base: "100%", md: "340px" }}>
+            <InputLeftElement pointerEvents="none"><Search size={16} color="gray" /></InputLeftElement>
+            <Input placeholder="Search by employee, code, email, template" size="md" borderRadius="lg" fontSize="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
           </InputGroup>
-          <Text fontSize="sm" color="text.muted">
-            {filtered.length} record{filtered.length !== 1 ? "s" : ""}
-          </Text>
+          <Text fontSize="sm" color="text.muted">{filtered.length} record{filtered.length !== 1 ? "s" : ""}</Text>
         </Flex>
-
-        <DataTable
-          columns={columns}
-          data={filtered}
-          keyField="id"
-          emptyMessage={loading ? "Loading..." : "No salary details found. Click 'Add New' to add one."}
-        />
+        <DataTable columns={columns} data={filtered} keyField="id" emptyMessage={loading ? "Loading..." : "No salary structure found."} />
       </SectionCard>
 
-      <ViewModal isOpen={viewModal.isOpen} onClose={viewModal.onClose} record={viewRecord} />
+      <ViewModal row={viewRow} isOpen={viewModal.isOpen} onClose={viewModal.onClose} />
     </Box>
   );
 }

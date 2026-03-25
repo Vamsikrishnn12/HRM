@@ -30,6 +30,19 @@ export const bulkImportSchema = z.object({
   year: z.number().int().min(2020).max(2099),
 });
 
+export const bulkGenerateSchema = z.object({
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2020).max(2099),
+  overwriteExisting: z.boolean().optional(),
+  employeeIds: z.array(z.string().uuid()).optional(),
+});
+
+export const runDispatchSchema = z.object({
+  sendEmail: z.boolean().default(true),
+  publishToPortal: z.boolean().default(true),
+  retryFailedOnly: z.boolean().default(false),
+});
+
 export const listRecordsSchema = z.object({
   month: z.coerce.number().int().min(1).max(12).optional(),
   year: z.coerce.number().int().min(2020).max(2099).optional(),
@@ -42,6 +55,17 @@ export const listPayslipsSchema = z.object({
 });
 
 export const summarySchema = z.object({
+  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2020).max(2099),
+});
+
+export const attendanceReportSchema = z.object({
+  employeeId: z.string().uuid(),
+  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2020).max(2099),
+});
+
+export const salaryReportSchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
   year: z.coerce.number().int().min(2020).max(2099),
 });

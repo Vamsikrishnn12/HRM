@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SettingsController } from '../controllers/settings.controller';
+import { OrganizationSalaryConfigController } from '../controllers/organizationSalaryConfig.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -43,6 +44,8 @@ router.use(authMiddleware, roleMiddleware('ADMIN'));
  *                     officeLatitude: { type: number, nullable: true }
  *                     officeLongitude: { type: number, nullable: true }
  *                     officeRadiusMeters: { type: integer, nullable: true }
+ *                     geoFenceRequired: { type: boolean, example: true }
+ *                     allowRemoteAttendance: { type: boolean, example: false }
  */
 router.get('/', asyncHandler(SettingsController.getSettings));
 
@@ -71,6 +74,8 @@ router.get('/', asyncHandler(SettingsController.getSettings));
  *               officeLatitude: { type: number, nullable: true }
  *               officeLongitude: { type: number, nullable: true }
  *               officeRadiusMeters: { type: integer, nullable: true }
+ *               geoFenceRequired: { type: boolean }
+ *               allowRemoteAttendance: { type: boolean }
  *     responses:
  *       200:
  *         description: Settings updated
@@ -78,6 +83,25 @@ router.get('/', asyncHandler(SettingsController.getSettings));
  *         description: Validation error
  */
 router.put('/', asyncHandler(SettingsController.updateSettings));
+
+// Salary configuration
+router.get(
+  '/salary-config',
+  asyncHandler(OrganizationSalaryConfigController.getActive),
+);
+router.get(
+  '/salary-config/versions',
+  asyncHandler(OrganizationSalaryConfigController.listVersions),
+);
+router.put(
+  '/salary-config',
+  asyncHandler(OrganizationSalaryConfigController.save),
+);
+router.post(
+  '/salary-config/preview',
+  asyncHandler(OrganizationSalaryConfigController.preview),
+);
+
 
 // ── Holidays ──
 

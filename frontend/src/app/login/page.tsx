@@ -11,16 +11,16 @@ import {
   FormControl,
   FormLabel,
   FormErrorMessage,
-  Checkbox,
   Button,
   VStack,
 } from "@chakra-ui/react";
-import { Eye, EyeOff, MapPin } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
 import AuthLoader from "@/components/ui/AuthLoader";
+import BrandMark from "@/components/ui/BrandMark";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Enter a valid email"),
@@ -32,7 +32,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
   const { login, isAuthenticated, user, authStatus } = useAuth();
   const router = useRouter();
 
@@ -72,8 +71,6 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-    setLocationError(null);
-
     const coords = await getCoordinates();
 
     const loggedInUser = await login({
@@ -138,23 +135,19 @@ export default function LoginPage() {
           left="10%"
         />
 
-        {/* Logo placeholder */}
-        <Flex
-          w={20}
-          h={20}
-          borderRadius="2xl"
-          bg="whiteAlpha.200"
-          align="center"
-          justify="center"
-          mb={8}
-          backdropFilter="blur(10px)"
-          border="1px solid"
-          borderColor="whiteAlpha.200"
-        >
-          <Text fontSize="2xl" fontWeight="800" color="white">
-            HR
-          </Text>
-        </Flex>
+        <Box mb={8}>
+          <BrandMark
+            logoSize="80px"
+            showName
+            nameColor="white"
+            nameFontSize="3xl"
+            logoBg="whiteAlpha.950"
+            logoBorderColor="whiteAlpha.300"
+            logoRadius="2xl"
+            logoShadow="0 14px 32px rgba(15, 23, 42, 0.28)"
+            priority
+          />
+        </Box>
 
         <Heading
           size="xl"
@@ -164,9 +157,7 @@ export default function LoginPage() {
           fontWeight="700"
           lineHeight="1.3"
         >
-          Human Resource
-          <br />
-          Management System
+          Human Resource Management System
         </Heading>
         <Text
           color="whiteAlpha.800"
@@ -175,7 +166,7 @@ export default function LoginPage() {
           maxW="380px"
           lineHeight="1.7"
         >
-          Streamline your workforce management with our comprehensive HRMS
+          Streamline your workforce management with the Zora HR
           platform. Track attendance, manage leaves, process payroll all in one
           place.
         </Text>

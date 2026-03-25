@@ -40,8 +40,16 @@ export default function UpcomingBirthdaysWidget(props: Record<string, any>) {
           <Spinner size="sm" color="brand.400" />
         </Flex>
       ) : birthdays.length === 0 ? (
-        <Flex justify="center" py={8}>
-          <Text fontSize="sm" color="text.muted" fontWeight="500">
+        <Flex
+          justify="center"
+          py={8}
+          px={4}
+          border="1px dashed"
+          borderColor="surface.border"
+          borderRadius="xl"
+          bg="surface.bg"
+        >
+          <Text fontSize="sm" color="text.muted" fontWeight="600">
             No upcoming birthdays in the next 30 days.
           </Text>
         </Flex>
@@ -54,22 +62,20 @@ export default function UpcomingBirthdaysWidget(props: Record<string, any>) {
               gap={3}
               p={3}
               borderRadius="xl"
-              bg="surface.bg"
-              _hover={{ bg: "brand.50", transform: "translateX(2px)" }}
+              bg="white"
+              border="1px solid"
+              borderColor="surface.border"
+              _hover={{ bg: "brand.50", transform: "translateX(2px)", borderColor: "brand.100" }}
               transition="all 0.25s cubic-bezier(.4,0,.2,1)"
             >
               <Avatar size="sm" name={b.fullName} bg="brand.400" color="white" />
               <Box flex={1} minW={0}>
-                <Text
-                  fontSize="sm"
-                  fontWeight="600"
-                  color="text.heading"
-                  isTruncated
-                >
+                <Text fontSize="sm" fontWeight="700" color="text.heading" isTruncated>
                   {b.fullName}
                 </Text>
-                <Text fontSize="xs" color="text.muted" isTruncated fontWeight="500">
-                  {b.department}{b.designation ? ` • ${b.designation}` : ""}
+                <Text fontSize="xs" color="text.muted" isTruncated fontWeight="600">
+                  {b.department}
+                  {b.designation ? ` - ${b.designation}` : ""}
                 </Text>
               </Box>
               <Text
@@ -82,7 +88,7 @@ export default function UpcomingBirthdaysWidget(props: Record<string, any>) {
                 color={b.daysLeft === 0 ? "#0D7C47" : "brand.400"}
                 flexShrink={0}
               >
-                {b.daysLeft === 0 ? "🎂 Today" : `In ${b.daysLeft}d`}
+                {b.daysLeft === 0 ? "Today" : `In ${b.daysLeft}d`}
               </Text>
             </Flex>
           ))}

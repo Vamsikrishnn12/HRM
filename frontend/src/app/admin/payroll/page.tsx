@@ -18,16 +18,15 @@ import {
   Spinner,
   Input,
   Tooltip,
+  Checkbox,
 } from "@chakra-ui/react";
 import {
   DollarSign,
   TrendingUp,
-  Clock,
   AlertCircle,
   Download,
   Upload,
   Mail,
-  Eye,
   Trash2,
   Plus,
   FileSpreadsheet,
@@ -47,6 +46,7 @@ import {
   type PayrollRecordType,
   type PayrollSummary,
   type ImportJobStatusType,
+  type PayrollRun,
 } from "@/api";
 
 const MONTHS = [
@@ -63,6 +63,7 @@ export default function PayrollPage() {
   const [year, setYear] = useState(currentYear);
   const [summary, setSummary] = useState<PayrollSummary | null>(null);
   const [records, setRecords] = useState<PayrollRecordType[]>([]);
+  const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -70,12 +71,14 @@ export default function PayrollPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, r] = await Promise.all([
+      const [s, recordsResp, runsResp] = await Promise.all([
         payrollApi.summary(month, year),
         payrollApi.listRecords({ month, year, search: search || undefined }),
+        payrollApi.listRuns({ month, year }),
       ]);
       setSummary(s);
-      setRecords(r);
+      setRecords((recordsResp as unknown as PayrollRecordType[]) || []);
+      setRuns((runsResp as unknown as PayrollRun[]) || []);
     } catch {
       // silent
     } finally {
@@ -244,6 +247,7 @@ export default function PayrollPage() {
         <TabList>
           <Tab fontWeight="600" fontSize="sm">Manual Payroll</Tab>
           <Tab fontWeight="600" fontSize="sm">Bulk Upload</Tab>
+          <Tab fontWeight="600" fontSize="sm">Bulk Generate</Tab>
           <Tab fontWeight="600" fontSize="sm">Records</Tab>
         </TabList>
         <TabPanels>
@@ -252,6 +256,9 @@ export default function PayrollPage() {
           </TabPanel>
           <TabPanel px={0}>
             <BulkUploadTab month={month} year={year} onComplete={fetchData} />
+          </TabPanel>
+          <TabPanel px={0}>
+            <BulkGenerateTab month={month} year={year} runs={runs} onComplete={fetchData} />
           </TabPanel>
           <TabPanel px={0}>
             <SectionCard title={`Payroll Records — ${MONTHS[month - 1]} ${year}`} noPadding>
@@ -481,6 +488,189 @@ function ManualPayrollTab({
           </PrimaryButton>
         </Box>
       )}
+    </SectionCard>
+  );
+}
+
+// ─── Bulk Generate Tab ───
+function BulkGenerateTab({
+  month,
+  year,
+  runs,
+  onComplete,
+}: {
+  month: number;
+  year: number;
+  runs: PayrollRun[];
+  onComplete: () => void;
+}) {
+  const [overwriteExisting, setOverwriteExisting] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [dispatchingRunId, setDispatchingRunId] = useState<string | null>(null);
+  const toast = useToast();
+
+  const runColumns = useMemo<Column<PayrollRun>[]>(
+    () => [
+      {
+        key: "createdAt",
+        header: "Run",
+        render: (row) => (
+          <Box>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">
+              {row.runType === "SYSTEM_BULK" ? "System Bulk" : "Excel Upload"}
+            </Text>
+            <Text fontSize="xs" color="text.muted">
+              {new Date(row.createdAt).toLocaleString()}
+            </Text>
+          </Box>
+        ),
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (row) => (
+          <Badge
+            colorScheme={
+              row.status === "COMPLETED"
+                ? "green"
+                : row.status === "FAILED"
+                  ? "red"
+                  : row.status === "PARTIAL_SUCCESS"
+                    ? "orange"
+                    : "purple"
+            }
+            borderRadius="full"
+            px={2.5}
+            py={1}
+          >
+            {row.status.replace(/_/g, " ")}
+          </Badge>
+        ),
+      },
+      {
+        key: "metrics",
+        header: "Result",
+        render: (row) => (
+          <Text fontSize="sm" color="text.body">
+            {row.successCount}/{row.totalEmployees} success{" "}
+            <Text as="span" color="text.muted">
+              ({row.failedCount || 0} failed, {row.skippedCount || 0} skipped)
+            </Text>
+          </Text>
+        ),
+      },
+      {
+        key: "delivery",
+        header: "Delivery",
+        render: (row) => (
+          <Text fontSize="sm" color="text.body">
+            Email: {row.emailedCount || 0} · Portal: {row.portalPublishedCount || 0}
+          </Text>
+        ),
+      },
+      {
+        key: "actions" as any,
+        header: "Actions",
+        width: "180px",
+        render: (row) => (
+          <Flex gap={2}>
+            <SecondaryButton
+              size="xs"
+              onClick={onComplete}
+              leftIcon={<Search size={12} />}
+            >
+              Refresh
+            </SecondaryButton>
+            <PrimaryButton
+              size="xs"
+              leftIcon={<Mail size={12} />}
+              isLoading={dispatchingRunId === row.id}
+              onClick={async () => {
+                setDispatchingRunId(row.id);
+                try {
+                  const result = await payrollApi.dispatchRun(row.id, {
+                    sendEmail: true,
+                    publishToPortal: true,
+                  });
+                  toast({
+                    title: "Dispatch completed",
+                    description: `Emailed ${result.emailed}, failed ${result.failed}`,
+                    status: result.failed > 0 ? "warning" : "success",
+                  });
+                  onComplete();
+                } catch (err: any) {
+                  toast({
+                    title: "Dispatch failed",
+                    description: err.message,
+                    status: "error",
+                  });
+                } finally {
+                  setDispatchingRunId(null);
+                }
+              }}
+            >
+              Send
+            </PrimaryButton>
+          </Flex>
+        ),
+      },
+    ],
+    [dispatchingRunId, onComplete, toast],
+  );
+
+  const startBulkGenerate = async () => {
+    setRunning(true);
+    try {
+      const result = await payrollApi.bulkGenerate({
+        month,
+        year,
+        overwriteExisting,
+      });
+      toast({
+        title: "Bulk generation started",
+        description: `Run ${result.runId} initiated`,
+        status: "info",
+      });
+      onComplete();
+    } catch (err: any) {
+      toast({
+        title: "Bulk generation failed",
+        description: err.message,
+        status: "error",
+      });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <SectionCard title="System Bulk Payroll Generation">
+      <Text fontSize="sm" color="text.muted" mb={3}>
+        Generate payroll for all active employees in {MONTHS[month - 1]} {year}
+        using attendance, leave treatment, salary structure, and employee overrides.
+      </Text>
+      <Checkbox
+        isChecked={overwriteExisting}
+        onChange={(e) => setOverwriteExisting(e.target.checked)}
+        colorScheme="purple"
+        mb={4}
+      >
+        Overwrite existing generated records
+      </Checkbox>
+      <Flex gap={3} mb={5}>
+        <PrimaryButton
+          leftIcon={<TrendingUp size={14} />}
+          onClick={startBulkGenerate}
+          isLoading={running}
+        >
+          Start Bulk Generation
+        </PrimaryButton>
+        <SecondaryButton leftIcon={<Search size={14} />} onClick={onComplete}>
+          Refresh Runs
+        </SecondaryButton>
+      </Flex>
+
+      <DataTable<PayrollRun> columns={runColumns} data={runs} keyField="id" />
     </SectionCard>
   );
 }

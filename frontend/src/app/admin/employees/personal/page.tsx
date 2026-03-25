@@ -25,7 +25,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { Edit2, Eye, Search, Plus } from "lucide-react";
-import { personalDetailsApi, employeeApi } from "@/api";
+import { personalDetailsApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";

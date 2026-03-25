@@ -126,20 +126,20 @@ function EmployeeForm_({
   const [form, setForm] = useState<AddEmployeeFormState>(
     emp
       ? {
-          firstName: emp.user.firstName,
-          lastName: emp.user.lastName,
-          email: emp.user.email,
-          department: emp.department,
-          designation: emp.designation,
-          employmentType: emp.employmentType,
-          dateOfJoining: emp.dateOfJoining,
-          reportingManager: emp.reportingManager,
-          shiftSchedule: emp.shiftSchedule,
-          allowLoginOnlyInsideOffice: emp.user.officeLocationRequired,
-          officeLatitude: emp.user.officeLatitude != null ? String(emp.user.officeLatitude) : "",
-          officeLongitude: emp.user.officeLongitude != null ? String(emp.user.officeLongitude) : "",
-          officeRadiusMeters: emp.user.officeRadiusMeters != null ? String(emp.user.officeRadiusMeters) : "",
-        }
+        firstName: emp.user.firstName,
+        lastName: emp.user.lastName,
+        email: emp.user.email,
+        department: emp.department,
+        designation: emp.designation,
+        employmentType: emp.employmentType,
+        dateOfJoining: emp.dateOfJoining,
+        reportingManager: emp.reportingManager,
+        shiftSchedule: emp.shiftSchedule,
+        allowLoginOnlyInsideOffice: emp.user.officeLocationRequired,
+        officeLatitude: emp.user.officeLatitude != null ? String(emp.user.officeLatitude) : "",
+        officeLongitude: emp.user.officeLongitude != null ? String(emp.user.officeLongitude) : "",
+        officeRadiusMeters: emp.user.officeRadiusMeters != null ? String(emp.user.officeRadiusMeters) : "",
+      }
       : { ...initialFormState },
   );
   const [isActive, setIsActive] = useState(emp?.user.isActive ?? true);
@@ -254,12 +254,20 @@ function EmployeeForm_({
             </Field>
           )}
           <Field label="Department" required>
-            <StyledSelect placeholder="Select department" value={form.department} onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}>
-              <option value="Engineering">Engineering</option>
-              <option value="HR">HR</option>
-              <option value="Sales">Sales</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Finance">Finance</option>
+            <StyledSelect
+              placeholder="Select department"
+              value={form.department}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, department: e.target.value }))
+              }
+            >
+              <option value="Developer">Developer</option>
+              <option value="Digital Marketing">Digital Marketing</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Business Development">Business Development</option>
+              <option value="Design">Design</option>
+              <option value="Quality Assurance">Quality Assurance</option>
+              <option value="DevOps">DevOps</option>
             </StyledSelect>
           </Field>
           <Field label="Designation" required>

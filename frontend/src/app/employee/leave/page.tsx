@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Box,
   Flex,
@@ -63,6 +64,7 @@ const STATUS_COLORS: Record<LeaveStatusType, { bg: string; color: string }> = {
 export default function EmployeeLeavePage() {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const searchParams = useSearchParams();
 
   const [summary, setSummary] = useState<LeaveSummary | null>(null);
   const [history, setHistory] = useState<LeaveRequestRecord[]>([]);
@@ -79,6 +81,7 @@ export default function EmployeeLeavePage() {
   const [formToTime, setFormToTime] = useState("");
   const [formReason, setFormReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [prefilledFromQuery, setPrefilledFromQuery] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -98,6 +101,25 @@ export default function EmployeeLeavePage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (prefilledFromQuery) return;
+    const queryDate = searchParams.get("date");
+    const queryMode = searchParams.get("mode");
+    const shouldOpen = searchParams.get("applyLeave") === "1";
+
+    if (queryDate) {
+      setFormDate(queryDate);
+      setFormStartDate(queryDate);
+      setFormEndDate(queryDate);
+    }
+    if (queryMode === "FULL_DAY" || queryMode === "HALF_DAY" || queryMode === "PERMISSION") {
+      setFormMode(queryMode);
+      if (queryMode === "PERMISSION") setFormLeaveType("PERMISSION");
+    }
+    if (shouldOpen) onOpen();
+    if (queryDate || queryMode || shouldOpen) setPrefilledFromQuery(true);
+  }, [onOpen, prefilledFromQuery, searchParams]);
 
   const resetForm = () => {
     setFormLeaveType("CL");
@@ -119,7 +141,7 @@ export default function EmployeeLeavePage() {
     setSubmitting(true);
     try {
       await leaveApi.applyLeave({
-        leaveType: formLeaveType,
+        leaveType: formMode === "PERMISSION" ? "PERMISSION" : formLeaveType,
         requestMode: formMode,
         startDate: formMode === "FULL_DAY" ? formStartDate : undefined,
         endDate: formMode === "FULL_DAY" ? formEndDate : undefined,
@@ -327,7 +349,7 @@ export default function EmployeeLeavePage() {
             <Thead>
               <Tr>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Applied</Th>
-                <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Type</Th>
+                <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Requested / Final</Th>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Mode</Th>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Date / Range</Th>
                 <Th fontSize="xs" color="text.muted" fontWeight="600" textTransform="uppercase" borderColor="surface.border">Days/Hrs</Th>
@@ -353,8 +375,11 @@ export default function EmployeeLeavePage() {
                       </Td>
                       <Td borderColor="surface.border">
                         <Badge px={2} py={0.5} borderRadius="full" bg="#EDE9F5" color="#7548b9" fontSize="xs" fontWeight="600">
-                          {rec.leaveType}
+                          {rec.requestedLeaveType}
                         </Badge>
+                        <Text fontSize="2xs" color="text.muted" mt={1}>
+                          Final: {rec.approvedLeaveType ?? rec.suggestedLeaveType ?? "-"}
+                        </Text>
                       </Td>
                       <Td fontSize="xs" color="text.body" borderColor="surface.border">
                         {rec.requestMode.replace("_", " ")}
@@ -372,6 +397,11 @@ export default function EmployeeLeavePage() {
                       </Td>
                       <Td fontSize="xs" color="text.muted" borderColor="surface.border" maxW="180px">
                         <Text noOfLines={2}>{rec.reason}</Text>
+                        {rec.treatmentNote && (
+                          <Text fontSize="xs" color="orange.700" mt={0.5} noOfLines={2}>
+                            {rec.treatmentNote}
+                          </Text>
+                        )}
                         {rec.adminRemarks && (
                           <Text fontSize="xs" color="blue.600" mt={0.5} noOfLines={1}>
                             Admin: {rec.adminRemarks}
@@ -417,9 +447,24 @@ export default function EmployeeLeavePage() {
                 >
                   {formMode !== "PERMISSION" && (
                     <>
-                      <option value="CL">Casual Leave (CL)</option>
-                      <option value="SL">Sick Leave (SL)</option>
-                      <option value="EL">Earned Leave (EL)</option>
+                      <option
+                        value="CL"
+                        disabled={Boolean(summary && (!summary.inProbation || summary.probationLeaveAllowed) && summary.balance.cl <= 0)}
+                      >
+                        Casual Leave (CL)
+                      </option>
+                      <option
+                        value="SL"
+                        disabled={Boolean(summary && (!summary.inProbation || summary.probationLeaveAllowed) && summary.balance.sl <= 0)}
+                      >
+                        Sick Leave (SL)
+                      </option>
+                      <option
+                        value="EL"
+                        disabled={Boolean(summary && (!summary.inProbation || summary.probationLeaveAllowed) && summary.balance.el <= 0)}
+                      >
+                        Earned Leave (EL)
+                      </option>
                       <option value="LOP">Loss of Pay (LOP)</option>
                     </>
                   )}
@@ -461,6 +506,15 @@ export default function EmployeeLeavePage() {
                   })}
                 </HStack>
               </Box>
+
+              {summary?.inProbation && !summary?.probationLeaveAllowed && formMode !== "PERMISSION" && formLeaveType !== "LOP" && (
+                <Alert status="warning" borderRadius="lg" variant="subtle">
+                  <AlertIcon />
+                  <Text fontSize="xs" color="yellow.800">
+                    During probation, this leave request will be suggested as LOP by default unless admin overrides it.
+                  </Text>
+                </Alert>
+              )}
 
               {/* Date fields based on mode */}
               {formMode === "FULL_DAY" && (

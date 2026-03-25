@@ -9,7 +9,6 @@ import {
   useToast,
   IconButton,
   HStack,
-  Input,
   Spinner,
   Modal,
   ModalOverlay,
@@ -19,18 +18,62 @@ import {
   ModalFooter,
   ModalCloseButton,
   useDisclosure,
-  Badge,
 } from "@chakra-ui/react";
 import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield } from "lucide-react";
 import { settingsApi } from "@/api";
-import { leaveApi, type LeavePolicyData, type LeaveSlabData } from "@/api/leave.api";
-import type { OrgSettings, Holiday } from "@/api";
+import { leaveApi, type LeaveSlabData } from "@/api/leave.api";
+import type { Holiday } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
+import SalaryConfigurationSection from "@/components/settings/SalaryConfigurationSection";
 
 const WEEK_DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+
+type LeavePolicyFormState = {
+  probationPeriodMonths: string;
+  probationLeaveAllowed: boolean;
+  allowHalfDayLeave: boolean;
+  allowPermissionHours: boolean;
+  maxPermissionHoursPerMonth: string;
+  maxPermissionRequestsPerMonth: string;
+  maxRegularizationsPerMonth: string;
+};
+
+type LeaveSlabFormState = {
+  minYearsOfService: string;
+  maxYearsOfService: string;
+  casualLeavePerYear: string;
+  sickLeavePerYear: string;
+  earnedLeavePerYear: string;
+};
+
+const toInputNumber = (value: number | null | undefined): string =>
+  value == null ? "" : String(value);
+
+const parseNumericField = (
+  raw: string,
+  label: string,
+  opts: { integer?: boolean; min?: number; nullable?: boolean } = {}
+): number | null => {
+  const value = raw.trim();
+  if (value === "") {
+    if (opts.nullable) return null;
+    throw new Error(`${label} is required`);
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${label} must be a valid number`);
+  }
+  if (opts.integer && !Number.isInteger(parsed)) {
+    throw new Error(`${label} must be a whole number`);
+  }
+  if (opts.min != null && parsed < opts.min) {
+    throw new Error(`${label} must be at least ${opts.min}`);
+  }
+  return parsed;
+};
 
 export default function SettingsPage() {
   const toast = useToast();
@@ -38,7 +81,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<string | null>(null);
 
   // ── Settings state ──
-  const [settings, setSettings] = useState<OrgSettings | null>(null);
 
   // ── Timings form ──
   const [timingsForm, setTimingsForm] = useState({
@@ -60,6 +102,8 @@ export default function SettingsPage() {
     officeLatitude: "",
     officeLongitude: "",
     officeRadiusMeters: "",
+    geoFenceRequired: true,
+    allowRemoteAttendance: false,
   });
 
   // ── Holidays ──
@@ -69,15 +113,23 @@ export default function SettingsPage() {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // ── Leave Policy ──
-  const [policyForm, setPolicyForm] = useState({
-    probationPeriodMonths: 6,
+  const [policyForm, setPolicyForm] = useState<LeavePolicyFormState>({
+    probationPeriodMonths: "6",
     probationLeaveAllowed: false,
     allowHalfDayLeave: true,
     allowPermissionHours: true,
-    maxPermissionHoursPerMonth: 2,
+    maxPermissionHoursPerMonth: "2",
+    maxPermissionRequestsPerMonth: "4",
+    maxRegularizationsPerMonth: "4",
   });
-  const [slabs, setSlabs] = useState<{ minYearsOfService: number; maxYearsOfService: number | null; casualLeavePerYear: number; sickLeavePerYear: number; earnedLeavePerYear: number }[]>([
-    { minYearsOfService: 0, maxYearsOfService: 2, casualLeavePerYear: 6, sickLeavePerYear: 6, earnedLeavePerYear: 0 },
+  const [slabs, setSlabs] = useState<LeaveSlabFormState[]>([
+    {
+      minYearsOfService: "0",
+      maxYearsOfService: "2",
+      casualLeavePerYear: "6",
+      sickLeavePerYear: "6",
+      earnedLeavePerYear: "0",
+    },
   ]);
 
   // ── Load data ──
@@ -89,7 +141,6 @@ export default function SettingsPage() {
         settingsApi.listHolidays(),
         leaveApi.getPolicy().catch(() => null),
       ]);
-      setSettings(s);
       setTimingsForm({
         workStartTime: s.workStartTime?.slice(0, 5) || "09:00",
         workEndTime: s.workEndTime?.slice(0, 5) || "18:00",
@@ -105,26 +156,30 @@ export default function SettingsPage() {
         officeLatitude: s.officeLatitude != null ? String(s.officeLatitude) : "",
         officeLongitude: s.officeLongitude != null ? String(s.officeLongitude) : "",
         officeRadiusMeters: s.officeRadiusMeters != null ? String(s.officeRadiusMeters) : "",
+        geoFenceRequired: s.geoFenceRequired ?? true,
+        allowRemoteAttendance: s.allowRemoteAttendance ?? false,
       });
       setHolidays(h.data);
       if (lp) {
         const pol = lp.policy;
         if (pol) {
           setPolicyForm({
-            probationPeriodMonths: pol.probationPeriodMonths ?? 6,
+            probationPeriodMonths: toInputNumber(pol.probationPeriodMonths ?? 6),
             probationLeaveAllowed: pol.probationLeaveAllowed ?? false,
             allowHalfDayLeave: pol.allowHalfDayLeave ?? true,
             allowPermissionHours: pol.allowPermissionHours ?? true,
-            maxPermissionHoursPerMonth: pol.maxPermissionHoursPerMonth ?? 2,
+            maxPermissionHoursPerMonth: toInputNumber(pol.maxPermissionHoursPerMonth ?? 2),
+            maxPermissionRequestsPerMonth: toInputNumber(pol.maxPermissionRequestsPerMonth ?? 4),
+            maxRegularizationsPerMonth: toInputNumber(pol.maxRegularizationsPerMonth ?? 4),
           });
         }
         if (lp.slabs && lp.slabs.length > 0) {
           setSlabs(lp.slabs.map((sl: LeaveSlabData) => ({
-            minYearsOfService: sl.minYearsOfService,
-            maxYearsOfService: sl.maxYearsOfService,
-            casualLeavePerYear: sl.casualLeavePerYear,
-            sickLeavePerYear: sl.sickLeavePerYear,
-            earnedLeavePerYear: sl.earnedLeavePerYear,
+            minYearsOfService: toInputNumber(sl.minYearsOfService),
+            maxYearsOfService: toInputNumber(sl.maxYearsOfService),
+            casualLeavePerYear: toInputNumber(sl.casualLeavePerYear),
+            sickLeavePerYear: toInputNumber(sl.sickLeavePerYear),
+            earnedLeavePerYear: toInputNumber(sl.earnedLeavePerYear),
           })));
         }
       }
@@ -141,8 +196,7 @@ export default function SettingsPage() {
   const saveSection = async (section: string, data: Record<string, unknown>) => {
     try {
       setSaving(section);
-      const updated = await settingsApi.update(data);
-      setSettings(updated);
+      await settingsApi.update(data);
       toast({ title: "Settings updated", status: "success", duration: 2000, isClosable: true, position: "top-right" });
     } catch {
       toast({ title: "Failed to save settings", status: "error", duration: 3000, isClosable: true, position: "top-right" });
@@ -162,6 +216,8 @@ export default function SettingsPage() {
       officeLatitude: locationForm.officeLatitude ? parseFloat(locationForm.officeLatitude) : null,
       officeLongitude: locationForm.officeLongitude ? parseFloat(locationForm.officeLongitude) : null,
       officeRadiusMeters: locationForm.officeRadiusMeters ? parseInt(locationForm.officeRadiusMeters) : null,
+      geoFenceRequired: locationForm.geoFenceRequired,
+      allowRemoteAttendance: locationForm.allowRemoteAttendance,
     };
     saveSection("location", data);
   };
@@ -223,18 +279,83 @@ export default function SettingsPage() {
 
   // ── Leave Policy helpers ──
   const addSlab = () => {
-    setSlabs((prev) => [...prev, { minYearsOfService: 0, maxYearsOfService: null, casualLeavePerYear: 0, sickLeavePerYear: 0, earnedLeavePerYear: 0 }]);
+    setSlabs((prev) => [
+      ...prev,
+      {
+        minYearsOfService: "0",
+        maxYearsOfService: "",
+        casualLeavePerYear: "0",
+        sickLeavePerYear: "0",
+        earnedLeavePerYear: "0",
+      },
+    ]);
   };
   const removeSlab = (idx: number) => {
     setSlabs((prev) => prev.filter((_, i) => i !== idx));
   };
-  const updateSlab = (idx: number, field: string, value: number | null) => {
+  const updateSlab = (idx: number, field: keyof LeaveSlabFormState, value: string) => {
     setSlabs((prev) => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
   };
   const handleSaveLeavePolicy = async () => {
     try {
       setSaving("leavePolicy");
-      await leaveApi.updatePolicy({ ...policyForm, slabs });
+      const normalizedSlabs = slabs.map((slab, idx) => {
+        const row = idx + 1;
+        const minYears = parseNumericField(slab.minYearsOfService, `Slab ${row} Min Years`, {
+          integer: true,
+          min: 0,
+        }) as number;
+        const maxYears = parseNumericField(slab.maxYearsOfService, `Slab ${row} Max Years`, {
+          integer: true,
+          min: 0,
+          nullable: true,
+        });
+        if (maxYears != null && maxYears < minYears) {
+          throw new Error(`Slab ${row} Max Years cannot be less than Min Years`);
+        }
+        return {
+          minYearsOfService: minYears,
+          maxYearsOfService: maxYears,
+          casualLeavePerYear: parseNumericField(slab.casualLeavePerYear, `Slab ${row} CL/Year`, {
+            integer: true,
+            min: 0,
+          }) as number,
+          sickLeavePerYear: parseNumericField(slab.sickLeavePerYear, `Slab ${row} SL/Year`, {
+            integer: true,
+            min: 0,
+          }) as number,
+          earnedLeavePerYear: parseNumericField(slab.earnedLeavePerYear, `Slab ${row} EL/Year`, {
+            integer: true,
+            min: 0,
+          }) as number,
+        };
+      });
+
+      await leaveApi.updatePolicy({
+        probationPeriodMonths: parseNumericField(policyForm.probationPeriodMonths, "Probation Period", {
+          integer: true,
+          min: 0,
+        }) as number,
+        probationLeaveAllowed: policyForm.probationLeaveAllowed,
+        allowHalfDayLeave: policyForm.allowHalfDayLeave,
+        allowPermissionHours: policyForm.allowPermissionHours,
+        maxPermissionHoursPerMonth: parseNumericField(
+          policyForm.maxPermissionHoursPerMonth,
+          "Max Permission Hrs/Month",
+          { min: 0 }
+        ) as number,
+        maxPermissionRequestsPerMonth: parseNumericField(
+          policyForm.maxPermissionRequestsPerMonth,
+          "Max Permission Requests/Month",
+          { integer: true, min: 0 }
+        ) as number,
+        maxRegularizationsPerMonth: parseNumericField(
+          policyForm.maxRegularizationsPerMonth,
+          "Max Regularizations/Month",
+          { integer: true, min: 0 }
+        ) as number,
+        slabs: normalizedSlabs,
+      });
       toast({ title: "Leave policy updated", status: "success", duration: 2000, isClosable: true, position: "top-right" });
     } catch (err: any) {
       toast({ title: err?.message || "Failed to save leave policy", status: "error", duration: 3000, isClosable: true, position: "top-right" });
@@ -384,13 +505,13 @@ export default function SettingsPage() {
           </Flex>
         </SectionCard>
 
-        {/* ── Office Location ── */}
+        {/* ── Office Location & Attendance Access ── */}
         <SectionCard
-          title="Office Location"
+          title="Office Location & Attendance Access"
           actions={
             <Flex align="center" gap={1.5} color="brand.400">
               <MapPin size={15} />
-              <Text fontSize="xs" fontWeight="600">Geo-fence</Text>
+              <Text fontSize="xs" fontWeight="600">Geo-fence + Remote</Text>
             </Flex>
           }
         >
@@ -424,6 +545,49 @@ export default function SettingsPage() {
                 maxW="180px"
               />
             </Field>
+            <Flex gap={3} flexWrap="wrap">
+              <Box
+                as="button"
+                type="button"
+                px={4}
+                py={2}
+                borderRadius="lg"
+                fontSize="sm"
+                fontWeight="600"
+                border="1px solid"
+                borderColor={locationForm.geoFenceRequired ? "brand.400" : "surface.border"}
+                bg={locationForm.geoFenceRequired ? "brand.50" : "white"}
+                color={locationForm.geoFenceRequired ? "brand.700" : "text.muted"}
+                _hover={{ borderColor: "brand.300" }}
+                transition="all 0.15s"
+                onClick={() => setLocationForm((f) => ({ ...f, geoFenceRequired: !f.geoFenceRequired }))}
+              >
+                {locationForm.geoFenceRequired ? "✓ " : ""}Geo-fence Required
+              </Box>
+              <Box
+                as="button"
+                type="button"
+                px={4}
+                py={2}
+                borderRadius="lg"
+                fontSize="sm"
+                fontWeight="600"
+                border="1px solid"
+                borderColor={locationForm.allowRemoteAttendance ? "green.400" : "surface.border"}
+                bg={locationForm.allowRemoteAttendance ? "green.50" : "white"}
+                color={locationForm.allowRemoteAttendance ? "green.700" : "text.muted"}
+                _hover={{ borderColor: "green.300" }}
+                transition="all 0.15s"
+                onClick={() =>
+                  setLocationForm((f) => ({
+                    ...f,
+                    allowRemoteAttendance: !f.allowRemoteAttendance,
+                  }))
+                }
+              >
+                {locationForm.allowRemoteAttendance ? "✓ " : ""}Allow Remote Attendance
+              </Box>
+            </Flex>
             <PrimaryButton
               size="sm"
               alignSelf="flex-start"
@@ -431,7 +595,7 @@ export default function SettingsPage() {
               onClick={handleSaveLocation}
               isLoading={saving === "location"}
             >
-              Save Location
+              Save Location & Access
             </PrimaryButton>
           </Flex>
         </SectionCard>
@@ -531,12 +695,12 @@ export default function SettingsPage() {
         >
           <Flex direction="column" gap={5}>
             {/* General Settings */}
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
               <Field label="Probation Period (months)">
                 <StyledInput
                   type="number"
                   value={policyForm.probationPeriodMonths}
-                  onChange={(e) => setPolicyForm((f) => ({ ...f, probationPeriodMonths: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setPolicyForm((f) => ({ ...f, probationPeriodMonths: e.target.value }))}
                   maxW="140px"
                 />
               </Field>
@@ -544,7 +708,33 @@ export default function SettingsPage() {
                 <StyledInput
                   type="number"
                   value={policyForm.maxPermissionHoursPerMonth}
-                  onChange={(e) => setPolicyForm((f) => ({ ...f, maxPermissionHoursPerMonth: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => setPolicyForm((f) => ({ ...f, maxPermissionHoursPerMonth: e.target.value }))}
+                  maxW="140px"
+                />
+              </Field>
+              <Field label="Max Permission Requests/Month">
+                <StyledInput
+                  type="number"
+                  value={policyForm.maxPermissionRequestsPerMonth}
+                  onChange={(e) =>
+                    setPolicyForm((f) => ({
+                      ...f,
+                      maxPermissionRequestsPerMonth: e.target.value,
+                    }))
+                  }
+                  maxW="140px"
+                />
+              </Field>
+              <Field label="Max Regularizations/Month">
+                <StyledInput
+                  type="number"
+                  value={policyForm.maxRegularizationsPerMonth}
+                  onChange={(e) =>
+                    setPolicyForm((f) => ({
+                      ...f,
+                      maxRegularizationsPerMonth: e.target.value,
+                    }))
+                  }
                   maxW="140px"
                 />
               </Field>
@@ -595,7 +785,7 @@ export default function SettingsPage() {
                       <StyledInput
                         type="number" size="sm" w="80px"
                         value={slab.minYearsOfService}
-                        onChange={(e) => updateSlab(idx, "minYearsOfService", parseInt(e.target.value) || 0)}
+                        onChange={(e) => updateSlab(idx, "minYearsOfService", e.target.value)}
                       />
                     </Box>
                     <Box>
@@ -603,8 +793,8 @@ export default function SettingsPage() {
                       <StyledInput
                         type="number" size="sm" w="80px"
                         placeholder="∞"
-                        value={slab.maxYearsOfService ?? ""}
-                        onChange={(e) => updateSlab(idx, "maxYearsOfService", e.target.value ? parseInt(e.target.value) : null)}
+                        value={slab.maxYearsOfService}
+                        onChange={(e) => updateSlab(idx, "maxYearsOfService", e.target.value)}
                       />
                     </Box>
                     <Box>
@@ -612,7 +802,7 @@ export default function SettingsPage() {
                       <StyledInput
                         type="number" size="sm" w="80px"
                         value={slab.casualLeavePerYear}
-                        onChange={(e) => updateSlab(idx, "casualLeavePerYear", parseInt(e.target.value) || 0)}
+                        onChange={(e) => updateSlab(idx, "casualLeavePerYear", e.target.value)}
                       />
                     </Box>
                     <Box>
@@ -620,7 +810,7 @@ export default function SettingsPage() {
                       <StyledInput
                         type="number" size="sm" w="80px"
                         value={slab.sickLeavePerYear}
-                        onChange={(e) => updateSlab(idx, "sickLeavePerYear", parseInt(e.target.value) || 0)}
+                        onChange={(e) => updateSlab(idx, "sickLeavePerYear", e.target.value)}
                       />
                     </Box>
                     <Box>
@@ -628,7 +818,7 @@ export default function SettingsPage() {
                       <StyledInput
                         type="number" size="sm" w="80px"
                         value={slab.earnedLeavePerYear}
-                        onChange={(e) => updateSlab(idx, "earnedLeavePerYear", parseInt(e.target.value) || 0)}
+                        onChange={(e) => updateSlab(idx, "earnedLeavePerYear", e.target.value)}
                       />
                     </Box>
                     {slabs.length > 1 && (
@@ -659,7 +849,9 @@ export default function SettingsPage() {
         </SectionCard>
       </Box>
 
-      {/* ── Holiday Modal ── */}
+      <SalaryConfigurationSection />
+
+      {/* Holiday Modal */}
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
         <ModalOverlay />
         <ModalContent borderRadius="xl">

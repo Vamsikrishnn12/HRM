@@ -27,13 +27,15 @@
       <p>Hi {{firstName}},</p>
       <p>Your leave request has been submitted successfully and is awaiting approval.</p>
       <div class="details">
-        <p><strong>Leave Type:</strong> {{leaveType}}</p>
+        <p><strong>Requested Type:</strong> {{requestedLeaveType}}</p>
+        <p><strong>Suggested Treatment:</strong> {{suggestedLeaveType}}</p>
         <p><strong>Request Mode:</strong> {{requestMode}}</p>
         <p><strong>Date / Range:</strong> {{dateRange}}</p>
         <p><strong>Duration:</strong> {{daysOrHours}}</p>
         <p><strong>Reason:</strong> {{reason}}</p>
         <p><strong>Status:</strong> <span class="status">{{status}}</span></p>
       </div>
+      <p><strong>Policy Note:</strong> {{treatmentNote}}</p>
       <p>You will receive an update once your request is reviewed by the admin.</p>
     </div>
     <div class="footer"><p>&copy; {{year}} HRMS. All rights reserved.</p></div>

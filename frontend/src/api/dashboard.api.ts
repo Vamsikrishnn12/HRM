@@ -3,19 +3,27 @@ import type {
   KpiStat,
   AttendanceTrend,
   DepartmentData,
-  LeaveTypeData,
+  AttendanceBreakdown,
   AttendanceRecord,
   Announcement,
   Holiday,
 } from "@/types";
 
 export interface PayrollProcessed {
+  status: "NOT_RUN" | "PENDING" | "PARTIAL" | "COMPLETED";
+  statusLabel: string;
+  progressPercent: number | null;
+  expectedEmployees: number;
   totalRecords: number;
   generatedCount: number;
+  failedCount: number;
+  draftCount: number;
+  emailedCount: number;
   totalPayout: number;
   month: string;
   year: number;
   isRun: boolean;
+  latestRunStatus: string | null;
 }
 
 export interface DashboardSummary {
@@ -23,7 +31,8 @@ export interface DashboardSummary {
   payrollProcessed: PayrollProcessed;
   attendanceTrend: AttendanceTrend[];
   departmentData: DepartmentData[];
-  leaveTypesData: LeaveTypeData[];
+  attendanceBreakdown: AttendanceBreakdown;
+  pendingLeaveCount: number;
   recentAttendance: AttendanceRecord[];
   announcements: Announcement[];
   upcomingHolidays: Holiday[];

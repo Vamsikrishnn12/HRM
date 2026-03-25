@@ -1,659 +1,2636 @@
-import { AttendanceRepository } from '../repositories/attendance.repository';
+﻿
+import { AttendanceV2Repository } from '../repositories/attendanceV2.repository';
 import { SettingsRepository } from '../repositories/settings.repository';
+import { LeaveRepository } from '../repositories/leave.repository';
 import { Attendance, AttendanceStatus } from '../entities/Attendance.entity';
-import { PunchType, PunchSource } from '../entities/AttendancePunch.entity';
+import { AttendancePolicy } from '../entities/AttendancePolicy.entity';
+import { AttendancePunch, PunchSource, PunchType } from '../entities/AttendancePunch.entity';
+import { AttendanceRegularizationRequest } from '../entities/AttendanceRegularizationRequest.entity';
+import { AttendancePermissionRequest } from '../entities/AttendancePermissionRequest.entity';
+import { AttendanceEmployeePolicyOverride } from '../entities/AttendanceEmployeePolicyOverride.entity';
 import { AlternateSaturdayRule, OrgSettings } from '../entities/OrgSettings.entity';
-import { LocationService } from './location.service';
+import { LeavePolicy } from '../entities/LeavePolicy.entity';
 import { ApiError } from '../utils/apiError';
-import { AppDataSource } from '../config/database';
-import { User } from '../entities/User.entity';
+import {
+  AttendanceAccessMode,
+  AttendanceDayType,
+  AttendanceRequestStatus,
+  AttendanceRegularizationRequestType,
+  type AttendanceClassificationConfig,
+  type AttendancePermissionConfig,
+  type AttendanceRegularizationConfig,
+} from '../attendance/attendance.enums';
+import { buildDefaultAttendancePolicy } from '../attendance/defaultAttendancePolicy';
 
-interface LocationInput {
+interface GeoInput {
   latitude?: number;
   longitude?: number;
 }
 
+interface PunchActionInput extends GeoInput {
+  punchType: PunchType;
+  source?: PunchSource;
+  remarks?: string;
+  punchedAt?: string;
+  isManualOverride?: boolean;
+}
+
+interface StartWorkInput extends GeoInput {
+  source?: PunchSource;
+}
+
+interface EndWorkInput extends GeoInput {
+  source?: PunchSource;
+  eodDescription?: string;
+}
+
+interface SessionSummary {
+  inTime: Date;
+  outTime: Date | null;
+  workedMinutes: number;
+  breakAfterMinutes: number;
+  sessionOrder: number;
+  isAutoClosed: boolean;
+  metadata: Record<string, unknown>;
+}
+
+interface SavePolicyInput {
+  defaultPolicyName?: string;
+  effectiveFrom?: string;
+  workStartTime?: string;
+  workEndTime?: string;
+  lateGraceMinutes?: number;
+  halfDayMinMinutes?: number;
+  fullDayMinMinutes?: number;
+  overtimeMinMinutes?: number;
+  maxEarlyOutToleranceMinutes?: number;
+  allowMultiplePunchSessions?: boolean;
+  autoCloseOpenSessionAtEndOfDay?: boolean;
+  minimumPunchGapMinutes?: number;
+  officeLatitude?: number | null;
+  officeLongitude?: number | null;
+  allowedRadiusMeters?: number | null;
+  geoFenceRequired?: boolean;
+  allowAdminOverrideForGeoFenceMiss?: boolean;
+  allowRemotePunch?: boolean;
+  defaultAttendanceMode?: AttendanceAccessMode;
+  requireRemotePunchReason?: boolean;
+  allowEmployeePolicyOverride?: boolean;
+  captureLocationOnEveryPunch?: boolean;
+  weekOffDays?: string;
+  alternateSaturdayOffRule?: AlternateSaturdayRule;
+  classificationConfig?: Partial<AttendanceClassificationConfig>;
+  permissionConfig?: Partial<AttendancePermissionConfig>;
+  regularizationConfig?: Partial<AttendanceRegularizationConfig>;
+  policyPrecedenceConfig?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+interface ReviewRequestInput {
+  approved: boolean;
+  adminRemarks?: string;
+}
+
+interface MonthlyQuery {
+  year: number;
+  month: number;
+}
+
+interface AccessPolicyResolution {
+  attendanceMode: AttendanceAccessMode;
+  remoteAllowed: boolean;
+  geoFenceRequired: boolean;
+  geoFenceExempt: boolean;
+  employeeOverrideApplied: boolean;
+  overrideSource: 'ORG_POLICY' | 'EMPLOYEE_OVERRIDE';
+}
+
+const DEFAULT_SUMMARY_STATUSES: AttendanceStatus[] = [
+  AttendanceStatus.PRESENT,
+  AttendanceStatus.HALF_DAY,
+  AttendanceStatus.LOP,
+  AttendanceStatus.LEAVE,
+  AttendanceStatus.HOLIDAY,
+  AttendanceStatus.WEEK_OFF,
+  AttendanceStatus.NOT_STARTED,
+  AttendanceStatus.LATE,
+  AttendanceStatus.PERMISSION,
+  AttendanceStatus.REGULARIZED,
+];
+
 export class AttendanceService {
-  private repo: AttendanceRepository;
+  private repo: AttendanceV2Repository;
   private settingsRepo: SettingsRepository;
+  private leaveRepo: LeaveRepository;
 
   constructor() {
-    this.repo = new AttendanceRepository();
+    this.repo = new AttendanceV2Repository();
     this.settingsRepo = new SettingsRepository();
+    this.leaveRepo = new LeaveRepository();
   }
 
-  // ════════════════════════════════════════════════════════
-  // Employee: Get today's state (backend-driven)
-  // ════════════════════════════════════════════════════════
+  async getActivePolicy() {
+    const policy = await this.ensureActivePolicy();
+    return this.mapPolicy(policy);
+  }
+
+  async listPolicyVersions() {
+    const rows = await this.repo.listPolicyVersions();
+    return rows.map((row) => this.mapPolicy(row));
+  }
+
+  async savePolicy(input: SavePolicyInput, actorId?: string) {
+    const currentPolicy = await this.ensureActivePolicy();
+    const merged = this.mergePolicyInput(currentPolicy, input);
+    this.validatePolicyPayload(merged);
+
+    const created = await this.repo.createPolicyVersion({
+      ...merged,
+      metadata: {
+        ...(merged.metadata ?? {}),
+        updatedBy: actorId ?? null,
+      },
+    });
+
+    await this.repo.createAuditLog({
+      actorId: actorId ?? null,
+      actionType: 'ATTENDANCE_POLICY_UPDATED',
+      targetType: 'ATTENDANCE_POLICY',
+      targetId: created.id,
+      beforeData: this.mapPolicy(currentPolicy),
+      afterData: this.mapPolicy(created),
+      metadata: {
+        previousVersion: currentPolicy.version,
+        newVersion: created.version,
+      },
+    });
+
+    return this.mapPolicy(created);
+  }
+
   async getTodayAttendance(employeeId: string) {
-    const today = this.todayDateString();
-    const settings = await this.settingsRepo.getSettings();
-    if (!settings) throw ApiError.internal('Organisation settings not configured');
+    return this.getTodayState(employeeId);
+  }
 
-    const record = await this.repo.findByEmployeeAndDate(employeeId, today);
-    const dayType = await this.getDayType(today, settings);
-
-    // Check approved leave
-    const leaves = await this.repo.findApprovedLeavesForDate(today);
-    const hasLeave = leaves.some((l) => l.employeeId === employeeId);
-
-    const windowMinutes = (settings as any).checkInWindowMinutes ?? 10;
+  async getTodayState(employeeId: string) {
+    const policy = await this.ensureActivePolicy();
     const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const startMinutes = this.timeToMinutes(settings.workStartTime);
-    const windowEnd = startMinutes + windowMinutes;
+    const date = this.toDateKey(now);
+    const state = await this.buildDayState(employeeId, date, policy, false);
+    const accessPolicy = await this.resolveAccessPolicy(employeeId, date, policy);
+    const canPunchIn = state.nextPunchType === PunchType.CHECK_IN;
 
-    const hasCheckedIn = !!(record && record.firstCheckInAt);
+    let reasonCode = 'READY';
+    let reasonMessage = 'Attendance action available';
 
-    // Determine override state
-    const overrideActive = !!(
-      record?.startWorkOverrideEnabled &&
-      (!record.overrideValidUntil || new Date(record.overrideValidUntil) > now)
-    );
-
-    // Compute canStartWork
-    let canStartWork = false;
-    let reasonCode = '';
-    let reasonMessage = '';
-
-    if (dayType === 'HOLIDAY') {
+    if (state.dayType === AttendanceDayType.HOLIDAY) {
       reasonCode = 'HOLIDAY';
-      reasonMessage = 'Today is a holiday';
-    } else if (dayType === 'WEEK_OFF') {
+      reasonMessage = 'Today is configured as a holiday';
+    } else if (state.dayType === AttendanceDayType.WEEK_OFF) {
       reasonCode = 'WEEK_OFF';
-      reasonMessage = 'Today is a week off';
-    } else if (hasLeave) {
+      reasonMessage = 'Today is a weekly off day';
+    } else if (state.dayType === AttendanceDayType.LEAVE) {
       reasonCode = 'ON_LEAVE';
-      reasonMessage = 'You are on approved leave today';
-    } else if (hasCheckedIn) {
-      reasonCode = 'ALREADY_STARTED';
-      reasonMessage = 'You have already started work today';
-    } else if (overrideActive) {
-      canStartWork = true;
-      reasonCode = 'OVERRIDE_ACTIVE';
-      reasonMessage = 'Admin has re-enabled start work for you';
-    } else if (currentMinutes < startMinutes) {
-      reasonCode = 'BEFORE_START_TIME';
-      reasonMessage = `Work can be started after ${this.formatTime12h(settings.workStartTime)}`;
-    } else if (currentMinutes <= windowEnd) {
-      canStartWork = true;
-      reasonCode = 'WITHIN_WINDOW';
-      reasonMessage = 'You can start work now';
-    } else {
-      reasonCode = 'WINDOW_EXPIRED';
-      reasonMessage = 'Check-in window has expired. Please contact your admin.';
+      reasonMessage = 'Approved leave exists for today';
+    } else if (state.dayType === ('PRE_JOINING' as AttendanceDayType)) {
+      reasonCode = 'PRE_JOINING';
+      reasonMessage = 'Attendance will start from your date of joining';
     }
 
-    // Compute today status
-    let todayStatus: string;
-    if (dayType === 'HOLIDAY') todayStatus = 'HOLIDAY';
-    else if (dayType === 'WEEK_OFF') todayStatus = 'WEEK_OFF';
-    else if (hasLeave) todayStatus = 'LEAVE';
-    else if (record) todayStatus = record.status;
-    else if (currentMinutes <= windowEnd) todayStatus = 'NOT_STARTED';
-    else todayStatus = 'MISSED_CHECK_IN';
+    const canPunchToday = state.dayType === AttendanceDayType.WORKING;
 
     return {
-      date: today,
-      dayType,
-      workStartTime: settings.workStartTime,
-      workEndTime: settings.workEndTime,
-      lateGraceMinutes: settings.lateGraceMinutes,
-      checkInWindowMinutes: windowMinutes,
-      canStartWork,
+      date,
+      dayType: state.dayType,
+      workStartTime: policy.workStartTime,
+      workEndTime: policy.workEndTime,
+      lateGraceMinutes: policy.lateGraceMinutes,
+      checkInWindowMinutes: policy.minimumPunchGapMinutes,
+      canStartWork: canPunchToday && canPunchIn,
+      canPunchToday,
+      isTooLate: false,
       reasonCode,
       reasonMessage,
-      todayStatus,
-      overrideActive,
-      isTooLate: reasonCode === 'WINDOW_EXPIRED' && !overrideActive,
-      attendance: record ? this.formatAttendance(record) : null,
+      todayStatus: state.record.status,
+      overrideActive: Boolean(state.record.startWorkOverrideEnabled),
+      nextPunchType: state.nextPunchType,
+      nextPunchAction:
+        state.nextPunchType === PunchType.CHECK_IN ? 'PUNCH_IN' : 'PUNCH_OUT',
+      geoFence: {
+        required: accessPolicy.geoFenceRequired,
+        hasOfficeCoordinates:
+          policy.officeLatitude != null &&
+          policy.officeLongitude != null &&
+          policy.allowedRadiusMeters != null,
+        allowedRadiusMeters: policy.allowedRadiusMeters,
+      },
+      accessPolicy,
+      sessions: state.sessions.map((session) => ({
+        inTime: session.inTime,
+        outTime: session.outTime,
+        workedMinutes: session.workedMinutes,
+        breakAfterMinutes: session.breakAfterMinutes,
+        sessionOrder: session.sessionOrder,
+        isAutoClosed: session.isAutoClosed,
+      })),
+      attendance: this.mapAttendanceRecord(state.record),
     };
   }
-
-  // ════════════════════════════════════════════════════════
-  // Employee: Start Work (Check-in)
-  // ════════════════════════════════════════════════════════
-  async startWork(employeeId: string, location: LocationInput) {
-    const today = this.todayDateString();
-    const now = new Date();
-    const settings = await this.settingsRepo.getSettings();
-    if (!settings) throw ApiError.internal('Organisation settings not configured');
-
-    const dayType = await this.getDayType(today, settings);
-
-    if (dayType === 'HOLIDAY') {
-      throw ApiError.badRequest('Today is a holiday', 'ATTENDANCE_HOLIDAY');
-    }
-    if (dayType === 'WEEK_OFF') {
-      throw ApiError.badRequest('Today is a week off', 'ATTENDANCE_WEEK_OFF');
+  async punchAction(employeeId: string, input: PunchActionInput) {
+    const policy = await this.ensureActivePolicy();
+    const punchedAt = input.punchedAt ? new Date(input.punchedAt) : new Date();
+    if (Number.isNaN(punchedAt.getTime())) {
+      throw ApiError.badRequest('Invalid punchedAt timestamp', 'INVALID_PUNCH_TIMESTAMP');
     }
 
-    const windowMinutes = (settings as any).checkInWindowMinutes ?? 10;
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const startMinutes = this.timeToMinutes(settings.workStartTime);
-    const windowEnd = startMinutes + windowMinutes;
+    const date = this.toDateKey(punchedAt);
+    const stateBefore = await this.buildDayState(employeeId, date, policy, false);
+    const accessPolicy = await this.resolveAccessPolicy(employeeId, date, policy);
 
-    // Check for existing record and override
-    const existing = await this.repo.findByEmployeeAndDate(employeeId, today);
-
-    const overrideActive = !!(
-      existing?.startWorkOverrideEnabled &&
-      (!existing.overrideValidUntil || new Date(existing.overrideValidUntil) > now)
-    );
-
-    if (existing && existing.firstCheckInAt) {
-      throw ApiError.badRequest('You have already started work today', 'ATTENDANCE_ALREADY_STARTED');
+    if (stateBefore.dayType === AttendanceDayType.HOLIDAY) {
+      throw ApiError.badRequest('Punch is disabled for holidays', 'PUNCH_BLOCKED_HOLIDAY');
     }
-
-    // Time window check — allow if override is active
-    if (!overrideActive) {
-      if (currentMinutes < startMinutes) {
-        throw ApiError.badRequest(
-          `Work can be started only after ${this.formatTime12h(settings.workStartTime)}`,
-          'ATTENDANCE_START_NOT_ALLOWED',
-        );
-      }
-      if (currentMinutes > windowEnd) {
-        throw ApiError.badRequest(
-          'Check-in window has expired. Please contact your admin for regularization.',
-          'ATTENDANCE_TOO_LATE',
-        );
-      }
+    if (stateBefore.dayType === AttendanceDayType.WEEK_OFF) {
+      throw ApiError.badRequest('Punch is disabled for weekly off days', 'PUNCH_BLOCKED_WEEKLY_OFF');
     }
-
-    // Validate location
-    let isInsideOffice = false;
-    let locationValidated = false;
-    const user = await AppDataSource.getRepository(User).findOne({ where: { id: employeeId } });
-
-    if (user?.officeLocationRequired) {
-      if (!location.latitude || !location.longitude) {
-        throw ApiError.badRequest(
-          'Location is required for office-based employees',
-          'ATTENDANCE_LOCATION_REQUIRED',
-        );
-      }
-
-      const officeLat = user.officeLatitude ?? (settings.officeLatitude ? parseFloat(String(settings.officeLatitude)) : null);
-      const officeLng = user.officeLongitude ?? (settings.officeLongitude ? parseFloat(String(settings.officeLongitude)) : null);
-      const radius = user.officeRadiusMeters ?? settings.officeRadiusMeters;
-
-      if (officeLat && officeLng && radius) {
-        isInsideOffice = LocationService.isWithinRadius(
-          officeLat, officeLng, location.latitude, location.longitude, radius,
-        );
-        locationValidated = true;
-
-        if (!isInsideOffice) {
-          throw ApiError.badRequest(
-            'You are not within the allowed office radius',
-            'ATTENDANCE_OUTSIDE_OFFICE',
-          );
-        }
-      }
+    if (stateBefore.dayType === AttendanceDayType.LEAVE) {
+      throw ApiError.badRequest('Punch is disabled on approved leave days', 'PUNCH_BLOCKED_LEAVE');
     }
-
-    // Calculate late minutes (from grace end, not window end)
-    const graceEnd = startMinutes + settings.lateGraceMinutes;
-    const lateMinutes = Math.max(0, currentMinutes - graceEnd);
-    const status = lateMinutes > 0 ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
-
-    await this.repo.createPunch({
-      employeeId,
-      type: PunchType.CHECK_IN,
-      time: now,
-      latitude: location.latitude ?? null,
-      longitude: location.longitude ?? null,
-      isInsideOffice,
-      source: PunchSource.WEB,
-    });
-
-    if (existing) {
-      existing.firstCheckInAt = now;
-      existing.status = status;
-      existing.lateMinutes = lateMinutes;
-      existing.locationValidated = locationValidated;
-      existing.checkInLatitude = location.latitude ?? null;
-      existing.checkInLongitude = location.longitude ?? null;
-      // Clear override after use
-      if (existing.startWorkOverrideEnabled) {
-        existing.startWorkOverrideEnabled = false;
-      }
-      await this.repo.saveAttendance(existing);
-      const updated = await this.repo.findByEmployeeAndDate(employeeId, today);
-      return this.formatAttendance(updated!);
-    }
-
-    const attendance = await this.repo.createAttendance({
-      employeeId,
-      date: today,
-      firstCheckInAt: now,
-      status,
-      lateMinutes,
-      locationValidated,
-      checkInLatitude: location.latitude ?? null,
-      checkInLongitude: location.longitude ?? null,
-    });
-
-    return this.formatAttendance(attendance);
-  }
-
-  // ════════════════════════════════════════════════════════
-  // Employee: End Work (Check-out)
-  // ════════════════════════════════════════════════════════
-  async endWork(employeeId: string, location: LocationInput & { eodDescription?: string }) {
-    const today = this.todayDateString();
-    const now = new Date();
-    const settings = await this.settingsRepo.getSettings();
-    if (!settings) throw ApiError.internal('Organisation settings not configured');
-
-    const record = await this.repo.findByEmployeeAndDate(employeeId, today);
-    if (!record || !record.firstCheckInAt) {
-      throw ApiError.badRequest('You have not started work today', 'ATTENDANCE_NOT_STARTED');
-    }
-
-    if (record.lastCheckOutAt) {
-      throw ApiError.badRequest('You have already ended work today', 'ATTENDANCE_ALREADY_ENDED');
-    }
-
-    let isInsideOffice = false;
-    const user = await AppDataSource.getRepository(User).findOne({ where: { id: employeeId } });
-
-    if (user?.officeLocationRequired && location.latitude && location.longitude) {
-      const officeLat = user.officeLatitude ?? (settings.officeLatitude ? parseFloat(String(settings.officeLatitude)) : null);
-      const officeLng = user.officeLongitude ?? (settings.officeLongitude ? parseFloat(String(settings.officeLongitude)) : null);
-      const radius = user.officeRadiusMeters ?? settings.officeRadiusMeters;
-
-      if (officeLat && officeLng && radius) {
-        isInsideOffice = LocationService.isWithinRadius(
-          officeLat, officeLng, location.latitude, location.longitude, radius,
-        );
-      }
-    }
-
-    await this.repo.createPunch({
-      employeeId,
-      type: PunchType.CHECK_OUT,
-      time: now,
-      latitude: location.latitude ?? null,
-      longitude: location.longitude ?? null,
-      isInsideOffice,
-      source: PunchSource.WEB,
-    });
-
-    const checkInTime = new Date(record.firstCheckInAt).getTime();
-    const totalWorkMinutes = Math.floor((now.getTime() - checkInTime) / 60000);
-
-    let status = record.status;
-    if (totalWorkMinutes < settings.halfDayMinMinutes) {
-      status = AttendanceStatus.ABSENT;
-    } else if (totalWorkMinutes < settings.fullDayMinMinutes) {
-      status = AttendanceStatus.HALF_DAY;
-    }
-
-    record.lastCheckOutAt = now;
-    record.totalWorkMinutes = totalWorkMinutes;
-    record.status = status;
-    record.eodDescription = location.eodDescription ?? null;
-    record.checkOutLatitude = location.latitude ?? null;
-    record.checkOutLongitude = location.longitude ?? null;
-
-    await this.repo.saveAttendance(record);
-    const updated = await this.repo.findByEmployeeAndDate(employeeId, today);
-    return this.formatAttendance(updated!);
-  }
-
-  // ════════════════════════════════════════════════════════
-  // Employee: History
-  // ════════════════════════════════════════════════════════
-  async getHistory(employeeId: string, days = 30) {
-    const endDate = this.todayDateString();
-    const start = new Date();
-    start.setDate(start.getDate() - days);
-    const startDate = start.toISOString().split('T')[0];
-
-    const records = await this.repo.findByEmployeeHistory(employeeId, startDate, endDate);
-    return records.map((r) => this.formatAttendance(r));
-  }
-
-  // ════════════════════════════════════════════════════════
-  // Admin: Full daily attendance roster
-  // ════════════════════════════════════════════════════════
-  async getAdminAttendance(date: string, status?: string, search?: string) {
-    const settings = await this.settingsRepo.getSettings();
-    if (!settings) throw ApiError.internal('Organisation settings not configured');
-
-    const dayType = await this.getDayType(date, settings);
-    const windowMinutes = (settings as any).checkInWindowMinutes ?? 10;
-    const startMinutes = this.timeToMinutes(settings.workStartTime);
-    const windowEnd = startMinutes + windowMinutes;
-
-    // Determine if check-in window is expired for this date
-    const now = new Date();
-    const today = this.todayDateString();
-    const isToday = date === today;
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const windowExpired = !isToday || currentMinutes > windowEnd;
-
-    // Gather all data in parallel
-    const [employees, attendanceMap, approvedLeaves] = await Promise.all([
-      this.repo.findAllActiveEmployees(),
-      this.repo.findAttendanceMapByDate(date),
-      this.repo.findApprovedLeavesForDate(date),
-    ]);
-
-    // Build leave set
-    const leaveEmployeeIds = new Set(approvedLeaves.map((l) => l.employeeId));
-
-    // Build roster
-    const roster: any[] = [];
-    const summaryMap: Record<string, number> = {
-      PRESENT: 0, LATE: 0, ABSENT: 0, HALF_DAY: 0, LEAVE: 0,
-      HOLIDAY: 0, WEEK_OFF: 0, NOT_STARTED: 0, MISSED_CHECK_IN: 0,
-    };
-
-    for (const emp of employees) {
-      const att = attendanceMap.get(emp.id);
-
-      let computedStatus: string;
-
-      if (dayType === 'HOLIDAY') {
-        computedStatus = 'HOLIDAY';
-      } else if (dayType === 'WEEK_OFF') {
-        computedStatus = 'WEEK_OFF';
-      } else if (leaveEmployeeIds.has(emp.id)) {
-        computedStatus = 'LEAVE';
-      } else if (att) {
-        // Use the real attendance status (including manual overrides)
-        computedStatus = att.status;
-      } else if (!windowExpired) {
-        computedStatus = 'NOT_STARTED';
-      } else {
-        computedStatus = 'MISSED_CHECK_IN';
-      }
-
-      summaryMap[computedStatus] = (summaryMap[computedStatus] ?? 0) + 1;
-
-      const record = {
-        id: att?.id ?? null,
-        employeeId: emp.id,
-        employeeName: `${emp.firstName} ${emp.lastName}`,
-        employeeCode: emp.empId ?? null,
-        date,
-        firstCheckInAt: att?.firstCheckInAt ?? null,
-        lastCheckOutAt: att?.lastCheckOutAt ?? null,
-        totalWorkMinutes: att?.totalWorkMinutes ?? 0,
-        status: computedStatus,
-        lateMinutes: att?.lateMinutes ?? 0,
-        isManualOverride: att?.isManualOverride ?? false,
-        overrideReason: att?.overrideReason ?? null,
-        locationValidated: att?.locationValidated ?? false,
-        eodDescription: att?.eodDescription ?? null,
-        startWorkOverrideEnabled: att?.startWorkOverrideEnabled ?? false,
-        overrideActive: !!(
-          att?.startWorkOverrideEnabled &&
-          (!att.overrideValidUntil || new Date(att.overrideValidUntil) > now)
-        ),
-        checkInLatitude: att?.checkInLatitude ? parseFloat(String(att.checkInLatitude)) : null,
-        checkInLongitude: att?.checkInLongitude ? parseFloat(String(att.checkInLongitude)) : null,
-        checkOutLatitude: att?.checkOutLatitude ? parseFloat(String(att.checkOutLatitude)) : null,
-        checkOutLongitude: att?.checkOutLongitude ? parseFloat(String(att.checkOutLongitude)) : null,
-      };
-
-      roster.push(record);
-    }
-
-    // Apply filters
-    let filtered = roster;
-
-    if (status) {
-      filtered = filtered.filter((r) => r.status === status);
-    }
-
-    if (search) {
-      const s = search.toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.employeeName?.toLowerCase().includes(s) ||
-          r.employeeCode?.toLowerCase().includes(s),
+    if (stateBefore.dayType === ('PRE_JOINING' as AttendanceDayType)) {
+      throw ApiError.badRequest(
+        'Punch is disabled before joining date',
+        'PUNCH_BLOCKED_PRE_JOINING',
       );
     }
 
-    // Recompute summary from filtered set only if not filtering
+    if (stateBefore.nextPunchType !== input.punchType) {
+      throw ApiError.badRequest(
+        `Invalid punch sequence. Expected ${stateBefore.nextPunchType} next`,
+        'INVALID_PUNCH_SEQUENCE',
+      );
+    }
+
+    if (!policy.allowMultiplePunchSessions && stateBefore.punches.length >= 2) {
+      throw ApiError.badRequest(
+        'Multiple punch sessions are disabled by attendance policy',
+        'MULTI_SESSION_DISABLED',
+      );
+    }
+
+    const geo = this.validateGeoFence(policy, accessPolicy, input, false, input.remarks);
+    const sessionOrder =
+      input.punchType === PunchType.CHECK_IN
+        ? stateBefore.sessions.length + 1
+        : Math.max(1, stateBefore.sessions.length);
+
+    await this.repo.createPunch({
+      employeeId,
+      type: input.punchType,
+      time: punchedAt,
+      punchDate: date,
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+      isInsideOffice: geo.withinGeoFence,
+      source: input.source ?? PunchSource.WEB,
+      remarks: input.remarks ?? null,
+      isManualOverride: Boolean(input.isManualOverride),
+      sessionOrder,
+      policyViolation: geo.policyViolation,
+      metadata: {
+        distanceMeters: geo.distanceMeters,
+      },
+    });
+
+    const recomputed = await this.buildDayState(employeeId, date, policy, true, {
+      eodDescription: input.punchType === PunchType.CHECK_OUT ? input.remarks : undefined,
+    });
+
+    await this.repo.createAuditLog({
+      actorId: employeeId,
+      actionType: input.punchType === PunchType.CHECK_IN ? 'PUNCH_IN' : 'PUNCH_OUT',
+      targetType: 'ATTENDANCE',
+      targetId: recomputed.record.id,
+      beforeData: {
+        status: stateBefore.record.status,
+        totalWorkMinutes: stateBefore.record.totalWorkMinutes,
+      },
+      afterData: {
+        status: recomputed.record.status,
+        totalWorkMinutes: recomputed.record.totalWorkMinutes,
+      },
+      metadata: {
+        date,
+        source: input.source ?? PunchSource.WEB,
+      },
+    });
+
     return {
-      summary: summaryMap,
-      records: filtered,
+      attendance: this.mapAttendanceRecord(recomputed.record),
+      nextPunchType: recomputed.nextPunchType,
+      sessions: recomputed.sessions,
+      geoFence: {
+        withinGeoFence: geo.withinGeoFence,
+        distanceMeters: geo.distanceMeters,
+      },
     };
   }
 
-  // ════════════════════════════════════════════════════════
-  // Admin: Get attendance for a specific employee
-  // ════════════════════════════════════════════════════════
+  async startWork(employeeId: string, input: StartWorkInput = {}) {
+    const result = await this.punchAction(employeeId, {
+      punchType: PunchType.CHECK_IN,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      source: input.source ?? PunchSource.WEB,
+    });
+    return result.attendance;
+  }
+
+  async endWork(employeeId: string, input: EndWorkInput = {}) {
+    const result = await this.punchAction(employeeId, {
+      punchType: PunchType.CHECK_OUT,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      source: input.source ?? PunchSource.WEB,
+      remarks: input.eodDescription,
+    });
+    return result.attendance;
+  }
+
+  async getHistory(employeeId: string, days = 30) {
+    const boundedDays = Number.isFinite(days) ? Math.min(Math.max(days, 1), 180) : 30;
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - boundedDays + 1);
+    const startDate = this.toDateKey(start);
+    const endDate = this.toDateKey(today);
+
+    const records = await this.repo.findMonthlyDayRecords(employeeId, startDate, endDate);
+    const map = new Map<string, Attendance>();
+    records.forEach((record) => map.set(record.date, record));
+
+    const policy = await this.ensureActivePolicy();
+    const response: any[] = [];
+
+    for (let i = 0; i < boundedDays; i++) {
+      const dateObj = new Date(start);
+      dateObj.setDate(start.getDate() + i);
+      const date = this.toDateKey(dateObj);
+      const existing = map.get(date);
+      if (existing) {
+        response.push(this.mapAttendanceRecord(existing));
+        continue;
+      }
+      const state = await this.buildDayState(employeeId, date, policy, false);
+      response.push(this.mapAttendanceRecord(state.record));
+    }
+
+    return response.sort((a, b) => (a.date < b.date ? 1 : -1));
+  }
+
+  async getEmployeeMonthlyAttendance(employeeId: string, query: MonthlyQuery) {
+    const { startDate, endDate, monthDays } = this.getMonthBounds(query.year, query.month);
+    const policy = await this.ensureActivePolicy();
+    const [stored, profile] = await Promise.all([
+      this.repo.findMonthlyDayRecords(employeeId, startDate, endDate),
+      this.repo.findEmployeeProfileByUserId(employeeId),
+    ]);
+    const map = new Map<string, Attendance>();
+    stored.forEach((row) => map.set(row.date, row));
+    const joiningDate = profile?.dateOfJoining ?? null;
+
+    const days: any[] = [];
+    for (let d = 1; d <= monthDays; d++) {
+      const date = this.toDateKey(new Date(query.year, query.month - 1, d));
+      if (joiningDate && date < joiningDate) {
+        days.push(
+          this.mapAttendanceRecord({
+            id: null as any,
+            employeeId,
+            date,
+            firstCheckInAt: null,
+            lastCheckOutAt: null,
+            totalWorkMinutes: 0,
+            totalBreakMinutes: 0,
+            earlyOutMinutes: 0,
+            overtimeMinutes: 0,
+            punchSessionsCount: 0,
+            status: AttendanceStatus.NOT_STARTED,
+            lateMinutes: 0,
+            dayType: 'PRE_JOINING',
+            missingPunch: false,
+            geoFenceIssue: false,
+            permissionMinutesApplied: 0,
+            regularized: false,
+            appliedPolicyId: policy.id,
+            policyVersion: policy.version,
+            statusReason: 'BEFORE_JOINING_DATE',
+            derivedSummary: {
+              preJoining: true,
+              joiningDate,
+            },
+            isManualOverride: false,
+            overrideReason: null,
+            eodDescription: null,
+            locationValidated: false,
+            checkInLatitude: null,
+            checkInLongitude: null,
+            checkOutLatitude: null,
+            checkOutLongitude: null,
+            startWorkOverrideEnabled: false,
+            overrideValidUntil: null,
+            overrideSetBy: null,
+            overrideSetAt: null,
+            isAutoClosed: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          } as unknown as Attendance),
+        );
+        continue;
+      }
+      const row = map.get(date);
+      if (row) {
+        days.push(this.mapAttendanceRecord(row));
+        continue;
+      }
+      const state = await this.buildDayState(employeeId, date, policy, false);
+      days.push(this.mapAttendanceRecord(state.record));
+    }
+
+    const summary = this.buildStatusSummary(days.map((day) => day.status));
+    return {
+      year: query.year,
+      month: query.month,
+      policy: this.mapPolicy(policy),
+      summary,
+      days,
+      context: {
+        joiningDate,
+      },
+    };
+  }
+
+  async recomputeEmployeeDateRange(employeeId: string, startDate: string, endDate: string) {
+    this.assertDate(startDate);
+    this.assertDate(endDate);
+    if (startDate > endDate) {
+      throw ApiError.badRequest(
+        'End date cannot be before start date',
+        'ATTENDANCE_RECOMPUTE_INVALID_RANGE',
+      );
+    }
+
+    const policy = await this.ensureActivePolicy();
+    const cursor = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    let processed = 0;
+
+    while (cursor.getTime() <= end.getTime()) {
+      const date = this.toDateKey(cursor);
+      await this.buildDayState(employeeId, date, policy, true);
+      processed += 1;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return {
+      employeeId,
+      startDate,
+      endDate,
+      processedDates: processed,
+    };
+  }
+
+  async getDayDetails(employeeId: string, date: string) {
+    this.assertDate(date);
+    const policy = await this.ensureActivePolicy();
+    const state = await this.buildDayState(employeeId, date, policy, false);
+    const accessPolicy = await this.resolveAccessPolicy(employeeId, date, policy);
+    const [regularizations, permissions] = await Promise.all([
+      this.repo.findRegularizationRequests({ employeeId, date }),
+      this.repo.findPermissionRequests({ employeeId, date }),
+    ]);
+    const actionEligibility = this.buildDayActionEligibility(state.record, regularizations, permissions);
+
+    return {
+      date,
+      attendance: this.mapAttendanceRecord(state.record),
+      sessions: state.sessions,
+      punches: state.punches,
+      nextPunchType: state.nextPunchType,
+      accessPolicy,
+      actionEligibility,
+      dayContext: this.buildDayContextLabel(state.record),
+    };
+  }
+
+  async createRegularizationRequest(
+    employeeId: string,
+    input: {
+      date: string;
+      requestType: AttendanceRegularizationRequestType;
+      requestedInTime?: string;
+      requestedOutTime?: string;
+      reason: string;
+    },
+  ) {
+    this.assertDate(input.date);
+
+    const policy = await this.ensureActivePolicy();
+    const rule = this.getRegularizationConfig(policy);
+    if (!rule.regularizationEnabled) {
+      throw ApiError.badRequest(
+        'Regularization is disabled by attendance policy',
+        'REGULARIZATION_DISABLED',
+      );
+    }
+
+    if (rule.reasonRequired && !input.reason.trim()) {
+      throw ApiError.badRequest('Reason is required for regularization', 'REGULARIZATION_REASON_REQUIRED');
+    }
+
+    const backDays = this.daysDiff(input.date, this.toDateKey(new Date()));
+    if (backDays > rule.maxRegularizationBackDays) {
+      throw ApiError.badRequest(
+        `Regularization can be raised only within ${rule.maxRegularizationBackDays} days`,
+        'REGULARIZATION_WINDOW_EXCEEDED',
+      );
+    }
+
+    const { monthStart, monthEnd } = this.getMonthRange(input.date);
+    const monthly = await this.repo.findRegularizationRequests({
+      employeeId,
+      monthStart,
+      monthEnd,
+    });
+
+    const activeCount = monthly.filter((row) => row.status !== AttendanceRequestStatus.REJECTED).length;
+    if (activeCount >= rule.maxRegularizationsPerMonth) {
+      throw ApiError.badRequest(
+        `Monthly regularization limit (${rule.maxRegularizationsPerMonth}) reached`,
+        'REGULARIZATION_LIMIT_REACHED',
+      );
+    }
+
+    const initialStatus = rule.regularizationApprovalRequired
+      ? AttendanceRequestStatus.PENDING
+      : AttendanceRequestStatus.APPROVED;
+
+    const created = await this.repo.createRegularizationRequest({
+      employeeId,
+      date: input.date,
+      requestType: input.requestType,
+      requestedInTime: input.requestedInTime ? new Date(input.requestedInTime) : null,
+      requestedOutTime: input.requestedOutTime ? new Date(input.requestedOutTime) : null,
+      reason: input.reason.trim(),
+      status: initialStatus,
+      reviewedBy: initialStatus === AttendanceRequestStatus.APPROVED ? employeeId : null,
+      reviewedAt: initialStatus === AttendanceRequestStatus.APPROVED ? new Date() : null,
+      metadata: {
+        autoApproved: !rule.regularizationApprovalRequired,
+      },
+    });
+
+    if (created.status === AttendanceRequestStatus.APPROVED) {
+      await this.buildDayState(employeeId, input.date, policy, true, { forceRecomputeManualOverride: true });
+    }
+
+    await this.repo.createAuditLog({
+      actorId: employeeId,
+      actionType: 'REGULARIZATION_REQUEST_CREATED',
+      targetType: 'ATTENDANCE_REGULARIZATION_REQUEST',
+      targetId: created.id,
+      afterData: created as any,
+      metadata: {
+        date: input.date,
+      },
+    });
+
+    return this.mapRegularizationRequest(created);
+  }
+
+  async listMyRegularizationRequests(employeeId: string, status?: AttendanceRequestStatus | string) {
+    const rows = await this.repo.findRegularizationRequests({ employeeId, status });
+    return rows.map((row) => this.mapRegularizationRequest(row));
+  }
+  async createPermissionRequest(
+    employeeId: string,
+    input: {
+      date: string;
+      fromTime: string;
+      toTime: string;
+      reason: string;
+    },
+  ) {
+    this.assertDate(input.date);
+    this.assertTime(input.fromTime);
+    this.assertTime(input.toTime);
+
+    const policy = await this.ensureActivePolicy();
+    const rule = this.getPermissionConfig(policy);
+    if (!rule.permissionEnabled) {
+      throw ApiError.badRequest('Permission is disabled by attendance policy', 'PERMISSION_DISABLED');
+    }
+
+    if (rule.permissionReasonRequired && !input.reason.trim()) {
+      throw ApiError.badRequest('Reason is required for permission', 'PERMISSION_REASON_REQUIRED');
+    }
+
+    const totalMinutes = this.minutesBetweenTime(input.fromTime, input.toTime);
+    if (totalMinutes <= 0) {
+      throw ApiError.badRequest('toTime must be after fromTime', 'INVALID_PERMISSION_TIME_RANGE');
+    }
+
+    if (totalMinutes % Math.max(1, rule.minPermissionUnitMinutes) !== 0) {
+      throw ApiError.badRequest(
+        `Permission duration must be in multiples of ${rule.minPermissionUnitMinutes} minutes`,
+        'PERMISSION_UNIT_INVALID',
+      );
+    }
+
+    const { monthStart, monthEnd } = this.getMonthRange(input.date);
+    const monthly = await this.repo.findPermissionRequests({ employeeId, monthStart, monthEnd });
+    const notRejected = monthly.filter((row) => row.status !== AttendanceRequestStatus.REJECTED);
+
+    if (notRejected.length >= rule.maxPermissionRequestsPerMonth) {
+      throw ApiError.badRequest(
+        `Monthly permission request limit (${rule.maxPermissionRequestsPerMonth}) reached`,
+        'PERMISSION_REQUEST_LIMIT_REACHED',
+      );
+    }
+
+    const usedHours = notRejected.reduce((sum, row) => sum + row.totalMinutes, 0) / 60;
+    if (usedHours + totalMinutes / 60 > rule.maxPermissionHoursPerMonth) {
+      throw ApiError.badRequest(
+        `Monthly permission hour limit (${rule.maxPermissionHoursPerMonth}) exceeded`,
+        'PERMISSION_HOUR_LIMIT_REACHED',
+      );
+    }
+
+    const initialStatus = rule.permissionApprovalRequired
+      ? AttendanceRequestStatus.PENDING
+      : AttendanceRequestStatus.APPROVED;
+
+    const created = await this.repo.createPermissionRequest({
+      employeeId,
+      date: input.date,
+      fromTime: input.fromTime,
+      toTime: input.toTime,
+      totalMinutes,
+      reason: input.reason.trim(),
+      status: initialStatus,
+      reviewedBy: initialStatus === AttendanceRequestStatus.APPROVED ? employeeId : null,
+      reviewedAt: initialStatus === AttendanceRequestStatus.APPROVED ? new Date() : null,
+      appliedMinutes:
+        initialStatus === AttendanceRequestStatus.APPROVED && rule.canPermissionConvertShortage
+          ? totalMinutes
+          : 0,
+      metadata: {
+        autoApproved: !rule.permissionApprovalRequired,
+      },
+    });
+
+    if (created.status === AttendanceRequestStatus.APPROVED) {
+      await this.buildDayState(employeeId, input.date, policy, true, { forceRecomputeManualOverride: true });
+    }
+
+    await this.repo.createAuditLog({
+      actorId: employeeId,
+      actionType: 'PERMISSION_REQUEST_CREATED',
+      targetType: 'ATTENDANCE_PERMISSION_REQUEST',
+      targetId: created.id,
+      afterData: created as any,
+      metadata: {
+        date: input.date,
+      },
+    });
+
+    return this.mapPermissionRequest(created);
+  }
+
+  async listMyPermissionRequests(employeeId: string, status?: AttendanceRequestStatus | string) {
+    const rows = await this.repo.findPermissionRequests({ employeeId, status });
+    return rows.map((row) => this.mapPermissionRequest(row));
+  }
+
+  async getAdminPendingRequests() {
+    const [pendingRegularizations, pendingPermissions] = await Promise.all([
+      this.repo.findRegularizationRequests({ status: AttendanceRequestStatus.PENDING }),
+      this.repo.findPermissionRequests({ status: AttendanceRequestStatus.PENDING }),
+    ]);
+
+    const employeeIds = Array.from(
+      new Set([
+        ...pendingRegularizations.map((row) => row.employeeId),
+        ...pendingPermissions.map((row) => row.employeeId),
+      ]),
+    );
+
+    const employees = await Promise.all(employeeIds.map((id) => this.repo.findEmployeeById(id)));
+    const employeeMap = new Map<string, any>();
+    employees.forEach((employee) => {
+      if (employee) employeeMap.set(employee.id, employee);
+    });
+
+    return {
+      regularizations: pendingRegularizations.map((row) => ({
+        ...this.mapRegularizationRequest(row),
+        employeeName: this.getEmployeeName(employeeMap.get(row.employeeId)),
+        employeeCode: employeeMap.get(row.employeeId)?.empId ?? null,
+      })),
+      permissions: pendingPermissions.map((row) => ({
+        ...this.mapPermissionRequest(row),
+        employeeName: this.getEmployeeName(employeeMap.get(row.employeeId)),
+        employeeCode: employeeMap.get(row.employeeId)?.empId ?? null,
+      })),
+    };
+  }
+
+  async listEmployeeAccessOverrides(search?: string) {
+    const rows = await this.repo.listEmployeeAccessOverrides({
+      search: search?.trim() || undefined,
+      activeOnly: false,
+    });
+    return rows.map((row) => this.mapAccessOverride(row));
+  }
+
+  async getEmployeeAccessOverride(employeeId: string) {
+    const employee = await this.repo.findEmployeeById(employeeId);
+    if (!employee) {
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+
+    const row = await this.repo.getEmployeeAccessOverride(employeeId);
+    return {
+      employeeId,
+      employeeName: this.getEmployeeName(employee),
+      employeeCode: employee.empId ?? null,
+      override: row ? this.mapAccessOverride(row) : null,
+    };
+  }
+
+  async saveEmployeeAccessOverride(
+    employeeId: string,
+    actorId: string,
+    input: {
+      overrideMode?: AttendanceAccessMode;
+      geoFenceExempt?: boolean;
+      remotePunchAllowed?: boolean | null;
+      reason?: string;
+      effectiveFrom?: string;
+      effectiveUntil?: string;
+      active?: boolean;
+    },
+  ) {
+    const employee = await this.repo.findEmployeeById(employeeId);
+    if (!employee) {
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+
+    if (
+      input.effectiveFrom &&
+      input.effectiveUntil &&
+      input.effectiveUntil < input.effectiveFrom
+    ) {
+      throw ApiError.badRequest(
+        'effectiveUntil must be greater than or equal to effectiveFrom',
+        'INVALID_OVERRIDE_EFFECTIVE_RANGE',
+      );
+    }
+
+    const policy = await this.ensureActivePolicy();
+    if (!policy.allowEmployeePolicyOverride) {
+      throw ApiError.badRequest(
+        'Employee attendance policy overrides are disabled',
+        'EMPLOYEE_OVERRIDE_DISABLED',
+      );
+    }
+
+    const saved = await this.repo.saveEmployeeAccessOverride(employeeId, {
+      overrideMode: input.overrideMode ?? AttendanceAccessMode.ORG_DEFAULT,
+      geoFenceExempt: Boolean(input.geoFenceExempt),
+      remotePunchAllowed:
+        input.remotePunchAllowed === null || input.remotePunchAllowed === undefined
+          ? null
+          : Boolean(input.remotePunchAllowed),
+      reason: input.reason?.trim() || null,
+      effectiveFrom: input.effectiveFrom ?? null,
+      effectiveUntil: input.effectiveUntil ?? null,
+      active: input.active ?? true,
+      updatedBy: actorId,
+      metadata: {
+        updatedBy: actorId,
+      },
+    });
+
+    await this.repo.createAuditLog({
+      actorId,
+      actionType: 'ATTENDANCE_EMPLOYEE_OVERRIDE_SAVED',
+      targetType: 'ATTENDANCE_EMPLOYEE_POLICY_OVERRIDE',
+      targetId: saved.id,
+      afterData: this.mapAccessOverride(saved),
+      metadata: {
+        employeeId,
+      },
+    });
+
+    const hydrated = await this.repo.getEmployeeAccessOverride(employeeId);
+    return this.mapAccessOverride(hydrated ?? saved);
+  }
+
+  async clearEmployeeAccessOverride(employeeId: string, actorId: string) {
+    const existing = await this.repo.getEmployeeAccessOverride(employeeId);
+    if (!existing) {
+      throw ApiError.notFound(
+        'Attendance access override not found',
+        'ATTENDANCE_OVERRIDE_NOT_FOUND',
+      );
+    }
+
+    const saved = await this.repo.saveEmployeeAccessOverride(employeeId, {
+      overrideMode: AttendanceAccessMode.ORG_DEFAULT,
+      geoFenceExempt: false,
+      remotePunchAllowed: null,
+      active: false,
+      updatedBy: actorId,
+      reason: existing.reason,
+      metadata: {
+        clearedBy: actorId,
+        clearedAt: new Date().toISOString(),
+      },
+    });
+
+    await this.repo.createAuditLog({
+      actorId,
+      actionType: 'ATTENDANCE_EMPLOYEE_OVERRIDE_CLEARED',
+      targetType: 'ATTENDANCE_EMPLOYEE_POLICY_OVERRIDE',
+      targetId: saved.id,
+      beforeData: this.mapAccessOverride(existing),
+      afterData: this.mapAccessOverride(saved),
+      metadata: { employeeId },
+    });
+
+    const hydrated = await this.repo.getEmployeeAccessOverride(employeeId);
+    return this.mapAccessOverride(hydrated ?? saved);
+  }
+
+  async reviewRegularizationRequest(
+    requestId: string,
+    actorId: string,
+    input: ReviewRequestInput,
+  ) {
+    const request = await this.repo.findRegularizationById(requestId);
+    if (!request) {
+      throw ApiError.notFound('Regularization request not found', 'REGULARIZATION_REQUEST_NOT_FOUND');
+    }
+    if (request.status !== AttendanceRequestStatus.PENDING) {
+      throw ApiError.badRequest('Request has already been reviewed', 'REQUEST_ALREADY_REVIEWED');
+    }
+
+    request.status = input.approved
+      ? AttendanceRequestStatus.APPROVED
+      : AttendanceRequestStatus.REJECTED;
+    request.reviewedBy = actorId;
+    request.reviewedAt = new Date();
+    request.adminRemarks = input.adminRemarks?.trim() || null;
+
+    const saved = await this.repo.saveRegularization(request);
+    const policy = await this.ensureActivePolicy();
+
+    if (saved.status === AttendanceRequestStatus.APPROVED) {
+      await this.buildDayState(saved.employeeId, saved.date, policy, true, {
+        forceRecomputeManualOverride: true,
+      });
+    }
+
+    await this.repo.createAuditLog({
+      actorId,
+      actionType: 'REGULARIZATION_REQUEST_REVIEWED',
+      targetType: 'ATTENDANCE_REGULARIZATION_REQUEST',
+      targetId: saved.id,
+      afterData: this.mapRegularizationRequest(saved),
+      metadata: {
+        approved: input.approved,
+      },
+    });
+
+    return this.mapRegularizationRequest(saved);
+  }
+
+  async reviewPermissionRequest(requestId: string, actorId: string, input: ReviewRequestInput) {
+    const request = await this.repo.findPermissionById(requestId);
+    if (!request) {
+      throw ApiError.notFound('Permission request not found', 'PERMISSION_REQUEST_NOT_FOUND');
+    }
+    if (request.status !== AttendanceRequestStatus.PENDING) {
+      throw ApiError.badRequest('Request has already been reviewed', 'REQUEST_ALREADY_REVIEWED');
+    }
+
+    const policy = await this.ensureActivePolicy();
+    const permissionConfig = this.getPermissionConfig(policy);
+
+    request.status = input.approved
+      ? AttendanceRequestStatus.APPROVED
+      : AttendanceRequestStatus.REJECTED;
+    request.reviewedBy = actorId;
+    request.reviewedAt = new Date();
+    request.adminRemarks = input.adminRemarks?.trim() || null;
+    request.appliedMinutes = input.approved && permissionConfig.canPermissionConvertShortage
+      ? request.totalMinutes
+      : 0;
+
+    const saved = await this.repo.savePermission(request);
+
+    if (saved.status === AttendanceRequestStatus.APPROVED) {
+      await this.buildDayState(saved.employeeId, saved.date, policy, true, {
+        forceRecomputeManualOverride: true,
+      });
+    }
+
+    await this.repo.createAuditLog({
+      actorId,
+      actionType: 'PERMISSION_REQUEST_REVIEWED',
+      targetType: 'ATTENDANCE_PERMISSION_REQUEST',
+      targetId: saved.id,
+      afterData: this.mapPermissionRequest(saved),
+      metadata: {
+        approved: input.approved,
+      },
+    });
+
+    return this.mapPermissionRequest(saved);
+  }
+
+  async getAdminAttendance(date: string, status?: string, search?: string, department?: string) {
+    this.assertDate(date);
+    const policy = await this.ensureActivePolicy();
+
+    const employees = await this.repo.findActiveEmployees();
+    const [dayRecords, leaves, holiday, profileMap, pendingRegularizations, pendingPermissions] = await Promise.all([
+      this.repo.findDayRecordsByDate(date),
+      this.repo.findApprovedLeavesForDate(date),
+      this.repo.findHolidayByDate(date),
+      this.repo.findEmployeeProfilesMap(employees.map((row) => row.id)),
+      this.repo.findRegularizationRequests({ date, status: AttendanceRequestStatus.PENDING }),
+      this.repo.findPermissionRequests({ date, status: AttendanceRequestStatus.PENDING }),
+    ]);
+
+    const dayRecordMap = new Map<string, Attendance>();
+    dayRecords.forEach((row) => dayRecordMap.set(row.employeeId, row));
+
+    const leaveMap = new Map<string, boolean>();
+    leaves.forEach((row) => leaveMap.set(row.employeeId, true));
+    const pendingRegularizationMap = new Map<string, number>();
+    pendingRegularizations.forEach((row) => {
+      pendingRegularizationMap.set(
+        row.employeeId,
+        (pendingRegularizationMap.get(row.employeeId) ?? 0) + 1,
+      );
+    });
+    const pendingPermissionMap = new Map<string, number>();
+    pendingPermissions.forEach((row) => {
+      pendingPermissionMap.set(
+        row.employeeId,
+        (pendingPermissionMap.get(row.employeeId) ?? 0) + 1,
+      );
+    });
+
+    const rows: any[] = [];
+    for (const employee of employees) {
+      const profile = profileMap.get(employee.id) ?? null;
+      if (department && profile?.department !== department) continue;
+
+      const fullName = this.getEmployeeName(employee);
+      const searchText = `${fullName} ${employee.email ?? ''} ${employee.empId ?? ''}`.toLowerCase();
+      if (search && !searchText.includes(search.toLowerCase())) continue;
+
+      let day = dayRecordMap.get(employee.id);
+      if (!day) {
+        const isPreJoining = Boolean(profile?.dateOfJoining && date < profile.dateOfJoining);
+        const syntheticDayType = isPreJoining
+          ? ('PRE_JOINING' as AttendanceDayType)
+          : holiday
+            ? AttendanceDayType.HOLIDAY
+            : leaveMap.has(employee.id)
+              ? AttendanceDayType.LEAVE
+              : this.isWeeklyOff(new Date(`${date}T00:00:00`), policy)
+                ? AttendanceDayType.WEEK_OFF
+                : AttendanceDayType.WORKING;
+
+        const syntheticStatus =
+          syntheticDayType === ('PRE_JOINING' as AttendanceDayType)
+            ? AttendanceStatus.NOT_STARTED
+            : syntheticDayType === AttendanceDayType.HOLIDAY
+            ? AttendanceStatus.HOLIDAY
+            : syntheticDayType === AttendanceDayType.WEEK_OFF
+              ? AttendanceStatus.WEEK_OFF
+              : syntheticDayType === AttendanceDayType.LEAVE
+                ? AttendanceStatus.LEAVE
+                : AttendanceStatus.NOT_STARTED;
+
+        day = {
+          id: null as any,
+          employeeId: employee.id,
+          date,
+          firstCheckInAt: null,
+          lastCheckOutAt: null,
+          totalWorkMinutes: 0,
+          totalBreakMinutes: 0,
+          earlyOutMinutes: 0,
+          overtimeMinutes: 0,
+          punchSessionsCount: 0,
+          status: syntheticStatus,
+          lateMinutes: 0,
+          dayType: syntheticDayType,
+          missingPunch: false,
+          geoFenceIssue: false,
+          permissionMinutesApplied: 0,
+          regularized: false,
+          appliedPolicyId: policy.id,
+          policyVersion: policy.version,
+          statusReason:
+            syntheticDayType === ('PRE_JOINING' as AttendanceDayType)
+              ? 'BEFORE_JOINING_DATE'
+              : syntheticStatus,
+          derivedSummary: {
+            preJoining: syntheticDayType === ('PRE_JOINING' as AttendanceDayType),
+            joiningDate: profile?.dateOfJoining ?? null,
+          },
+          isManualOverride: false,
+          overrideReason: null,
+          eodDescription: null,
+          locationValidated: false,
+          checkInLatitude: null,
+          checkInLongitude: null,
+          checkOutLatitude: null,
+          checkOutLongitude: null,
+          startWorkOverrideEnabled: false,
+          overrideValidUntil: null,
+          overrideSetBy: null,
+          overrideSetAt: null,
+          isAutoClosed: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          employee: employee as any,
+        } as Attendance;
+      }
+
+      const normalized = this.mapAdminAttendanceRecord(day, employee, profile, {
+        pendingRegularizationCount: pendingRegularizationMap.get(employee.id) ?? 0,
+        pendingPermissionCount: pendingPermissionMap.get(employee.id) ?? 0,
+      });
+      if (status && normalized.status !== status) continue;
+      rows.push(normalized);
+    }
+
+    const summary = this.buildStatusSummary(rows.map((row) => row.status));
+
+    return {
+      date,
+      summary,
+      records: rows,
+    };
+  }
   async getAdminEmployeeAttendance(employeeId: string, days = 30) {
     return this.getHistory(employeeId, days);
   }
 
-  // ════════════════════════════════════════════════════════
-  // Admin: Override status (create record if missing)
-  // ════════════════════════════════════════════════════════
-  async overrideStatus(
-    employeeId: string,
-    date: string,
-    status: AttendanceStatus,
-    reason: string,
-  ) {
-    const record = await this.repo.upsertAttendance(employeeId, date, {
+  async getAdminDayDetails(employeeId: string, date: string) {
+    this.assertDate(date);
+    const [employee, profile, policy, regularizations, permissions, dayDetail] = await Promise.all([
+      this.repo.findEmployeeById(employeeId),
+      this.repo.findEmployeeProfileByUserId(employeeId),
+      this.ensureActivePolicy(),
+      this.repo.findRegularizationRequests({ employeeId, date }),
+      this.repo.findPermissionRequests({ employeeId, date }),
+      this.getDayDetails(employeeId, date),
+    ]);
+
+    if (!employee) {
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+
+    return {
+      ...dayDetail,
+      employee: {
+        id: employee.id,
+        name: this.getEmployeeName(employee),
+        employeeCode: employee.empId ?? null,
+        email: employee.email ?? null,
+        department: profile?.department ?? null,
+        designation: profile?.designation ?? null,
+      },
+      policySummary: {
+        policyName: policy.defaultPolicyName,
+        version: policy.version,
+        workStartTime: policy.workStartTime,
+        workEndTime: policy.workEndTime,
+        halfDayMinMinutes: policy.halfDayMinMinutes,
+        fullDayMinMinutes: policy.fullDayMinMinutes,
+        lateGraceMinutes: policy.lateGraceMinutes,
+      },
+      requests: {
+        regularizations: regularizations.map((row) => this.mapRegularizationRequest(row)),
+        permissions: permissions.map((row) => this.mapPermissionRequest(row)),
+      },
+    };
+  }
+
+  async getAdminMonthlySummary(employeeId: string, query: MonthlyQuery) {
+    const monthly = await this.getEmployeeMonthlyAttendance(employeeId, query);
+    const dayRows = monthly.days;
+    const lopDays = dayRows.filter(
+      (row) => row.status === AttendanceStatus.LOP || row.status === AttendanceStatus.ABSENT,
+    ).length;
+
+    return {
+      ...monthly,
+      metrics: {
+        presentDays: dayRows.filter((row) => row.status === AttendanceStatus.PRESENT).length,
+        lateDays: dayRows.filter((row) => row.status === AttendanceStatus.LATE).length,
+        absentDays: 0,
+        halfDays: dayRows.filter((row) => row.status === AttendanceStatus.HALF_DAY).length,
+        permissionDays: dayRows.filter((row) => row.status === AttendanceStatus.PERMISSION).length,
+        regularizedDays: dayRows.filter((row) => row.status === AttendanceStatus.REGULARIZED).length,
+        lopDays,
+        overtimeDays: dayRows.filter((row) => row.status === AttendanceStatus.OVERTIME).length,
+      },
+    };
+  }
+
+  async overrideStatus(employeeId: string, date: string, status: AttendanceStatus, reason: string) {
+    this.assertDate(date);
+    const day = await this.repo.upsertDayRecord(employeeId, date, {
       status,
       isManualOverride: true,
       overrideReason: reason,
+      statusReason: 'ADMIN_OVERRIDE',
+      dayType: AttendanceDayType.WORKING,
     });
 
-    // Reload with employee relation
-    const updated = await this.repo.findById(record.id);
-    return this.formatAttendanceAdmin(updated!);
+    await this.repo.createAuditLog({
+      actorId: null,
+      actionType: 'ATTENDANCE_STATUS_OVERRIDDEN',
+      targetType: 'ATTENDANCE',
+      targetId: day.id,
+      afterData: this.mapAttendanceRecord(day),
+      metadata: {
+        reason,
+        status,
+      },
+    });
+
+    return this.mapAttendanceRecord(day);
   }
 
-  // ════════════════════════════════════════════════════════
-  // Admin: Manual entry (create record if missing)
-  // ════════════════════════════════════════════════════════
   async manualEntry(
     employeeId: string,
     date: string,
-    data: {
+    input: {
       firstCheckInAt?: string;
       lastCheckOutAt?: string;
       status?: AttendanceStatus;
       reason?: string;
     },
   ) {
-    let record = await this.repo.findByEmployeeAndDate(employeeId, date);
+    this.assertDate(date);
 
-    if (!record) {
-      record = await this.repo.createAttendance({
+    const firstCheckInAt = input.firstCheckInAt ? new Date(input.firstCheckInAt) : null;
+    const lastCheckOutAt = input.lastCheckOutAt ? new Date(input.lastCheckOutAt) : null;
+
+    if (
+      firstCheckInAt &&
+      lastCheckOutAt &&
+      firstCheckInAt.getTime() > lastCheckOutAt.getTime()
+    ) {
+      throw ApiError.badRequest('Check-out cannot be before check-in', 'INVALID_MANUAL_TIMINGS');
+    }
+
+    const totalWorkMinutes =
+      firstCheckInAt && lastCheckOutAt
+        ? Math.max(0, Math.round((lastCheckOutAt.getTime() - firstCheckInAt.getTime()) / 60000))
+        : 0;
+
+    const day = await this.repo.upsertDayRecord(employeeId, date, {
+      firstCheckInAt,
+      lastCheckOutAt,
+      totalWorkMinutes,
+      totalBreakMinutes: 0,
+      punchSessionsCount: firstCheckInAt ? 1 : 0,
+      status: input.status ?? (totalWorkMinutes > 0 ? AttendanceStatus.PRESENT : AttendanceStatus.LOP),
+      statusReason: input.reason?.trim() || 'MANUAL_ENTRY',
+      overrideReason: input.reason?.trim() || null,
+      isManualOverride: true,
+      regularized: false,
+      permissionMinutesApplied: 0,
+      lateMinutes: 0,
+      missingPunch: Boolean(firstCheckInAt && !lastCheckOutAt),
+      dayType: AttendanceDayType.WORKING,
+    });
+
+    if (firstCheckInAt) {
+      await this.repo.replaceSessions(day.id, employeeId, date, [
+        {
+          inTime: firstCheckInAt,
+          outTime: lastCheckOutAt,
+          workedMinutes: totalWorkMinutes,
+          breakAfterMinutes: 0,
+          sessionOrder: 1,
+          isAutoClosed: false,
+          metadata: { source: 'MANUAL_ENTRY' },
+        },
+      ]);
+    } else {
+      await this.repo.replaceSessions(day.id, employeeId, date, []);
+    }
+
+    return this.mapAttendanceRecord(day);
+  }
+
+  async reEnableStartWork(
+    employeeId: string,
+    actorId: string,
+    input: { reason?: string; validUntil?: string },
+  ) {
+    const date = this.toDateKey(new Date());
+    const validUntil = input.validUntil ? new Date(input.validUntil) : this.endOfToday();
+
+    const day = await this.repo.upsertDayRecord(employeeId, date, {
+      startWorkOverrideEnabled: true,
+      overrideSetBy: actorId,
+      overrideSetAt: new Date(),
+      overrideValidUntil: validUntil,
+      overrideReason: input.reason?.trim() || 'Admin re-enabled start work',
+    });
+
+    await this.repo.createAuditLog({
+      actorId,
+      actionType: 'START_WORK_RE_ENABLED',
+      targetType: 'ATTENDANCE',
+      targetId: day.id,
+      metadata: {
+        employeeId,
+        validUntil,
+      },
+    });
+
+    return this.mapAttendanceRecord(day);
+  }
+
+  private async ensureActivePolicy(): Promise<AttendancePolicy> {
+    const [existing, org, leavePolicy] = await Promise.all([
+      this.repo.getActivePolicy(),
+      this.settingsRepo.getSettings(),
+      this.leaveRepo.getPolicy(),
+    ]);
+    if (existing) {
+      return this.applyPrimarySourceOverrides(existing, org, leavePolicy);
+    }
+
+    const defaults = buildDefaultAttendancePolicy({
+      workStartTime: org?.workStartTime,
+      workEndTime: org?.workEndTime,
+      lateGraceMinutes: org?.lateGraceMinutes,
+      halfDayMinMinutes: org?.halfDayMinMinutes,
+      fullDayMinMinutes: org?.fullDayMinMinutes,
+      officeLatitude: org?.officeLatitude ?? null,
+      officeLongitude: org?.officeLongitude ?? null,
+      officeRadiusMeters: org?.officeRadiusMeters ?? null,
+      weekOffDays: org?.weekOffDays,
+      alternateSaturdayOffRule: org?.alternateSaturdayOffRule,
+    });
+
+    const created = await this.repo.createPolicyVersion(defaults);
+    return this.applyPrimarySourceOverrides(created, org, leavePolicy);
+  }
+
+  private applyPrimarySourceOverrides(
+    policy: AttendancePolicy,
+    org: OrgSettings | null,
+    leavePolicy: LeavePolicy | null,
+  ): AttendancePolicy {
+    const merged = this.mergePolicyDefaults(policy);
+
+    if (org) {
+      merged.workStartTime = org.workStartTime ?? merged.workStartTime;
+      merged.workEndTime = org.workEndTime ?? merged.workEndTime;
+      merged.lateGraceMinutes = org.lateGraceMinutes ?? merged.lateGraceMinutes;
+      merged.halfDayMinMinutes = org.halfDayMinMinutes ?? merged.halfDayMinMinutes;
+      merged.fullDayMinMinutes = org.fullDayMinMinutes ?? merged.fullDayMinMinutes;
+      merged.weekOffDays = org.weekOffDays ?? merged.weekOffDays;
+      merged.alternateSaturdayOffRule =
+        org.alternateSaturdayOffRule ?? merged.alternateSaturdayOffRule;
+      merged.officeLatitude =
+        org.officeLatitude != null ? Number(org.officeLatitude) : null;
+      merged.officeLongitude =
+        org.officeLongitude != null ? Number(org.officeLongitude) : null;
+      merged.allowedRadiusMeters = org.officeRadiusMeters ?? null;
+
+      const geoFenceConfigured =
+        merged.officeLatitude != null &&
+        merged.officeLongitude != null &&
+        merged.allowedRadiusMeters != null &&
+        merged.allowedRadiusMeters > 0;
+
+      merged.geoFenceRequired = Boolean(org.geoFenceRequired);
+      merged.allowRemotePunch = Boolean(org.allowRemoteAttendance);
+
+      if (merged.geoFenceRequired && !geoFenceConfigured) {
+        // Defensive fallback for legacy/misaligned records.
+        merged.geoFenceRequired = false;
+      }
+
+      if (!merged.geoFenceRequired && !merged.allowRemotePunch) {
+        // Keep attendance operable if both flags are disabled accidentally.
+        merged.allowRemotePunch = true;
+      }
+
+      merged.defaultAttendanceMode =
+        merged.geoFenceRequired && merged.allowRemotePunch
+          ? AttendanceAccessMode.HYBRID
+          : merged.geoFenceRequired
+            ? AttendanceAccessMode.GEO_FENCE_ONLY
+            : AttendanceAccessMode.REMOTE_ALLOWED;
+    }
+
+    merged.classificationConfig = {
+      ...this.getClassificationConfig(merged),
+      presentMinMinutes: merged.fullDayMinMinutes,
+      halfDayMinMinutes: merged.halfDayMinMinutes,
+    };
+
+    if (leavePolicy) {
+      merged.permissionConfig = {
+        ...this.getPermissionConfig(merged),
+        permissionEnabled: Boolean(leavePolicy.allowPermissionHours),
+        maxPermissionHoursPerMonth: Number(leavePolicy.maxPermissionHoursPerMonth),
+        maxPermissionRequestsPerMonth: Number(leavePolicy.maxPermissionRequestsPerMonth),
+      };
+      merged.regularizationConfig = {
+        ...this.getRegularizationConfig(merged),
+        maxRegularizationsPerMonth: Number(leavePolicy.maxRegularizationsPerMonth),
+      };
+    }
+
+    return merged;
+  }
+
+  private mergePolicyDefaults(policy: AttendancePolicy): AttendancePolicy {
+    const defaults = buildDefaultAttendancePolicy();
+    policy.defaultAttendanceMode = this.resolvePolicyMode(policy) ?? defaults.defaultAttendanceMode;
+    policy.requireRemotePunchReason =
+      policy.requireRemotePunchReason ?? defaults.requireRemotePunchReason;
+    policy.allowEmployeePolicyOverride =
+      policy.allowEmployeePolicyOverride ?? defaults.allowEmployeePolicyOverride;
+    policy.classificationConfig = {
+      ...defaults.classificationConfig,
+      ...(policy.classificationConfig ?? {}),
+    };
+    policy.permissionConfig = {
+      ...defaults.permissionConfig,
+      ...(policy.permissionConfig ?? {}),
+    };
+    policy.regularizationConfig = {
+      ...defaults.regularizationConfig,
+      ...(policy.regularizationConfig ?? {}),
+    };
+    policy.policyPrecedenceConfig = {
+      ...(defaults.policyPrecedenceConfig ?? {}),
+      ...(policy.policyPrecedenceConfig ?? {}),
+    };
+    return policy;
+  }
+
+  private mergePolicyInput(current: AttendancePolicy, input: SavePolicyInput): AttendancePolicy {
+    const merged = this.mergePolicyDefaults({ ...current } as AttendancePolicy);
+    Object.assign(merged, {
+      defaultPolicyName: input.defaultPolicyName ?? merged.defaultPolicyName,
+      effectiveFrom: input.effectiveFrom ?? this.toDateKey(new Date()),
+      workStartTime: input.workStartTime ?? merged.workStartTime,
+      workEndTime: input.workEndTime ?? merged.workEndTime,
+      lateGraceMinutes: input.lateGraceMinutes ?? merged.lateGraceMinutes,
+      halfDayMinMinutes: input.halfDayMinMinutes ?? merged.halfDayMinMinutes,
+      fullDayMinMinutes: input.fullDayMinMinutes ?? merged.fullDayMinMinutes,
+      overtimeMinMinutes: input.overtimeMinMinutes ?? merged.overtimeMinMinutes,
+      maxEarlyOutToleranceMinutes:
+        input.maxEarlyOutToleranceMinutes ?? merged.maxEarlyOutToleranceMinutes,
+      allowMultiplePunchSessions:
+        input.allowMultiplePunchSessions ?? merged.allowMultiplePunchSessions,
+      autoCloseOpenSessionAtEndOfDay:
+        input.autoCloseOpenSessionAtEndOfDay ?? merged.autoCloseOpenSessionAtEndOfDay,
+      minimumPunchGapMinutes: input.minimumPunchGapMinutes ?? merged.minimumPunchGapMinutes,
+      officeLatitude: input.officeLatitude ?? merged.officeLatitude,
+      officeLongitude: input.officeLongitude ?? merged.officeLongitude,
+      allowedRadiusMeters: input.allowedRadiusMeters ?? merged.allowedRadiusMeters,
+      geoFenceRequired: input.geoFenceRequired ?? merged.geoFenceRequired,
+      allowAdminOverrideForGeoFenceMiss:
+        input.allowAdminOverrideForGeoFenceMiss ?? merged.allowAdminOverrideForGeoFenceMiss,
+      allowRemotePunch: input.allowRemotePunch ?? merged.allowRemotePunch,
+      defaultAttendanceMode:
+        input.defaultAttendanceMode ?? (merged.defaultAttendanceMode as AttendanceAccessMode),
+      requireRemotePunchReason:
+        input.requireRemotePunchReason ?? merged.requireRemotePunchReason,
+      allowEmployeePolicyOverride:
+        input.allowEmployeePolicyOverride ?? merged.allowEmployeePolicyOverride,
+      captureLocationOnEveryPunch:
+        input.captureLocationOnEveryPunch ?? merged.captureLocationOnEveryPunch,
+      weekOffDays: input.weekOffDays ?? merged.weekOffDays,
+      alternateSaturdayOffRule:
+        input.alternateSaturdayOffRule ?? merged.alternateSaturdayOffRule,
+      classificationConfig: {
+        ...this.getClassificationConfig(merged),
+        ...(input.classificationConfig ?? {}),
+      },
+      permissionConfig: {
+        ...this.getPermissionConfig(merged),
+        ...(input.permissionConfig ?? {}),
+      },
+      regularizationConfig: {
+        ...this.getRegularizationConfig(merged),
+        ...(input.regularizationConfig ?? {}),
+      },
+      policyPrecedenceConfig: {
+        ...(merged.policyPrecedenceConfig ?? {}),
+        ...(input.policyPrecedenceConfig ?? {}),
+      },
+      metadata: {
+        ...(merged.metadata ?? {}),
+        ...(input.metadata ?? {}),
+      },
+    });
+
+    const mode = merged.defaultAttendanceMode as AttendanceAccessMode;
+    if (mode === AttendanceAccessMode.GEO_FENCE_ONLY) {
+      merged.geoFenceRequired = true;
+      merged.allowRemotePunch = false;
+    } else if (mode === AttendanceAccessMode.REMOTE_ALLOWED) {
+      merged.geoFenceRequired = false;
+      merged.allowRemotePunch = true;
+    } else if (mode === AttendanceAccessMode.HYBRID) {
+      merged.geoFenceRequired = true;
+      merged.allowRemotePunch = true;
+    }
+
+    return merged;
+  }
+
+  private validatePolicyPayload(policy: AttendancePolicy) {
+    this.assertTime(policy.workStartTime);
+    this.assertTime(policy.workEndTime);
+
+    if (policy.fullDayMinMinutes <= 0 || policy.halfDayMinMinutes <= 0) {
+      throw ApiError.badRequest('Full day and half day thresholds must be positive', 'INVALID_DAY_THRESHOLDS');
+    }
+    if (policy.halfDayMinMinutes > policy.fullDayMinMinutes) {
+      throw ApiError.badRequest('Half-day minutes cannot exceed full-day minutes', 'INVALID_HALF_DAY_THRESHOLD');
+    }
+    if (policy.minimumPunchGapMinutes < 0) {
+      throw ApiError.badRequest('minimumPunchGapMinutes cannot be negative', 'INVALID_MIN_PUNCH_GAP');
+    }
+    if (policy.allowedRadiusMeters != null && policy.allowedRadiusMeters <= 0) {
+      throw ApiError.badRequest('allowedRadiusMeters must be greater than 0', 'INVALID_GEOFENCE_RADIUS');
+    }
+    if (
+      ![
+        AttendanceAccessMode.GEO_FENCE_ONLY,
+        AttendanceAccessMode.REMOTE_ALLOWED,
+        AttendanceAccessMode.HYBRID,
+      ].includes(policy.defaultAttendanceMode as AttendanceAccessMode)
+    ) {
+      throw ApiError.badRequest(
+        'Invalid defaultAttendanceMode',
+        'INVALID_ATTENDANCE_ACCESS_MODE',
+      );
+    }
+
+    const permission = this.getPermissionConfig(policy);
+    if (permission.maxPermissionHoursPerMonth < 0 || permission.maxPermissionRequestsPerMonth < 0) {
+      throw ApiError.badRequest('Permission limits cannot be negative', 'INVALID_PERMISSION_LIMITS');
+    }
+
+    const regularization = this.getRegularizationConfig(policy);
+    if (regularization.maxRegularizationsPerMonth < 0 || regularization.maxRegularizationBackDays < 0) {
+      throw ApiError.badRequest('Regularization limits cannot be negative', 'INVALID_REGULARIZATION_LIMITS');
+    }
+  }
+  private async buildDayState(
+    employeeId: string,
+    date: string,
+    policy: AttendancePolicy,
+    persist: boolean,
+    options?: {
+      eodDescription?: string;
+      forceRecomputeManualOverride?: boolean;
+    },
+  ) {
+    const [existing, leave, holiday, approvedPermission, approvedRegularization, punches, profile] =
+      await Promise.all([
+      this.repo.findDayRecord(employeeId, date),
+      this.repo.findApprovedLeaveForEmployeeDate(employeeId, date),
+      this.repo.findHolidayByDate(date),
+      this.repo.findApprovedPermissionForDate(employeeId, date),
+      this.repo.findApprovedRegularizationForDate(employeeId, date),
+      this.repo.findPunchesByEmployeeAndDate(employeeId, this.startOfDay(date), this.endOfDay(date)),
+      this.repo.findEmployeeProfileByUserId(employeeId),
+    ]);
+
+    if (existing?.isManualOverride && !options?.forceRecomputeManualOverride) {
+      const sessions = await this.repo.findSessionsByAttendanceId(existing.id);
+      return {
+        record: existing,
+        sessions: sessions.map((row) => ({
+          inTime: row.inTime,
+          outTime: row.outTime,
+          workedMinutes: row.workedMinutes,
+          breakAfterMinutes: row.breakAfterMinutes,
+          sessionOrder: row.sessionOrder,
+          isAutoClosed: row.isAutoClosed,
+          metadata: row.metadata,
+        })),
+        punches,
+        dayType: existing.dayType,
+        nextPunchType: this.getExpectedNextPunchType(punches),
+      };
+    }
+
+    const dayType =
+      profile?.dateOfJoining && date < profile.dateOfJoining
+        ? ('PRE_JOINING' as AttendanceDayType)
+        : this.resolveDayType(date, policy, {
+            holidayApplied: Boolean(holiday),
+            leaveApplied: Boolean(leave),
+          });
+
+    const sessions = this.buildSessions(date, punches, policy);
+    const patchedSessions = this.applyRegularizationToSessions(sessions, approvedRegularization, date);
+
+    const stats = this.calculateDayStats(
+      date,
+      patchedSessions,
+      policy,
+      approvedPermission,
+      approvedRegularization,
+    );
+    const accessPolicy = await this.resolveAccessPolicy(employeeId, date, policy);
+
+    const statusResult = this.deriveFinalStatus({
+      date,
+      dayType,
+      stats,
+      policy,
+      hasPunches: punches.length > 0,
+      hasRegularization: Boolean(approvedRegularization),
+      hasPermission: stats.permissionMinutesApplied > 0,
+    });
+
+    const payload: Partial<Attendance> = {
+      employeeId,
+      date,
+      firstCheckInAt: stats.firstPunchIn,
+      lastCheckOutAt: stats.lastPunchOut,
+      totalWorkMinutes: stats.totalWorkedMinutes,
+      totalBreakMinutes: stats.totalBreakMinutes,
+      earlyOutMinutes: stats.earlyOutMinutes,
+      overtimeMinutes: stats.overtimeMinutes,
+      punchSessionsCount: patchedSessions.length,
+      lateMinutes: stats.lateByMinutes,
+      dayType,
+      missingPunch: stats.missingPunch,
+      geoFenceIssue: punches.some(
+        (punch) => punch.policyViolation || (accessPolicy.geoFenceRequired && !punch.isInsideOffice),
+      ),
+      permissionMinutesApplied: stats.permissionMinutesApplied,
+      regularized: Boolean(approvedRegularization),
+      appliedPolicyId: policy.id,
+      policyVersion: policy.version,
+      status: statusResult.status,
+      statusReason: statusResult.reason,
+      derivedSummary: {
+        preJoining: dayType === ('PRE_JOINING' as AttendanceDayType),
+        joiningDate: profile?.dateOfJoining ?? null,
+        sessions: patchedSessions.length,
+        leaveApplied: Boolean(leave),
+        leaveType: leave ? leave.approvedLeaveType ?? leave.leaveType : null,
+        holidayApplied: Boolean(holiday),
+        holidayName: holiday?.name ?? null,
+        weeklyOffApplied: dayType === AttendanceDayType.WEEK_OFF,
+        permissionApplied: stats.permissionMinutesApplied,
+        regularizationApplied: Boolean(approvedRegularization),
+      },
+      isAutoClosed: patchedSessions.some((session) => session.isAutoClosed),
+      locationValidated:
+        punches.length > 0
+          ? accessPolicy.geoFenceRequired
+            ? punches.every((p) => p.isInsideOffice)
+            : true
+          : false,
+      checkInLatitude: punches.find((punch) => punch.type === PunchType.CHECK_IN)?.latitude ?? null,
+      checkInLongitude: punches.find((punch) => punch.type === PunchType.CHECK_IN)?.longitude ?? null,
+      checkOutLatitude:
+        [...punches]
+          .reverse()
+          .find((punch) => punch.type === PunchType.CHECK_OUT)?.latitude ?? null,
+      checkOutLongitude:
+        [...punches]
+          .reverse()
+          .find((punch) => punch.type === PunchType.CHECK_OUT)?.longitude ?? null,
+      eodDescription: options?.eodDescription ?? existing?.eodDescription ?? null,
+      isManualOverride: false,
+      overrideReason: existing?.overrideReason ?? null,
+      startWorkOverrideEnabled:
+        existing?.startWorkOverrideEnabled &&
+        (!existing.overrideValidUntil || existing.overrideValidUntil.getTime() > Date.now()),
+      overrideValidUntil: existing?.overrideValidUntil ?? null,
+      overrideSetAt: existing?.overrideSetAt ?? null,
+      overrideSetBy: existing?.overrideSetBy ?? null,
+    };
+
+    let record: Attendance;
+    if (persist) {
+      record = await this.repo.upsertDayRecord(employeeId, date, payload);
+      await this.repo.replaceSessions(
+        record.id,
         employeeId,
         date,
-        status: data.status ?? AttendanceStatus.PRESENT,
-        isManualOverride: true,
-        overrideReason: data.reason ?? 'Manual entry by admin',
+        patchedSessions.map((session) => ({
+          inTime: session.inTime,
+          outTime: session.outTime,
+          workedMinutes: session.workedMinutes,
+          breakAfterMinutes: session.breakAfterMinutes,
+          sessionOrder: session.sessionOrder,
+          isAutoClosed: session.isAutoClosed,
+          metadata: session.metadata,
+        })),
+      );
+    } else {
+      record = {
+        ...(existing ?? {}),
+        ...payload,
+      } as Attendance;
+    }
+
+    return {
+      record,
+      sessions: patchedSessions,
+      punches,
+      dayType,
+      nextPunchType: this.getExpectedNextPunchType(punches),
+    };
+  }
+
+  private resolveDayType(
+    date: string,
+    policy: AttendancePolicy,
+    flags: { holidayApplied: boolean; leaveApplied: boolean },
+  ): AttendanceDayType {
+    const classification = this.getClassificationConfig(policy);
+    const weeklyOff = this.isWeeklyOff(new Date(`${date}T00:00:00`), policy);
+
+    if (classification.holidayPrecedence && flags.holidayApplied) return AttendanceDayType.HOLIDAY;
+    if (classification.leavePrecedence && flags.leaveApplied) return AttendanceDayType.LEAVE;
+    if (classification.weeklyOffPrecedence && weeklyOff) return AttendanceDayType.WEEK_OFF;
+
+    if (flags.holidayApplied) return AttendanceDayType.HOLIDAY;
+    if (flags.leaveApplied) return AttendanceDayType.LEAVE;
+    if (weeklyOff) return AttendanceDayType.WEEK_OFF;
+    return AttendanceDayType.WORKING;
+  }
+
+  private buildSessions(date: string, punches: AttendancePunch[], policy: AttendancePolicy): SessionSummary[] {
+    const sessions: SessionSummary[] = [];
+    let openIn: Date | null = null;
+    let order = 1;
+
+    for (const punch of punches) {
+      if (punch.type === PunchType.CHECK_IN) {
+        if (openIn) {
+          sessions.push({
+            inTime: openIn,
+            outTime: null,
+            workedMinutes: 0,
+            breakAfterMinutes: 0,
+            sessionOrder: order,
+            isAutoClosed: false,
+            metadata: { missingOutPunch: true },
+          });
+          order += 1;
+        }
+        openIn = punch.time;
+      } else if (punch.type === PunchType.CHECK_OUT) {
+        if (!openIn) {
+          sessions.push({
+            inTime: punch.time,
+            outTime: punch.time,
+            workedMinutes: 0,
+            breakAfterMinutes: 0,
+            sessionOrder: order,
+            isAutoClosed: false,
+            metadata: { unmatchedOutPunch: true },
+          });
+          order += 1;
+          continue;
+        }
+
+        const worked = Math.max(0, this.minutesBetween(openIn, punch.time));
+        sessions.push({
+          inTime: openIn,
+          outTime: punch.time,
+          workedMinutes: worked,
+          breakAfterMinutes: 0,
+          sessionOrder: order,
+          isAutoClosed: false,
+          metadata: {},
+        });
+        order += 1;
+        openIn = null;
+      }
+    }
+
+    if (openIn) {
+      const shouldAutoClose = this.shouldAutoCloseSession(date, policy);
+      if (shouldAutoClose) {
+        const closeTime = this.resolveAutoCloseTime(date, policy);
+        sessions.push({
+          inTime: openIn,
+          outTime: closeTime,
+          workedMinutes: Math.max(0, this.minutesBetween(openIn, closeTime)),
+          breakAfterMinutes: 0,
+          sessionOrder: order,
+          isAutoClosed: true,
+          metadata: { autoClosed: true },
+        });
+      } else {
+        sessions.push({
+          inTime: openIn,
+          outTime: null,
+          workedMinutes: 0,
+          breakAfterMinutes: 0,
+          sessionOrder: order,
+          isAutoClosed: false,
+          metadata: { openSession: true },
+        });
+      }
+    }
+
+    for (let i = 0; i < sessions.length - 1; i++) {
+      const current = sessions[i];
+      const next = sessions[i + 1];
+      if (current.outTime) {
+        current.breakAfterMinutes = Math.max(0, this.minutesBetween(current.outTime, next.inTime));
+      }
+    }
+
+    return sessions;
+  }
+  private applyRegularizationToSessions(
+    sessions: SessionSummary[],
+    regularization: AttendanceRegularizationRequest | null,
+    date: string,
+  ) {
+    if (!regularization || regularization.status !== AttendanceRequestStatus.APPROVED) {
+      return sessions;
+    }
+
+    const result = [...sessions];
+
+    if (regularization.requestedInTime) {
+      if (result.length === 0) {
+        result.push({
+          inTime: regularization.requestedInTime,
+          outTime: regularization.requestedOutTime ?? null,
+          workedMinutes: regularization.requestedOutTime
+            ? Math.max(0, this.minutesBetween(regularization.requestedInTime, regularization.requestedOutTime))
+            : 0,
+          breakAfterMinutes: 0,
+          sessionOrder: 1,
+          isAutoClosed: false,
+          metadata: { regularized: true },
+        });
+      } else {
+        result[0] = {
+          ...result[0],
+          inTime: regularization.requestedInTime,
+          workedMinutes:
+            result[0].outTime
+              ? Math.max(0, this.minutesBetween(regularization.requestedInTime, result[0].outTime))
+              : 0,
+          metadata: {
+            ...result[0].metadata,
+            regularizedInTime: true,
+          },
+        };
+      }
+    }
+
+    if (regularization.requestedOutTime && result.length > 0) {
+      const lastIndex = result.length - 1;
+      const last = result[lastIndex];
+      result[lastIndex] = {
+        ...last,
+        outTime: regularization.requestedOutTime,
+        workedMinutes: Math.max(0, this.minutesBetween(last.inTime, regularization.requestedOutTime)),
+        metadata: {
+          ...last.metadata,
+          regularizedOutTime: true,
+        },
+      };
+    }
+
+    for (let i = 0; i < result.length - 1; i++) {
+      const current = result[i];
+      const next = result[i + 1];
+      current.breakAfterMinutes = current.outTime
+        ? Math.max(0, this.minutesBetween(current.outTime, next.inTime))
+        : 0;
+    }
+
+    if (result.length > 0) {
+      result.forEach((session, index) => {
+        session.sessionOrder = index + 1;
       });
     }
 
-    if (data.firstCheckInAt) record.firstCheckInAt = new Date(data.firstCheckInAt);
-    if (data.lastCheckOutAt) record.lastCheckOutAt = new Date(data.lastCheckOutAt);
-    if (data.status) record.status = data.status;
-
-    if (record.firstCheckInAt && record.lastCheckOutAt) {
-      const checkIn = new Date(record.firstCheckInAt).getTime();
-      const checkOut = new Date(record.lastCheckOutAt).getTime();
-      record.totalWorkMinutes = Math.floor((checkOut - checkIn) / 60000);
+    if (result.length === 0 && regularization.requestedInTime) {
+      return [
+        {
+          inTime: regularization.requestedInTime,
+          outTime: regularization.requestedOutTime,
+          workedMinutes:
+            regularization.requestedOutTime
+              ? Math.max(
+                  0,
+                  this.minutesBetween(regularization.requestedInTime, regularization.requestedOutTime),
+                )
+              : 0,
+          breakAfterMinutes: 0,
+          sessionOrder: 1,
+          isAutoClosed: false,
+          metadata: { regularized: true, date },
+        },
+      ];
     }
 
-    record.isManualOverride = true;
-    record.overrideReason = data.reason ?? 'Manual entry by admin';
-    await this.repo.saveAttendance(record);
-
-    const updated = await this.repo.findById(record.id);
-    return this.formatAttendanceAdmin(updated!);
+    return result;
   }
 
-  // ════════════════════════════════════════════════════════
-  // Admin: Re-enable Start Work for an employee
-  // ════════════════════════════════════════════════════════
-  async reEnableStartWork(
-    employeeId: string,
-    adminId: string,
-    data: { reason?: string; validUntil?: string },
+  private calculateDayStats(
+    date: string,
+    sessions: SessionSummary[],
+    policy: AttendancePolicy,
+    permissionRequests: AttendancePermissionRequest[],
+    regularization: AttendanceRegularizationRequest | null,
   ) {
-    const today = this.todayDateString();
-    const settings = await this.settingsRepo.getSettings();
-    if (!settings) throw ApiError.internal('Organisation settings not configured');
+    const now = new Date();
+    const isToday = date === this.toDateKey(now);
 
-    const dayType = await this.getDayType(today, settings);
-    if (dayType === 'HOLIDAY') {
-      throw ApiError.badRequest('Cannot enable start work on a holiday', 'ATTENDANCE_OVERRIDE_NOT_ALLOWED');
-    }
-    if (dayType === 'WEEK_OFF') {
-      throw ApiError.badRequest('Cannot enable start work on a week off', 'ATTENDANCE_OVERRIDE_NOT_ALLOWED');
-    }
+    let totalWorkedMinutes = 0;
+    let totalBreakMinutes = 0;
+    let firstPunchIn: Date | null = null;
+    let lastPunchOut: Date | null = null;
+    let missingPunch = false;
 
-    // Default valid until end of work day
-    const endOfDay = new Date();
-    const [endH, endM] = settings.workEndTime.split(':').map(Number);
-    endOfDay.setHours(endH, endM, 0, 0);
+    sessions.forEach((session, index) => {
+      if (!firstPunchIn || firstPunchIn.getTime() > session.inTime.getTime()) {
+        firstPunchIn = session.inTime;
+      }
 
-    const validUntil = data.validUntil ? new Date(data.validUntil) : endOfDay;
+      if (session.outTime) {
+        lastPunchOut = session.outTime;
+        totalWorkedMinutes += session.workedMinutes;
+      } else if (isToday) {
+        totalWorkedMinutes += Math.max(0, this.minutesBetween(session.inTime, now));
+        missingPunch = true;
+      } else {
+        missingPunch = true;
+      }
 
-    const record = await this.repo.upsertAttendance(employeeId, today, {
-      startWorkOverrideEnabled: true,
-      overrideValidUntil: validUntil,
-      overrideSetBy: adminId,
-      overrideSetAt: new Date(),
-      overrideReason: data.reason ?? 'Admin re-enabled start work',
+      if (index < sessions.length - 1) {
+        totalBreakMinutes += session.breakAfterMinutes;
+      }
     });
 
-    // If status was MISSED_CHECK_IN or NOT_STARTED from computed, but the actual
-    // DB record might have ABSENT default — keep it until employee checks in
-    if (record.status === AttendanceStatus.ABSENT && !record.firstCheckInAt) {
-      record.status = AttendanceStatus.NOT_STARTED;
-      await this.repo.saveAttendance(record);
+    const shiftStart = this.combineDateTime(date, policy.workStartTime);
+    const shiftEnd = this.combineDateTime(date, policy.workEndTime);
+
+    const lateByMinutes = firstPunchIn
+      ? Math.max(0, this.minutesBetween(this.addMinutes(shiftStart, policy.lateGraceMinutes), firstPunchIn))
+      : 0;
+
+    const earlyOutRaw = lastPunchOut ? Math.max(0, this.minutesBetween(lastPunchOut, shiftEnd)) : 0;
+    const earlyOutMinutes = Math.max(0, earlyOutRaw - Math.max(0, policy.maxEarlyOutToleranceMinutes));
+
+    const permissionMinutesAvailable = permissionRequests.reduce((sum, request) => {
+      return sum + (request.appliedMinutes > 0 ? request.appliedMinutes : request.totalMinutes);
+    }, 0);
+
+    const permissionConfig = this.getPermissionConfig(policy);
+    const shortageAgainstFullDay = Math.max(0, policy.fullDayMinMinutes - totalWorkedMinutes);
+    const permissionMinutesApplied = permissionConfig.canPermissionConvertShortage
+      ? Math.min(permissionMinutesAvailable, shortageAgainstFullDay)
+      : 0;
+
+    const effectiveWorked = totalWorkedMinutes + permissionMinutesApplied;
+    const overtimeMinutes = Math.max(0, effectiveWorked - policy.fullDayMinMinutes);
+
+    if (sessions.some((session) => session.outTime == null)) {
+      missingPunch = true;
     }
 
-    const updated = await this.repo.findById(record.id);
+    if (regularization && regularization.status === AttendanceRequestStatus.APPROVED) {
+      missingPunch = false;
+    }
+
     return {
-      employeeId,
-      date: today,
-      startWorkOverrideEnabled: true,
-      overrideValidUntil: validUntil,
-      attendance: updated ? this.formatAttendanceAdmin(updated) : null,
+      firstPunchIn,
+      lastPunchOut,
+      totalWorkedMinutes,
+      totalBreakMinutes,
+      lateByMinutes,
+      earlyOutMinutes,
+      overtimeMinutes,
+      permissionMinutesApplied,
+      effectiveWorked,
+      missingPunch,
     };
   }
 
-  // ════════════════════════════════════════════════════════
-  // Helper: Determine day type
-  // ════════════════════════════════════════════════════════
-  async getDayType(date: string, settings: any): Promise<'WORKING' | 'HOLIDAY' | 'WEEK_OFF'> {
-    const holiday = await this.settingsRepo.findHolidayByDate(date);
-    if (holiday) return 'HOLIDAY';
+  private deriveFinalStatus(params: {
+    date: string;
+    dayType: AttendanceDayType;
+    stats: {
+      effectiveWorked: number;
+      lateByMinutes: number;
+      earlyOutMinutes: number;
+      overtimeMinutes: number;
+      permissionMinutesApplied: number;
+      missingPunch: boolean;
+    };
+    policy: AttendancePolicy;
+    hasPunches: boolean;
+    hasRegularization: boolean;
+    hasPermission: boolean;
+  }): { status: AttendanceStatus; reason: string } {
+    if (params.dayType === AttendanceDayType.HOLIDAY) {
+      return { status: AttendanceStatus.HOLIDAY, reason: 'HOLIDAY_PRECEDENCE' };
+    }
+    if (params.dayType === AttendanceDayType.WEEK_OFF) {
+      return { status: AttendanceStatus.WEEK_OFF, reason: 'WEEKLY_OFF_PRECEDENCE' };
+    }
+    if (params.dayType === AttendanceDayType.LEAVE) {
+      return { status: AttendanceStatus.LEAVE, reason: 'LEAVE_PRECEDENCE' };
+    }
+    if (params.dayType === ('PRE_JOINING' as AttendanceDayType)) {
+      return { status: AttendanceStatus.NOT_STARTED, reason: 'BEFORE_JOINING_DATE' };
+    }
 
-    const d = new Date(date + 'T00:00:00');
-    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    const dayName = dayNames[d.getDay()];
+    if (!params.hasPunches) {
+      const today = this.toDateKey(new Date());
+      if (params.date > today) {
+        return { status: AttendanceStatus.NOT_STARTED, reason: 'FUTURE_DATE' };
+      }
+      if (params.date === this.toDateKey(new Date())) {
+        return { status: AttendanceStatus.NOT_STARTED, reason: 'NO_PUNCH_TODAY' };
+      }
+      return { status: AttendanceStatus.LOP, reason: 'NO_PUNCH' };
+    }
 
-    const weekOffDays = (settings.weekOffDays || '')
+    let status: AttendanceStatus;
+    if (params.stats.effectiveWorked >= params.policy.fullDayMinMinutes) {
+      status = AttendanceStatus.PRESENT;
+    } else if (params.stats.effectiveWorked >= params.policy.halfDayMinMinutes) {
+      status = AttendanceStatus.HALF_DAY;
+    } else {
+      status = AttendanceStatus.LOP;
+    }
+
+    let reason = 'WORK_HOURS_EVALUATION';
+    if (params.hasPermission && params.stats.permissionMinutesApplied > 0) {
+      reason = 'WORK_HOURS_PERMISSION_ADJUSTED';
+    }
+    if (params.hasRegularization) {
+      reason = 'WORK_HOURS_REGULARIZED';
+    }
+
+    return { status, reason };
+  }
+
+  private validateGeoFence(
+    policy: AttendancePolicy,
+    accessPolicy: AccessPolicyResolution,
+    input: GeoInput,
+    isAdminOverride: boolean,
+    remarks?: string,
+  ) {
+    const hasCoords = input.latitude != null && input.longitude != null;
+    const hasOfficeCoordinates =
+      policy.officeLatitude != null &&
+      policy.officeLongitude != null &&
+      policy.allowedRadiusMeters != null;
+
+    if (accessPolicy.remoteAllowed && policy.requireRemotePunchReason && !hasCoords) {
+      if (!remarks?.trim()) {
+        throw ApiError.badRequest(
+          'Reason is required for remote punch',
+          'REMOTE_PUNCH_REASON_REQUIRED',
+        );
+      }
+    }
+
+    if (!accessPolicy.geoFenceRequired) {
+      if (!hasCoords || !hasOfficeCoordinates) {
+        return {
+          withinGeoFence: true,
+          distanceMeters: null as number | null,
+          policyViolation: false,
+        };
+      }
+
+      const relaxedDistance = this.calculateDistanceMeters(
+        input.latitude!,
+        input.longitude!,
+        Number(policy.officeLatitude),
+        Number(policy.officeLongitude),
+      );
+      return {
+        withinGeoFence: relaxedDistance <= (policy.allowedRadiusMeters ?? 0),
+        distanceMeters: relaxedDistance,
+        policyViolation: false,
+      };
+    }
+
+    if (!hasCoords) {
+      if (accessPolicy.remoteAllowed || isAdminOverride) {
+        return {
+          withinGeoFence: false,
+          distanceMeters: null,
+          policyViolation: false,
+        };
+      }
+      throw ApiError.badRequest(
+        'Location is required for punching as per attendance policy',
+        'PUNCH_LOCATION_REQUIRED',
+      );
+    }
+
+    if (
+      !hasOfficeCoordinates
+    ) {
+      if (accessPolicy.remoteAllowed || isAdminOverride) {
+        return {
+          withinGeoFence: true,
+          distanceMeters: null,
+          policyViolation: false,
+        };
+      }
+      throw ApiError.badRequest(
+        'Office geo-fence is not configured. Contact administrator',
+        'GEOFENCE_NOT_CONFIGURED',
+      );
+    }
+
+    const distance = this.calculateDistanceMeters(
+      input.latitude!,
+      input.longitude!,
+      Number(policy.officeLatitude),
+      Number(policy.officeLongitude),
+    );
+
+    const allowedRadius = policy.allowedRadiusMeters ?? 0;
+    if (distance <= allowedRadius) {
+      return {
+        withinGeoFence: true,
+        distanceMeters: distance,
+        policyViolation: false,
+      };
+    }
+
+    if (accessPolicy.remoteAllowed || isAdminOverride) {
+      return {
+        withinGeoFence: false,
+        distanceMeters: distance,
+        policyViolation: false,
+      };
+    }
+
+    throw ApiError.badRequest(
+      `Punch blocked. You are ${Math.round(distance)}m away from office (allowed ${allowedRadius}m)`,
+      'PUNCH_OUTSIDE_GEOFENCE',
+    );
+  }
+  private getExpectedNextPunchType(punches: AttendancePunch[]): PunchType {
+    if (punches.length === 0) return PunchType.CHECK_IN;
+    const latest = punches[punches.length - 1];
+    return latest.type === PunchType.CHECK_IN ? PunchType.CHECK_OUT : PunchType.CHECK_IN;
+  }
+
+  private getClassificationConfig(policy: AttendancePolicy): AttendanceClassificationConfig {
+    return policy.classificationConfig;
+  }
+
+  private getPermissionConfig(policy: AttendancePolicy): AttendancePermissionConfig {
+    return policy.permissionConfig;
+  }
+
+  private getRegularizationConfig(policy: AttendancePolicy): AttendanceRegularizationConfig {
+    return policy.regularizationConfig;
+  }
+
+  private resolvePolicyMode(policy: AttendancePolicy): AttendanceAccessMode {
+    const explicit = policy.defaultAttendanceMode as AttendanceAccessMode | undefined;
+    if (
+      explicit &&
+      [
+        AttendanceAccessMode.GEO_FENCE_ONLY,
+        AttendanceAccessMode.REMOTE_ALLOWED,
+        AttendanceAccessMode.HYBRID,
+      ].includes(explicit)
+    ) {
+      return explicit;
+    }
+
+    // Backward compatibility with old boolean flags.
+    if (policy.geoFenceRequired && policy.allowRemotePunch) return AttendanceAccessMode.HYBRID;
+    if (policy.geoFenceRequired) return AttendanceAccessMode.GEO_FENCE_ONLY;
+    return AttendanceAccessMode.REMOTE_ALLOWED;
+  }
+
+  private async resolveAccessPolicy(
+    employeeId: string,
+    date: string,
+    policy: AttendancePolicy,
+  ): Promise<AccessPolicyResolution> {
+    const orgMode = this.resolvePolicyMode(policy);
+    let mode = orgMode;
+    let employeeOverrideApplied = false;
+    let geoFenceExempt = false;
+    let remoteAllowed = mode !== AttendanceAccessMode.GEO_FENCE_ONLY;
+    let overrideSource: AccessPolicyResolution['overrideSource'] = 'ORG_POLICY';
+
+    if (policy.allowEmployeePolicyOverride) {
+      const override = await this.repo.getEffectiveEmployeeAccessOverride(employeeId, date);
+      if (override && override.active) {
+        employeeOverrideApplied = true;
+        overrideSource = 'EMPLOYEE_OVERRIDE';
+        if (
+          override.overrideMode &&
+          override.overrideMode !== AttendanceAccessMode.ORG_DEFAULT &&
+          [
+            AttendanceAccessMode.GEO_FENCE_ONLY,
+            AttendanceAccessMode.REMOTE_ALLOWED,
+            AttendanceAccessMode.HYBRID,
+          ].includes(override.overrideMode as AttendanceAccessMode)
+        ) {
+          mode = override.overrideMode as AttendanceAccessMode;
+        }
+        geoFenceExempt = Boolean(override.geoFenceExempt);
+        if (override.remotePunchAllowed !== null && override.remotePunchAllowed !== undefined) {
+          remoteAllowed = Boolean(override.remotePunchAllowed);
+        } else {
+          remoteAllowed = mode !== AttendanceAccessMode.GEO_FENCE_ONLY;
+        }
+      }
+    }
+
+    const geoFenceRequired =
+      mode === AttendanceAccessMode.GEO_FENCE_ONLY && !geoFenceExempt;
+
+    return {
+      attendanceMode: mode,
+      remoteAllowed,
+      geoFenceRequired,
+      geoFenceExempt,
+      employeeOverrideApplied,
+      overrideSource,
+    };
+  }
+
+  private shouldAutoCloseSession(date: string, policy: AttendancePolicy) {
+    if (!policy.autoCloseOpenSessionAtEndOfDay) return false;
+    const now = new Date();
+    const day = new Date(`${date}T00:00:00`);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (day.getTime() < today.getTime()) return true;
+    const shiftEnd = this.combineDateTime(date, policy.workEndTime);
+    return now.getTime() > shiftEnd.getTime();
+  }
+
+  private resolveAutoCloseTime(date: string, policy: AttendancePolicy) {
+    const shiftEnd = this.combineDateTime(date, policy.workEndTime);
+    const endOfDay = this.endOfDay(date);
+    return shiftEnd.getTime() <= endOfDay.getTime() ? shiftEnd : endOfDay;
+  }
+
+  private isWeeklyOff(date: Date, policy: AttendancePolicy): boolean {
+    const configuredDays = (policy.weekOffDays || '')
       .split(',')
-      .map((s: string) => s.trim().toUpperCase());
+      .map((day) => day.trim().toUpperCase())
+      .filter(Boolean);
 
-    if (weekOffDays.includes(dayName)) {
-      if (dayName === 'SATURDAY' && settings.alternateSaturdayOffRule !== AlternateSaturdayRule.NONE) {
-        const weekNum = this.getWeekOfMonth(d);
-        if (settings.alternateSaturdayOffRule === AlternateSaturdayRule.SECOND_FOURTH) {
-          if (weekNum === 2 || weekNum === 4) return 'WEEK_OFF';
-          return 'WORKING';
-        }
-        if (settings.alternateSaturdayOffRule === AlternateSaturdayRule.FIRST_THIRD) {
-          if (weekNum === 1 || weekNum === 3) return 'WEEK_OFF';
-          return 'WORKING';
-        }
-      }
-      return 'WEEK_OFF';
-    }
+    const dayName = [
+      'SUNDAY',
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
+    ][date.getDay()];
 
-    if (dayName === 'SATURDAY' && settings.alternateSaturdayOffRule !== AlternateSaturdayRule.NONE) {
-      const weekNum = this.getWeekOfMonth(d);
-      if (settings.alternateSaturdayOffRule === AlternateSaturdayRule.SECOND_FOURTH) {
-        if (weekNum === 2 || weekNum === 4) return 'WEEK_OFF';
+    if (dayName === 'SATURDAY' && policy.alternateSaturdayOffRule !== AlternateSaturdayRule.NONE) {
+      const saturdayOrder = Math.floor((date.getDate() - 1) / 7) + 1;
+      if (policy.alternateSaturdayOffRule === AlternateSaturdayRule.SECOND_FOURTH) {
+        return saturdayOrder === 2 || saturdayOrder === 4;
       }
-      if (settings.alternateSaturdayOffRule === AlternateSaturdayRule.FIRST_THIRD) {
-        if (weekNum === 1 || weekNum === 3) return 'WEEK_OFF';
+      if (policy.alternateSaturdayOffRule === AlternateSaturdayRule.FIRST_THIRD) {
+        return saturdayOrder === 1 || saturdayOrder === 3;
       }
     }
 
-    return 'WORKING';
+    return configuredDays.includes(dayName);
   }
 
-  private getWeekOfMonth(date: Date): number {
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-    let count = 0;
-    for (let d = firstDay; d <= date; d.setDate(d.getDate() + 1)) {
-      if (d.getDay() === date.getDay()) count++;
-    }
-    return count;
-  }
-
-  private timeToMinutes(time: string): number {
-    const parts = time.split(':');
-    return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-  }
-
-  private formatTime12h(time: string): string {
-    const [h, m] = time.split(':').map(Number);
-    const suffix = h >= 12 ? 'PM' : 'AM';
-    const hours = h % 12 || 12;
-    return `${String(hours).padStart(2, '0')}:${String(m).padStart(2, '0')} ${suffix}`;
-  }
-
-  private todayDateString(): string {
-    return new Date().toISOString().split('T')[0];
-  }
-
-  private formatAttendance(a: Attendance) {
+  private mapPolicy(policy: AttendancePolicy) {
     return {
-      id: a.id,
-      employeeId: a.employeeId,
-      date: a.date,
-      firstCheckInAt: a.firstCheckInAt,
-      lastCheckOutAt: a.lastCheckOutAt,
-      totalWorkMinutes: a.totalWorkMinutes,
-      status: a.status,
-      lateMinutes: a.lateMinutes,
-      isManualOverride: a.isManualOverride,
-      locationValidated: a.locationValidated,
-      eodDescription: a.eodDescription,
+      id: policy.id,
+      organizationId: policy.organizationId,
+      defaultPolicyName: policy.defaultPolicyName,
+      version: policy.version,
+      active: policy.active,
+      effectiveFrom: policy.effectiveFrom,
+      workStartTime: policy.workStartTime,
+      workEndTime: policy.workEndTime,
+      lateGraceMinutes: policy.lateGraceMinutes,
+      halfDayMinMinutes: policy.halfDayMinMinutes,
+      fullDayMinMinutes: policy.fullDayMinMinutes,
+      overtimeMinMinutes: policy.overtimeMinMinutes,
+      maxEarlyOutToleranceMinutes: policy.maxEarlyOutToleranceMinutes,
+      allowMultiplePunchSessions: policy.allowMultiplePunchSessions,
+      autoCloseOpenSessionAtEndOfDay: policy.autoCloseOpenSessionAtEndOfDay,
+      minimumPunchGapMinutes: policy.minimumPunchGapMinutes,
+      officeLatitude: policy.officeLatitude != null ? Number(policy.officeLatitude) : null,
+      officeLongitude: policy.officeLongitude != null ? Number(policy.officeLongitude) : null,
+      allowedRadiusMeters: policy.allowedRadiusMeters,
+      geoFenceRequired: policy.geoFenceRequired,
+      allowAdminOverrideForGeoFenceMiss: policy.allowAdminOverrideForGeoFenceMiss,
+      allowRemotePunch: policy.allowRemotePunch,
+      defaultAttendanceMode: policy.defaultAttendanceMode as AttendanceAccessMode,
+      requireRemotePunchReason: policy.requireRemotePunchReason,
+      allowEmployeePolicyOverride: policy.allowEmployeePolicyOverride,
+      captureLocationOnEveryPunch: policy.captureLocationOnEveryPunch,
+      weekOffDays: policy.weekOffDays,
+      alternateSaturdayOffRule: policy.alternateSaturdayOffRule,
+      classificationConfig: this.getClassificationConfig(policy),
+      permissionConfig: this.getPermissionConfig(policy),
+      regularizationConfig: this.getRegularizationConfig(policy),
+      policyPrecedenceConfig: policy.policyPrecedenceConfig,
+      metadata: policy.metadata,
+      createdAt: policy.createdAt,
+      updatedAt: policy.updatedAt,
     };
   }
 
-  private formatAttendanceAdmin(a: Attendance) {
-    const emp = a.employee;
+  private mapAttendanceRecord(record: Attendance) {
     return {
-      id: a.id,
-      employeeId: a.employeeId,
-      employeeName: emp ? `${emp.firstName} ${emp.lastName}` : null,
-      employeeCode: emp?.empId ?? null,
-      date: a.date,
-      firstCheckInAt: a.firstCheckInAt,
-      lastCheckOutAt: a.lastCheckOutAt,
-      totalWorkMinutes: a.totalWorkMinutes,
-      status: a.status,
-      lateMinutes: a.lateMinutes,
-      isManualOverride: a.isManualOverride,
-      overrideReason: a.overrideReason,
-      locationValidated: a.locationValidated,
-      eodDescription: a.eodDescription,
-      startWorkOverrideEnabled: a.startWorkOverrideEnabled ?? false,
-      checkInLatitude: a.checkInLatitude ? parseFloat(String(a.checkInLatitude)) : null,
-      checkInLongitude: a.checkInLongitude ? parseFloat(String(a.checkInLongitude)) : null,
-      checkOutLatitude: a.checkOutLatitude ? parseFloat(String(a.checkOutLatitude)) : null,
-      checkOutLongitude: a.checkOutLongitude ? parseFloat(String(a.checkOutLongitude)) : null,
+      id: record.id,
+      employeeId: record.employeeId,
+      date: record.date,
+      firstCheckInAt: record.firstCheckInAt,
+      lastCheckOutAt: record.lastCheckOutAt,
+      totalWorkMinutes: record.totalWorkMinutes,
+      totalBreakMinutes: record.totalBreakMinutes,
+      earlyOutMinutes: record.earlyOutMinutes,
+      overtimeMinutes: record.overtimeMinutes,
+      punchSessionsCount: record.punchSessionsCount,
+      status: record.status,
+      lateMinutes: record.lateMinutes,
+      dayType: record.dayType,
+      missingPunch: record.missingPunch,
+      geoFenceIssue: record.geoFenceIssue,
+      permissionMinutesApplied: record.permissionMinutesApplied,
+      regularized: record.regularized,
+      appliedPolicyId: record.appliedPolicyId,
+      policyVersion: record.policyVersion,
+      statusReason: record.statusReason,
+      derivedSummary: record.derivedSummary,
+      isManualOverride: record.isManualOverride,
+      overrideReason: record.overrideReason,
+      eodDescription: record.eodDescription,
+      locationValidated: record.locationValidated,
+      checkInLatitude: record.checkInLatitude,
+      checkInLongitude: record.checkInLongitude,
+      checkOutLatitude: record.checkOutLatitude,
+      checkOutLongitude: record.checkOutLongitude,
+      startWorkOverrideEnabled: record.startWorkOverrideEnabled,
+      overrideValidUntil: record.overrideValidUntil,
+      overrideSetBy: record.overrideSetBy,
+      overrideSetAt: record.overrideSetAt,
+      isAutoClosed: record.isAutoClosed,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
     };
+  }
+
+  private mapAdminAttendanceRecord(
+    record: Attendance,
+    employee: any,
+    profile: any,
+    extra?: {
+      pendingRegularizationCount?: number;
+      pendingPermissionCount?: number;
+    },
+  ) {
+    const data = this.mapAttendanceRecord(record);
+    return {
+      ...data,
+      employeeName: this.getEmployeeName(employee),
+      employeeCode: employee.empId ?? null,
+      email: employee.email ?? null,
+      department: profile?.department ?? null,
+      designation: profile?.designation ?? null,
+      pendingRegularizationCount: extra?.pendingRegularizationCount ?? 0,
+      pendingPermissionCount: extra?.pendingPermissionCount ?? 0,
+    };
+  }
+  private mapRegularizationRequest(request: AttendanceRegularizationRequest) {
+    return {
+      id: request.id,
+      employeeId: request.employeeId,
+      date: request.date,
+      requestType: request.requestType,
+      requestedInTime: request.requestedInTime,
+      requestedOutTime: request.requestedOutTime,
+      reason: request.reason,
+      status: request.status,
+      adminRemarks: request.adminRemarks,
+      reviewedBy: request.reviewedBy,
+      reviewedAt: request.reviewedAt,
+      metadata: request.metadata,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+    };
+  }
+
+  private mapPermissionRequest(request: AttendancePermissionRequest) {
+    return {
+      id: request.id,
+      employeeId: request.employeeId,
+      date: request.date,
+      fromTime: request.fromTime,
+      toTime: request.toTime,
+      totalMinutes: request.totalMinutes,
+      appliedMinutes: request.appliedMinutes,
+      reason: request.reason,
+      status: request.status,
+      adminRemarks: request.adminRemarks,
+      reviewedBy: request.reviewedBy,
+      reviewedAt: request.reviewedAt,
+      metadata: request.metadata,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+    };
+  }
+
+  private mapAccessOverride(row: AttendanceEmployeePolicyOverride) {
+    return {
+      id: row.id,
+      employeeId: row.employeeId,
+      employeeName: this.getEmployeeName(row.employee),
+      employeeCode: row.employee?.empId ?? null,
+      overrideMode: row.overrideMode,
+      geoFenceExempt: row.geoFenceExempt,
+      remotePunchAllowed: row.remotePunchAllowed,
+      reason: row.reason,
+      effectiveFrom: row.effectiveFrom,
+      effectiveUntil: row.effectiveUntil,
+      active: row.active,
+      updatedBy: row.updatedBy,
+      metadata: row.metadata,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  private buildDayActionEligibility(
+    attendance: Attendance,
+    regularizations: AttendanceRegularizationRequest[],
+    permissions: AttendancePermissionRequest[],
+  ) {
+    const today = this.toDateKey(new Date());
+    const isFutureDate = attendance.date > today;
+    const nonWorkingDay =
+      attendance.dayType === AttendanceDayType.HOLIDAY ||
+      attendance.dayType === AttendanceDayType.WEEK_OFF ||
+      attendance.dayType === AttendanceDayType.LEAVE ||
+      attendance.dayType === ('PRE_JOINING' as AttendanceDayType);
+
+    const issueStatuses: AttendanceStatus[] = [
+      AttendanceStatus.LATE,
+      AttendanceStatus.ABSENT,
+      AttendanceStatus.HALF_DAY,
+      AttendanceStatus.LOP,
+      AttendanceStatus.MISSING_PUNCH,
+      AttendanceStatus.EARLY_OUT,
+      AttendanceStatus.NOT_STARTED,
+    ];
+
+    const needsAttention =
+      issueStatuses.includes(attendance.status) ||
+      attendance.geoFenceIssue ||
+      attendance.missingPunch;
+
+    const latestRegularization = regularizations[0] ?? null;
+    const latestPermission = permissions[0] ?? null;
+
+    return {
+      canRequestRegularization: !isFutureDate && !nonWorkingDay && needsAttention,
+      canRequestPermission: !isFutureDate && !nonWorkingDay && needsAttention,
+      hideActions: isFutureDate || nonWorkingDay || !needsAttention,
+      reasonCode: isFutureDate
+        ? 'FUTURE_DATE'
+        : nonWorkingDay
+        ? 'NON_WORKING_DAY'
+        : needsAttention
+          ? 'ATTENDANCE_ISSUE'
+          : 'NO_ACTION_REQUIRED',
+      existingRegularization: latestRegularization
+        ? {
+            id: latestRegularization.id,
+            status: latestRegularization.status,
+            requestType: latestRegularization.requestType,
+          }
+        : null,
+      existingPermission: latestPermission
+        ? {
+            id: latestPermission.id,
+            status: latestPermission.status,
+            totalMinutes: latestPermission.totalMinutes,
+          }
+        : null,
+    };
+  }
+
+  private buildDayContextLabel(attendance: Attendance) {
+    if (attendance.dayType === 'PRE_JOINING') {
+      return {
+        type: 'PRE_JOINING',
+        label: 'Before Joining Date',
+        description: 'Attendance is not applicable before your date of joining.',
+      };
+    }
+    if (attendance.dayType === AttendanceDayType.HOLIDAY) {
+      return {
+        type: 'HOLIDAY',
+        label: 'Holiday',
+        description:
+          (attendance.derivedSummary?.holidayName as string) ||
+          'Organization holiday',
+      };
+    }
+    if (attendance.dayType === AttendanceDayType.WEEK_OFF) {
+      return {
+        type: 'WEEK_OFF',
+        label: 'Weekly Off',
+        description: 'Configured weekly off day',
+      };
+    }
+    if (attendance.dayType === AttendanceDayType.LEAVE) {
+      return {
+        type: 'LEAVE',
+        label: 'Approved Leave',
+        description:
+          (attendance.derivedSummary?.leaveType as string) || 'Approved leave',
+      };
+    }
+    return {
+      type: 'WORKING',
+      label: 'Working Day',
+      description: 'Attendance is tracked for this day.',
+    };
+  }
+
+  private buildStatusSummary(statuses: string[]) {
+    const summary: Record<string, number> = {};
+    DEFAULT_SUMMARY_STATUSES.forEach((status) => {
+      summary[status] = 0;
+    });
+    statuses.forEach((status) => {
+      const normalized =
+        status === AttendanceStatus.ABSENT || status === AttendanceStatus.MISSING_PUNCH
+          ? AttendanceStatus.LOP
+          : status;
+      summary[normalized] = (summary[normalized] ?? 0) + 1;
+    });
+    delete summary[AttendanceStatus.ABSENT];
+    delete summary[AttendanceStatus.MISSING_PUNCH];
+    return summary;
+  }
+
+  private getEmployeeName(employee: any): string {
+    if (!employee) return '-';
+    const firstName = employee.firstName ?? '';
+    const lastName = employee.lastName ?? '';
+    const full = `${firstName} ${lastName}`.trim();
+    return full || employee.email || '-';
+  }
+
+  private assertDate(date: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw ApiError.badRequest('Date must be in YYYY-MM-DD format', 'INVALID_DATE_FORMAT');
+    }
+  }
+
+  private assertTime(time: string) {
+    if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) {
+      throw ApiError.badRequest('Invalid time format, expected HH:mm or HH:mm:ss', 'INVALID_TIME_FORMAT');
+    }
+  }
+
+  private toDateKey(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private startOfDay(date: string) {
+    return new Date(`${date}T00:00:00`);
+  }
+
+  private endOfDay(date: string) {
+    return new Date(`${date}T23:59:59.999`);
+  }
+
+  private endOfToday() {
+    const now = new Date();
+    return new Date(`${this.toDateKey(now)}T23:59:59.999`);
+  }
+
+  private combineDateTime(date: string, time: string) {
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+    return new Date(`${date}T${normalizedTime}`);
+  }
+
+  private addMinutes(date: Date, minutes: number) {
+    return new Date(date.getTime() + minutes * 60000);
+  }
+
+  private minutesBetween(start: Date, end: Date) {
+    return Math.round((end.getTime() - start.getTime()) / 60000);
+  }
+
+  private minutesBetweenTime(fromTime: string, toTime: string) {
+    const [fh, fm] = fromTime.split(':').map((v) => parseInt(v, 10));
+    const [th, tm] = toTime.split(':').map((v) => parseInt(v, 10));
+    return th * 60 + tm - (fh * 60 + fm);
+  }
+
+  private getMonthBounds(year: number, month: number) {
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+      throw ApiError.badRequest('Invalid year/month', 'INVALID_MONTH_QUERY');
+    }
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    return {
+      startDate: this.toDateKey(start),
+      endDate: this.toDateKey(end),
+      monthDays: end.getDate(),
+    };
+  }
+
+  private getMonthRange(date: string) {
+    const d = new Date(`${date}T00:00:00`);
+    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return {
+      monthStart: this.toDateKey(start),
+      monthEnd: this.toDateKey(end),
+    };
+  }
+
+  private daysDiff(fromDate: string, toDate: string) {
+    const from = new Date(`${fromDate}T00:00:00`).getTime();
+    const to = new Date(`${toDate}T00:00:00`).getTime();
+    return Math.max(0, Math.floor((to - from) / (24 * 60 * 60 * 1000)));
+  }
+
+  private calculateDistanceMeters(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ) {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const earthRadius = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadius * c;
   }
 }
+
