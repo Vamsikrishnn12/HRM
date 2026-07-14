@@ -3,9 +3,46 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const normalizeEnvValue = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+      (trimmed.startsWith('"') && trimmed.endsWith('"')))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
+
+const optionalString = z.preprocess(
+  (value) => {
+    const normalized = normalizeEnvValue(value);
+    return normalized === '' ? undefined : normalized;
+  },
+  z.string().optional(),
+);
+
+const optionalEmail = z.preprocess(
+  (value) => {
+    const normalized = normalizeEnvValue(value);
+    return normalized === '' ? undefined : normalized;
+  },
+  z.string().email().optional(),
+);
+
+const optionalPort = z.preprocess(
+  (value) => {
+    const normalized = normalizeEnvValue(value);
+    return normalized === '' ? undefined : normalized;
+  },
+  z.coerce.number().positive().optional(),
+);
+
 const envSchema = z.object({
   // One canonical connection string for the active database.
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.preprocess(normalizeEnvValue, z.string().url()),
 
   JWT_ACCESS_SECRET: z.string().min(10),
   JWT_REFRESH_SECRET: z.string().min(10),
@@ -25,13 +62,13 @@ const envSchema = z.object({
   ADMIN_LAST_NAME: z.string().default('Admin'),
 
   // SMTP (optional – when not set, credentials are logged to console)
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().transform(Number).pipe(z.number().positive()).optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().email().optional(),
+  SMTP_HOST: optionalString,
+  SMTP_PORT: optionalPort,
+  SMTP_USER: optionalString,
+  SMTP_PASS: optionalString,
+  SMTP_FROM: optionalEmail,
   SMTP_FROM_NAME: z.string().default('Connect HR'),
-  CHROME_PATH: z.string().optional(),
+  CHROME_PATH: optionalString,
 });
 
 const parsed = envSchema.safeParse(process.env);
