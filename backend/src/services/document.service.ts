@@ -6,6 +6,7 @@ import { DocumentRepository } from '../repositories/document.repository';
 const UPLOAD_REL = 'uploads/documents';
 import { EmployeeRepository } from '../repositories/employee.repository';
 import { ApiError } from '../utils/apiError';
+import { getUploadPath } from '../utils/uploadPath';
 
 export class DocumentService {
   private docRepo: DocumentRepository;
@@ -66,7 +67,7 @@ export class DocumentService {
     }
 
     // Resolve the relative stored path against project root
-    const fullPath = path.resolve(record.filePath);
+    const fullPath = getUploadPath('documents', path.basename(record.filePath));
     try { if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); } catch { /* ignore */ }
 
     await this.docRepo.deleteById(id);

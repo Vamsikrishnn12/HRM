@@ -2,8 +2,9 @@ import path from 'path';
 import fs from 'fs';
 import puppeteer from 'puppeteer-core';
 import type { PayrollComponent } from '../entities/PayrollRecord.entity';
+import { getUploadPath } from '../utils/uploadPath';
 
-const PAYSLIP_DIR = path.resolve('uploads', 'payslips');
+const PAYSLIP_DIR = getUploadPath('payslips');
 if (!fs.existsSync(PAYSLIP_DIR)) {
   fs.mkdirSync(PAYSLIP_DIR, { recursive: true });
 }

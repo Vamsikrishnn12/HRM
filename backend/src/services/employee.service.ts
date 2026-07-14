@@ -8,6 +8,7 @@ import { ApiError } from '../utils/apiError';
 import { UserRole } from '../entities/User.entity';
 import fs from 'fs';
 import path from 'path';
+import { getUploadPath } from '../utils/uploadPath';
 
 interface CreateEmployeeInput {
   firstName: string;
@@ -276,7 +277,7 @@ export class EmployeeService {
     await this.userRepo.update(profile.userId, { profilePhotoUrl });
 
     if (previousPhoto?.startsWith('/uploads/profile-photos/')) {
-      const previousPath = path.resolve(previousPhoto.replace(/^\//, ''));
+      const previousPath = getUploadPath('profile-photos', path.basename(previousPhoto));
       fs.unlink(previousPath, () => undefined);
     }
 

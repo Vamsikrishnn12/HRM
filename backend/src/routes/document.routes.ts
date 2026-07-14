@@ -7,11 +7,12 @@ import { DocumentController } from '../controllers/document.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getUploadPath } from '../utils/uploadPath';
 
 const router = Router();
 
 // ── Multer config ────────────────────────────────────────────────
-const UPLOAD_DIR = path.resolve('uploads', 'documents');
+const UPLOAD_DIR = getUploadPath('documents');
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }

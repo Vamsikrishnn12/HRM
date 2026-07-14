@@ -7,6 +7,7 @@ import { ApiError } from '../utils/apiError';
 import { env } from '../config/env';
 
 const authService = new AuthService();
+const cookieSameSite = env.COOKIE_SAME_SITE ?? (env.NODE_ENV === 'production' ? 'none' : 'lax');
 
 export class AuthController {
   /**
@@ -27,7 +28,7 @@ export class AuthController {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: cookieSameSite,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/',
     });
@@ -54,7 +55,7 @@ export class AuthController {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: cookieSameSite,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -77,7 +78,7 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: cookieSameSite,
       path: '/',
     });
 

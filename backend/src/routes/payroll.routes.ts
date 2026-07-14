@@ -7,11 +7,12 @@ import { PayrollController } from '../controllers/payroll.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
+import { getUploadPath } from '../utils/uploadPath';
 
 const router = Router();
 
 // ── Multer config for Excel uploads ───
-const UPLOAD_DIR = path.resolve('uploads', 'payroll-imports');
+const UPLOAD_DIR = getUploadPath('payroll-imports');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.diskStorage({

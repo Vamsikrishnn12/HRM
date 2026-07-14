@@ -17,6 +17,7 @@ import {
 } from '../validators/payroll.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
+import { getUploadPath } from '../utils/uploadPath';
 
 const payrollService = new PayrollService();
 
@@ -219,7 +220,7 @@ export class PayrollController {
     if (!record.hasPayslip || !record.payslipFileName) {
       throw ApiError.notFound('Payslip PDF not found');
     }
-    const filePath = path.resolve('uploads', 'payslips', record.payslipFileName);
+    const filePath = getUploadPath('payslips', record.payslipFileName);
     if (!fs.existsSync(filePath)) {
       throw ApiError.notFound('Payslip file not found on disk');
     }
@@ -258,7 +259,7 @@ export class PayrollController {
     if (!record.hasPayslip || !record.payslipFileName) {
       throw ApiError.notFound('Payslip PDF not found');
     }
-    const filePath = path.resolve('uploads', 'payslips', record.payslipFileName);
+    const filePath = getUploadPath('payslips', record.payslipFileName);
     if (!fs.existsSync(filePath)) {
       throw ApiError.notFound('Payslip file not found on disk');
     }

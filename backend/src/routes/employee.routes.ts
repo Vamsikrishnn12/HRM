@@ -7,10 +7,11 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { getUploadPath } from '../utils/uploadPath';
 
 const router = Router();
 
-const PHOTO_DIR = path.resolve('uploads', 'profile-photos');
+const PHOTO_DIR = getUploadPath('profile-photos');
 fs.mkdirSync(PHOTO_DIR, { recursive: true });
 
 const photoUpload = multer({

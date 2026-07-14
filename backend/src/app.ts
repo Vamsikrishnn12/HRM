@@ -22,8 +22,20 @@ import payrollRoutes from './routes/payroll.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import profileRoutes from './routes/profile.routes';
 import employeeSalaryStructureRoutes from './routes/employeeSalaryStructure.routes';
+import { ensureBackendReady } from './config/bootstrap';
+import { uploadRoot } from './utils/uploadPath';
 
 const app = express();
+app.set('trust proxy', 1);
+
+const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
+const isAllowedOrigin = (origin: string): boolean =>
+  allowedOrigins.some((allowed) => {
+    if (allowed === origin) return true;
+    if (!allowed.includes('*')) return false;
+    const pattern = new RegExp(`^${allowed.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
+    return pattern.test(origin);
+  });
 
 // --------------- Global Middlewares ---------------
 
@@ -33,7 +45,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        'frame-ancestors': ["'self'", ...env.CORS_ORIGIN.split(',').map((o) => o.trim())],
+        'frame-ancestors': ["'self'", ...allowedOrigins],
       },
     },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -43,7 +55,10 @@ app.use(
 // CORS
 app.use(
   cors({
-    origin: env.CORS_ORIGIN.split(',').map((o) => o.trim()),
+    origin: (origin, callback) => {
+      if (!origin || isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error('Origin is not allowed by CORS'));
+    },
     credentials: true,
   }),
 );
@@ -57,6 +72,17 @@ app.use(cookieParser());
 
 // Request ID
 app.use(requestIdMiddleware);
+
+// Vercel starts the Express application without running server.ts. Initialize
+// TypeORM lazily and reuse the connection while the function instance is warm.
+app.use(async (_req, _res, next) => {
+  try {
+    await ensureBackendReady();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // --------------- Swagger Docs ---------------
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -81,7 +107,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/salary-structures', employeeSalaryStructureRoutes);
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.resolve('uploads')));
+app.use('/uploads', express.static(uploadRoot));
 
 // --------------- 404 Handler ---------------
 app.use((_req, res) => {

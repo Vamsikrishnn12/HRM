@@ -10,15 +10,11 @@ export const seedAdmin = async (): Promise<void> => {
     where: { email: env.ADMIN_EMAIL },
   });
 
-  const hashedPassword = await hashPassword(env.ADMIN_PASSWORD);
-
   if (existingAdmin) {
-    existingAdmin.password = hashedPassword;
-    existingAdmin.firstName = env.ADMIN_FIRST_NAME;
-    existingAdmin.lastName = env.ADMIN_LAST_NAME;
-    await userRepo.save(existingAdmin);
     return;
   }
+
+  const hashedPassword = await hashPassword(env.ADMIN_PASSWORD);
 
   const admin = userRepo.create({
     email: env.ADMIN_EMAIL,

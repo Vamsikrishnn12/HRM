@@ -1,18 +1,14 @@
 import app from './app';
 import { env } from './config/env';
-import { AppDataSource } from './config/database';
-import { seedAdmin } from './seed/seedAdmin';
+import { ensureBackendReady } from './config/bootstrap';
 
 const startServer = async (): Promise<void> => {
   try {
-    // 1. Initialize database connection
-    await AppDataSource.initialize();
+    // Initialize the same database bootstrap used by Vercel functions.
+    await ensureBackendReady();
     console.log('Database connection established');
 
-    // 2. Run seed
-    await seedAdmin();
-
-    // 3. Start Express server
+    // Start the long-running local server.
     app.listen(env.PORT, () => {
       console.log(`Server running on http://localhost:${env.PORT}`);
       console.log(`Swagger docs available at http://localhost:${env.PORT}/api/docs`);

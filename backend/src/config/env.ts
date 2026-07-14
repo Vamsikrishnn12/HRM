@@ -17,6 +17,7 @@ const envSchema = z.object({
 
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   APP_URL: z.string().url().default('http://localhost:3000'),
+  COOKIE_SAME_SITE: z.enum(['strict', 'lax', 'none']).optional(),
 
   ADMIN_EMAIL: z.string().email().default('admin@hrms.com'),
   ADMIN_PASSWORD: z.string().min(6).default('Admin@123'),
@@ -30,6 +31,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
   SMTP_FROM_NAME: z.string().default('Connect HR'),
+  CHROME_PATH: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
