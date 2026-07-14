@@ -6,7 +6,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { getUploadPath } from '../utils/uploadPath';
 
 const router = Router();
@@ -17,7 +17,7 @@ fs.mkdirSync(PHOTO_DIR, { recursive: true });
 const photoUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, PHOTO_DIR),
-    filename: (_req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname).toLowerCase()}`),
+    filename: (_req, file, cb) => cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
   }),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {

@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { TokenRepository } from '../repositories/token.repository';
 import {
   generateAccessToken,
@@ -25,7 +25,7 @@ export class TokenService {
       role: user.role,
     };
 
-    const tokenId = uuidv4();
+    const tokenId = randomUUID();
     const accessToken = generateAccessToken(accessPayload);
     const refreshToken = generateRefreshToken({ userId: user.id, tokenId });
 
