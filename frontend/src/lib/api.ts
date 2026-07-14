@@ -1,4 +1,6 @@
-export const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
+export const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL || "https://hrm-lilac-one.vercel.app/api"
+).replace(/\/$/, "");
 
 export const getAssetUrl = (assetPath?: string | null): string | undefined => {
   if (!assetPath) return undefined;

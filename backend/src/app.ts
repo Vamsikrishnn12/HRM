@@ -88,6 +88,10 @@ app.use(async (_req, _res, next) => {
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // --------------- Health Check ---------------
+app.get('/', (_req, res) => {
+  res.json({ success: true, message: 'Connect HR backend is running' });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'HRMS API is running', timestamp: new Date().toISOString() });
 });

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "clean:next": "node -e \"const fs=require('fs');for(const d of ['.next','.next-cache']){try{fs.rmSync(d,{recursive:true,force:true});}catch(_){}}\"",
+    "clean:next": "node -e \"const fs=require('fs');try{fs.rmSync('.next',{recursive:true,force:true});}catch(_){}\"",
     "predev": "npm run clean:next",
     "dev": "next dev",
     "prebuild": "npm run clean:next",
