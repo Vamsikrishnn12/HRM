@@ -2,12 +2,13 @@
   "name": "hrms-backend",
   "version": "1.0.0",
   "description": "HRMS Backend API",
-  "main": "dist/server.js",
+  "main": "dist/localServer.js",
   "scripts": {
     "dev": "nodemon",
+    "prebuild": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc && npm run copy:templates",
     "copy:templates": "node -e \"const fs=require('fs'),p=require('path');const s=p.join('src','templates'),d=p.join('dist','templates');fs.mkdirSync(d,{recursive:true});fs.readdirSync(s).forEach(f=>fs.copyFileSync(p.join(s,f),p.join(d,f)));console.log('Templates copied to dist/')\"",
-    "start": "node dist/server.js",
+    "start": "node dist/localServer.js",
     "seed": "ts-node -r reflect-metadata src/seed/seedAdmin.ts",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d src/config/database.ts",
@@ -16,7 +17,7 @@
     "migration:run:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/config/database.js",
     "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d src/config/database.ts",
     "prod:migrate": "npm run build && npm run migration:run:prod",
-    "prod:start": "npm run prod:migrate && node dist/server.js"
+    "prod:start": "npm run prod:migrate && node dist/localServer.js"
   },
   "keywords": [],
   "author": "",
