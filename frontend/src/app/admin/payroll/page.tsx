@@ -299,10 +299,13 @@ function ManualPayrollTab({
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [generatedRecord, setGeneratedRecord] = useState<PayrollRecordType | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const toast = useToast();
 
   const handlePreview = async () => {
     if (!employeeId) return;
+    setGeneratedRecord(null);
     setLoading(true);
     try {
       const data = await payrollApi.preview({ employeeId, month, year });
@@ -324,7 +327,7 @@ function ManualPayrollTab({
     if (!employeeId || earnings.length === 0) return;
     setGenerating(true);
     try {
-      await payrollApi.generate({
+      const record = await payrollApi.generate({
         employeeId,
         month,
         year,
@@ -332,17 +335,29 @@ function ManualPayrollTab({
         deductions: deductions.filter((d) => d.amount > 0),
         remarks: remarks || undefined,
       });
-      toast({ title: "Payroll generated", status: "success", duration: 2500, isClosable: true });
-      setPreview(null);
-      setEarnings([]);
-      setDeductions([]);
-      setRemarks("");
-      setEmployeeId("");
+      setGeneratedRecord(record);
+      toast({ title: "Payslip generated", description: "Your company-branded payslip is ready to download.", status: "success", duration: 3000, isClosable: true });
       onGenerated();
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, status: "error", duration: 3500, isClosable: true });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDownloadGenerated = async () => {
+    if (!generatedRecord) return;
+    setDownloading(true);
+    try {
+      await payrollApi.downloadPayslip(
+        generatedRecord.id,
+        generatedRecord.payslipFileName || `payslip_${preview?.employeeCode || generatedRecord.employeeId}_${month}_${year}.pdf`,
+      );
+      toast({ title: "Payslip downloaded", status: "success", duration: 2000, isClosable: true });
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -356,7 +371,7 @@ function ManualPayrollTab({
 
   return (
     <SectionCard title="Manual Payroll Generation">
-      <EmployeeSelector value={employeeId} onChange={setEmployeeId} />
+      <EmployeeSelector value={employeeId} onChange={(value) => { setEmployeeId(value); setGeneratedRecord(null); }} />
       <PrimaryButton size="sm" onClick={handlePreview} isLoading={loading} isDisabled={!employeeId} mb={5}>
         Preview Payroll
       </PrimaryButton>
@@ -483,9 +498,27 @@ function ManualPayrollTab({
             />
           </Field>
 
-          <PrimaryButton onClick={handleGenerate} isLoading={generating} isDisabled={earnings.filter((e) => e.amount > 0).length === 0}>
-            Generate Payslip
-          </PrimaryButton>
+          <Flex gap={3} align="center" wrap="wrap">
+            <PrimaryButton onClick={handleGenerate} isLoading={generating} isDisabled={earnings.filter((e) => e.amount > 0).length === 0}>
+              Generate Payslip
+            </PrimaryButton>
+            {generatedRecord && (
+              <SecondaryButton
+                leftIcon={<Download size={16} />}
+                onClick={handleDownloadGenerated}
+                isLoading={downloading}
+                borderColor="brand.500"
+                color="brand.600"
+              >
+                Download Payslip
+              </SecondaryButton>
+            )}
+            {generatedRecord && (
+              <Text fontSize="sm" color="green.600" fontWeight="600">
+                Payslip ready for {preview.employeeName}
+              </Text>
+            )}
+          </Flex>
         </Box>
       )}
     </SectionCard>

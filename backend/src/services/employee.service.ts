@@ -9,6 +9,8 @@ import { UserRole } from '../entities/User.entity';
 import fs from 'fs';
 import path from 'path';
 import { getUploadPath } from '../utils/uploadPath';
+import { del, put } from '@vercel/blob';
+import { randomUUID } from 'crypto';
 
 interface CreateEmployeeInput {
   firstName: string;
@@ -268,15 +270,40 @@ export class EmployeeService {
   async updateProfilePhoto(id: string, file: Express.Multer.File) {
     const profile = await this.employeeRepo.findById(id);
     if (!profile) {
-      fs.unlink(file.path, () => undefined);
+      if (file.path) fs.unlink(file.path, () => undefined);
       throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
     }
 
     const previousPhoto = profile.user.profilePhotoUrl;
-    const profilePhotoUrl = `/uploads/profile-photos/${file.filename}`;
+    let profilePhotoUrl: string;
+
+    if (process.env.VERCEL) {
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        throw ApiError.internal(
+          'Profile photo storage is not configured. Add BLOB_READ_WRITE_TOKEN in Vercel.',
+          'BLOB_STORAGE_NOT_CONFIGURED',
+        );
+      }
+      const extension = path.extname(file.originalname).toLowerCase();
+      const blob = await put(
+        `profile-photos/${profile.userId}/${randomUUID()}${extension}`,
+        file.buffer,
+        {
+          access: 'public',
+          contentType: file.mimetype,
+          addRandomSuffix: false,
+        },
+      );
+      profilePhotoUrl = blob.url;
+    } else {
+      profilePhotoUrl = `/uploads/profile-photos/${file.filename}`;
+    }
+
     await this.userRepo.update(profile.userId, { profilePhotoUrl });
 
-    if (previousPhoto?.startsWith('/uploads/profile-photos/')) {
+    if (previousPhoto?.includes('.blob.vercel-storage.com/') && process.env.BLOB_READ_WRITE_TOKEN) {
+      await del(previousPhoto).catch(() => undefined);
+    } else if (previousPhoto?.startsWith('/uploads/profile-photos/')) {
       const previousPath = getUploadPath('profile-photos', path.basename(previousPhoto));
       fs.unlink(previousPath, () => undefined);
     }

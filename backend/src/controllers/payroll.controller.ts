@@ -1,6 +1,4 @@
 import { Request, Response } from 'express';
-import path from 'path';
-import fs from 'fs';
 import { PayrollService } from '../services/payroll.service';
 import { PayrollRecordStatus } from '../entities/PayrollRecord.entity';
 import {
@@ -17,7 +15,6 @@ import {
 } from '../validators/payroll.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
-import { getUploadPath } from '../utils/uploadPath';
 
 const payrollService = new PayrollService();
 
@@ -216,15 +213,10 @@ export class PayrollController {
 
   // ─── Admin/Employee: Download payslip PDF ───
   static async downloadPayslip(req: Request, res: Response): Promise<void> {
-    const record = await payrollService.getRecord(req.params.id as string);
-    if (!record.hasPayslip || !record.payslipFileName) {
-      throw ApiError.notFound('Payslip PDF not found');
-    }
-    const filePath = getUploadPath('payslips', record.payslipFileName);
-    if (!fs.existsSync(filePath)) {
-      throw ApiError.notFound('Payslip file not found on disk');
-    }
-    res.download(filePath, record.payslipFileName);
+    const pdf = await payrollService.getPayslipPdf(req.params.id as string);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${pdf.fileName}"`);
+    res.send(pdf.buffer);
   }
 
   // ─── Employee: My payslips ───
@@ -256,13 +248,9 @@ export class PayrollController {
     if (record.employeeId !== userId) {
       throw ApiError.forbidden('Not your payslip');
     }
-    if (!record.hasPayslip || !record.payslipFileName) {
-      throw ApiError.notFound('Payslip PDF not found');
-    }
-    const filePath = getUploadPath('payslips', record.payslipFileName);
-    if (!fs.existsSync(filePath)) {
-      throw ApiError.notFound('Payslip file not found on disk');
-    }
-    res.download(filePath, record.payslipFileName);
+    const pdf = await payrollService.getPayslipPdf(req.params.id as string);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${pdf.fileName}"`);
+    res.send(pdf.buffer);
   }
 }

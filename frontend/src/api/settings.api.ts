@@ -8,6 +8,8 @@ import type {
 
 export interface OrgSettings {
   id: string;
+  companyName: string;
+  companyAddress: string;
   workStartTime: string;
   workEndTime: string;
   lateGraceMinutes: number;

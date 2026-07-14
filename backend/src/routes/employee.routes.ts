@@ -14,11 +14,16 @@ const router = Router();
 const PHOTO_DIR = getUploadPath('profile-photos');
 fs.mkdirSync(PHOTO_DIR, { recursive: true });
 
+const photoStorage = process.env.VERCEL
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, PHOTO_DIR),
+      filename: (_req, file, cb) =>
+        cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+    });
+
 const photoUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, PHOTO_DIR),
-    filename: (_req, file, cb) => cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
-  }),
+  storage: photoStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);

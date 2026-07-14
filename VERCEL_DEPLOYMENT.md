@@ -32,6 +32,7 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-google-app-password
 SMTP_FROM=your-email@gmail.com
 SMTP_FROM_NAME=Connect HR
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 ```
 
 Do not add `PORT`; Vercel controls the function port. Generate new JWT secrets for production rather than copying development values. `ADMIN_PASSWORD` is used only when the configured admin does not already exist.
@@ -57,8 +58,10 @@ NEXT_PUBLIC_API_URL=https://YOUR-BACKEND.vercel.app/api
 
 Deploy the frontend, then copy its final production URL into the backend `CORS_ORIGIN` and `APP_URL` variables and redeploy the backend. Use exact origins. If a preview frontend must call the production backend, add that exact preview URL as another comma-separated `CORS_ORIGIN` value.
 
-## File-storage note
+## File storage
 
-Vercel Functions do not provide permanent local file storage. The backend uses `/tmp` on Vercel so Excel processing and uploads do not crash the function, but profile photos, employee documents, and generated payslip files will not persist between function instances. Before using those file features in production, connect durable object storage such as Vercel Blob, Amazon S3, or Cloudinary. Government-ID documents should use private storage with authenticated downloads.
+Create a **public Vercel Blob store** and connect it to the backend project. Vercel adds `BLOB_READ_WRITE_TOKEN`; profile photos are stored there and their permanent Blob URLs are saved in Neon.
+
+Vercel Functions do not provide permanent local file storage. Employee documents and generated payslip files still require a separate **private** Blob/S3 store with authenticated downloads. Government-ID documents must not be placed in the public profile-photo store.
 
 Payslip PDF generation also requires a serverless-compatible Chromium runtime; a desktop `CHROME_PATH` is not available in a standard Vercel Function. Until durable storage and serverless Chromium are connected, use the existing local backend or a persistent Node host for file and PDF workflows.

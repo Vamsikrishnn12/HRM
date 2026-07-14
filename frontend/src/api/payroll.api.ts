@@ -230,8 +230,8 @@ export const payrollApi = {
   downloadPayslipUrl: (id: string) =>
     `${API_BASE}${BASE}/records/${id}/download`,
 
-  downloadPayslip: (id: string) =>
-    api.downloadBlob(`${BASE}/records/${id}/download`, `payslip_${id}.pdf`),
+  downloadPayslip: (id: string, fileName?: string) =>
+    api.downloadBlob(`${BASE}/records/${id}/download`, fileName || `payslip_${id}.pdf`),
 
   downloadMyPayslipPdf: (id: string) =>
     api.downloadBlob(`${BASE}/my-payslips/${id}/download`, `payslip_${id}.pdf`),

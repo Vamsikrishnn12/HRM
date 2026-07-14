@@ -424,13 +424,13 @@ export class PayrollService {
     snapshot: Record<string, unknown>,
   ) {
     // Get company details from OrgSettings
-    let companyName = 'HRMS';
+    let companyName = 'Connect HR';
     let companyAddress = '';
     try {
       const orgRepo = AppDataSource.getRepository(OrgSettings);
       const org = await orgRepo.findOne({ where: {} });
       if (org) {
-        companyName = org.companyName || 'HRMS';
+        companyName = org.companyName || 'Connect HR';
         companyAddress = org.companyAddress || '';
       }
     } catch {
@@ -475,18 +475,69 @@ export class PayrollService {
     if (existingDoc) {
       await this.repo.updateDocument(existingDoc.id, {
         fileName: result.fileName,
-        filePath: result.filePath,
+        filePath: 'generated-on-demand',
       } as any);
     } else {
       await this.repo.createDocument({
         payrollRecordId: record.id,
         fileName: result.fileName,
-        filePath: result.filePath,
+        filePath: 'generated-on-demand',
       });
     }
   }
 
   // ─── Email payslip ───
+
+  async getPayslipPdf(recordId: string): Promise<{ buffer: Buffer; fileName: string }> {
+    const record = await this.repo.findRecordById(recordId);
+    if (!record) throw ApiError.notFound('Payroll record not found');
+    if (record.status === PayrollRecordStatus.DRAFT) {
+      throw ApiError.badRequest('Cannot download a draft payslip');
+    }
+
+    const snapshot = (record.employeeSnapshot || {}) as Record<string, unknown>;
+    let companyName = 'Connect HR';
+    let companyAddress = '';
+    try {
+      const org = await AppDataSource.getRepository(OrgSettings).findOne({ where: {} });
+      if (org) {
+        companyName = org.companyName || 'Connect HR';
+        companyAddress = org.companyAddress || '';
+      }
+    } catch { /* use defaults */ }
+
+    const data: PayslipData = {
+      companyName,
+      companyAddress,
+      employeeName: String(snapshot.employeeName || ''),
+      employeeCode: String(snapshot.employeeCode || ''),
+      designation: String(snapshot.designation || ''),
+      department: String(snapshot.department || ''),
+      dateOfJoining: String(snapshot.dateOfJoining || ''),
+      bankAccount: String(snapshot.bankAccount || ''),
+      uan: String(snapshot.uan || ''),
+      pfNo: String(snapshot.pfNo || ''),
+      esiNo: String(snapshot.esiNo || ''),
+      month: record.month,
+      year: record.year,
+      workingDays: Number(record.workingDays) || 0,
+      eligibleWorkingDays: Number(record.eligibleWorkingDays) || Number(record.workingDays) || 0,
+      payableDays: Number(record.payableDays) || 0,
+      presentDays: Number(record.presentDays) || 0,
+      leaveDays: Number(record.leaveDays) || 0,
+      lopDays: Number(record.lopDays) || 0,
+      weekOffDays: Number((record.attendanceSnapshot as any)?.weekOffDays || 0),
+      holidayDays: Number((record.attendanceSnapshot as any)?.holidayDays || 0),
+      earnings: record.earnings || [],
+      deductions: record.deductions || [],
+      grossEarnings: Number(record.grossEarnings),
+      totalDeductions: Number(record.totalDeductions),
+      netPay: Number(record.netPay),
+      pfEmployerContribution: Number(snapshot.pfEmployerContribution) || 0,
+    };
+    const employeeCode = String(snapshot.employeeCode || record.employeeId).replace(/[^a-zA-Z0-9]/g, '_');
+    return generatePayslipPdf(data, `payslip_${employeeCode}_${record.month}_${record.year}.pdf`);
+  }
 
   async emailPayslip(recordId: string) {
     const record = await this.repo.findRecordById(recordId);
@@ -498,15 +549,16 @@ export class PayrollService {
     if (!email) throw ApiError.badRequest('Employee email not available');
 
     const doc = record.payslipDocument || (await this.repo.findDocByRecordId(recordId));
-    if (!doc || !fs.existsSync(doc.filePath))
+    if (!doc)
       throw ApiError.badRequest('Payslip PDF not found — regenerate first');
 
+    const pdf = await this.getPayslipPdf(recordId);
     const empName = (record.employeeSnapshot as any)?.employeeName || 'Employee';
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const periodStr = `${monthNames[record.month - 1]} ${record.year}`;
 
     // Get company name for email
-    let companyName = 'HRMS';
+    let companyName = 'Connect HR';
     try {
       const orgRepo = AppDataSource.getRepository(OrgSettings);
       const org = await orgRepo.findOne({ where: {} });
@@ -519,7 +571,7 @@ export class PayrollService {
         to: email,
         subject: `Your Payslip for ${periodStr}`,
         html: buildPayslipEmailHtml(empName, periodStr, Number(record.netPay), companyName),
-        attachments: [{ filename: doc.fileName, path: doc.filePath }],
+        attachments: [{ filename: pdf.fileName, content: pdf.buffer }],
       });
 
       await this.repo.updateRecord(record.id, { status: PayrollRecordStatus.EMAILED } as any);

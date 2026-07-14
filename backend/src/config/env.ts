@@ -69,6 +69,7 @@ const envSchema = z.object({
   SMTP_FROM: optionalEmail,
   SMTP_FROM_NAME: z.string().default('Connect HR'),
   CHROME_PATH: optionalString,
+  BLOB_READ_WRITE_TOKEN: optionalString,
 });
 
 const parsed = envSchema.safeParse(process.env);

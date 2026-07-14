@@ -28,6 +28,7 @@ import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import SalaryConfigurationSection from "@/components/settings/SalaryConfigurationSection";
+import BrandMark from "@/components/ui/BrandMark";
 
 const WEEK_DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 
@@ -79,6 +80,11 @@ export default function SettingsPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+
+  const [companyForm, setCompanyForm] = useState({
+    companyName: "Connect HR",
+    companyAddress: "",
+  });
 
   // ── Settings state ──
 
@@ -147,6 +153,10 @@ export default function SettingsPage() {
         lateGraceMinutes: s.lateGraceMinutes,
         halfDayMinMinutes: s.halfDayMinMinutes,
         fullDayMinMinutes: s.fullDayMinMinutes,
+      });
+      setCompanyForm({
+        companyName: s.companyName || "Connect HR",
+        companyAddress: s.companyAddress || "",
       });
       setWeekOffForm({
         weekOffDays: s.weekOffDays || "SUNDAY",
@@ -376,6 +386,38 @@ export default function SettingsPage() {
   return (
     <Box>
       <PageHeader title="Settings" subtitle="Manage organisation preferences" />
+
+      <SectionCard title="Company & Payslip Branding" mb={4}>
+        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={5} alignItems="end">
+          <Box p={4} bg="surface.bg" borderRadius="lg">
+            <Text fontSize="xs" color="text.muted" mb={3}>Logo used on generated payslips</Text>
+            <BrandMark logoSize="52px" />
+          </Box>
+          <Field label="Company Name" required>
+            <StyledInput
+              value={companyForm.companyName}
+              onChange={(e) => setCompanyForm((form) => ({ ...form, companyName: e.target.value }))}
+              placeholder="Company name"
+            />
+          </Field>
+          <Field label="Company Address">
+            <StyledInput
+              value={companyForm.companyAddress}
+              onChange={(e) => setCompanyForm((form) => ({ ...form, companyAddress: e.target.value }))}
+              placeholder="Address shown on payslips"
+            />
+          </Field>
+        </SimpleGrid>
+        <Flex justify="flex-end" mt={4}>
+          <PrimaryButton
+            onClick={() => saveSection("company", companyForm)}
+            isLoading={saving === "company"}
+            isDisabled={!companyForm.companyName.trim()}
+          >
+            Save Payslip Branding
+          </PrimaryButton>
+        </Flex>
+      </SectionCard>
 
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
         {/* ── Office Timings ── */}

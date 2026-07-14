@@ -137,7 +137,7 @@ export class SettingsService {
   private formatSettings(s: any) {
     return {
       id: s.id,
-      companyName: s.companyName || 'HRMS',
+      companyName: s.companyName || 'Connect HR',
       companyAddress: s.companyAddress || '',
       workStartTime: s.workStartTime,
       workEndTime: s.workEndTime,
