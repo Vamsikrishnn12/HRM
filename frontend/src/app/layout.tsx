@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logobg.png";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Zora HR - Human Resource Management System",
-  description: "Streamline your workforce management with Zora HR",
+  title: "Connect HR | Human Resource Management",
+  description: "Connect people, simplify work, and empower your organization with Connect HR.",
   icons: {
     icon: logoImage.src,
     shortcut: logoImage.src,

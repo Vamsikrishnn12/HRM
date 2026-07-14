@@ -95,6 +95,46 @@ const emptyComponent = (category: "EARNING" | "DEDUCTION", order: number): Edita
   displayOrder: String(order),
 });
 
+const connectHrPresetComponents = (): EditableSalaryTemplateComponent[] => [
+  {
+    ...emptyComponent("EARNING", 1),
+    componentName: "Basic Pay",
+    componentCode: "BASIC",
+    calculationType: "PERCENTAGE",
+    value: "50",
+    percentageOf: "GROSS",
+    includeInPfWage: true,
+    includeInEsiWage: true,
+  },
+  {
+    ...emptyComponent("EARNING", 2),
+    componentName: "HRA",
+    componentCode: "HRA",
+    calculationType: "PERCENTAGE",
+    value: "50",
+    percentageOf: "BASIC",
+    includeInEsiWage: true,
+  },
+  {
+    ...emptyComponent("EARNING", 3),
+    componentName: "Conveyance Allowance",
+    componentCode: "CONVEYANCE_ALLOWANCE",
+    calculationType: "PERCENTAGE",
+    value: "50",
+    percentageOf: "HRA",
+    includeInEsiWage: true,
+  },
+  {
+    ...emptyComponent("EARNING", 4),
+    componentName: "Special Allowance",
+    componentCode: "SPECIAL_ALLOWANCE",
+    calculationType: "RESIDUAL",
+    value: "",
+    percentageOf: "GROSS",
+    includeInEsiWage: true,
+  },
+];
+
 const formatCurrency = formatInrCurrency;
 
 const toEditableNumber = (value: number | null | undefined): string =>
@@ -232,6 +272,69 @@ export default function SalaryConfigurationSection() {
         ...prev,
         components: next.map((item, i) => ({ ...item, displayOrder: String(i + 1) })),
       };
+    });
+  };
+
+  const applyConnectHrPreset = () => {
+    setConfig((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        defaultTemplateName: "Connect HR Standard CTC Structure",
+        metadata: {
+          ...(prev.metadata || {}),
+          preset: "connecthr-standard-ctc-v1",
+          description: "Employer PF is deducted from monthly CTC before gross pay is divided.",
+          grossExcludesEmployerPf: true,
+          employerPfBasis: "HALF_MONTHLY_CTC",
+        },
+        roundingRules: {
+          componentRule: "FLOOR",
+          statutoryRule: "ROUND",
+          summaryRule: "ROUND",
+        },
+        pfConfig: {
+          ...prev.pfConfig,
+          pfApplicable: true,
+          defaultEnabled: true,
+          pfCalculationMode: "PERCENTAGE",
+          pfWageBasis: "BASIC",
+          employeePfRate: "12",
+          employerPfRate: "12",
+          pensionRate: 0,
+          pfWageLimitEnabled: false,
+          allowHigherPf: true,
+        },
+        esiConfig: {
+          ...prev.esiConfig,
+          esiApplicable: true,
+          defaultEnabled: true,
+          esiCalculationMode: "PERCENTAGE",
+          employeeEsiRate: "0.75",
+          employerEsiRate: "3.25",
+          esiWageBasis: "GROSS",
+          esiEligibilityThresholdEnabled: true,
+          esiEligibilityThresholdAmount: 21000,
+        },
+        ptConfig: {
+          ...prev.ptConfig,
+          ptApplicable: true,
+          defaultEnabled: true,
+          ptCalculationMode: "FIXED",
+          fixedAmount: "200",
+        },
+        components: connectHrPresetComponents(),
+      };
+    });
+    setPreviewMonthlyCtc("83333");
+    setPreviewData(null);
+    toast({
+      title: "Connect HR salary structure applied",
+      description: "Review the ₹83,333 preview, then save it as the active version.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+      position: "top-right",
     });
   };
 
@@ -383,13 +486,43 @@ export default function SalaryConfigurationSection() {
             <Badge colorScheme="green" variant="subtle">
               v{activeVersion}
             </Badge>
-            <Badge colorScheme="purple" variant="subtle">
+            <Badge colorScheme="brand" variant="subtle">
               {versionsCount} versions
             </Badge>
           </HStack>
         }
       >
         <Flex direction="column" gap={5}>
+          <Flex
+            gap={4}
+            align={{ base: "stretch", md: "center" }}
+            justify="space-between"
+            direction={{ base: "column", md: "row" }}
+            borderWidth="1px"
+            borderColor="brand.100"
+            bg="brand.50"
+            borderRadius="xl"
+            px={4}
+            py={3}
+          >
+            <Box>
+              <Text fontSize="sm" fontWeight="800" color="text.heading">
+                Connect HR CTC Preset
+              </Text>
+              <Text mt={1} fontSize="xs" color="text.muted">
+                Gross = CTC − employer PF; Basic 50% of gross; HRA 50% of Basic;
+                Conveyance 50% of HRA; Special Allowance balances gross.
+              </Text>
+            </Box>
+            <SecondaryButton
+              flexShrink={0}
+              leftIcon={<WandSparkles size={15} />}
+              onClick={applyConnectHrPreset}
+            >
+              Use Connect HR Preset
+            </SecondaryButton>
+          </Flex>
+
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             <Field label="Template Name" required>
               <StyledInput

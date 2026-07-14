@@ -29,6 +29,12 @@ export const employeeApi = {
   update: (id: string, payload: Record<string, unknown>) =>
     api.patch(`/employees/${id}`, payload),
 
+  uploadPhoto: (id: string, photo: File) => {
+    const formData = new FormData();
+    formData.append("photo", photo);
+    return api.postFormData<{ profilePhotoUrl: string }>(`/employees/${id}/photo`, formData);
+  },
+
   dropdown: () =>
     api.get<DropdownEmployee[]>("/employees/dropdown"),
 
@@ -43,6 +49,12 @@ export const employeeApi = {
 };
 
 export const personalDetailsApi = {
+  getMe: () =>
+    api.get<PersonalDetailsRow | null>("/personal-details/me"),
+
+  saveMe: (data: PersonalForm) =>
+    api.put<PersonalDetailsRow>("/personal-details/me", data),
+
   list: () =>
     api.get<{ data: PersonalDetailsRow[]; total: number }>("/personal-details"),
 

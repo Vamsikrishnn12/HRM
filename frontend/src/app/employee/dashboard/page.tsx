@@ -203,7 +203,7 @@ export default function EmployeeDashboard() {
         >
           <Flex direction="column" gap={3}>
             <HStack spacing={2}>
-              <CalendarCheck size={17} color="#7548b9" />
+              <CalendarCheck size={17} color="#0B72E7" />
               <Text fontSize="sm" fontWeight="700" color="text.heading">Today Attendance</Text>
               <Badge px={2.5} py={1} borderRadius="full" bg={statusStyle.bg} color={statusStyle.color} fontSize="11px">
                 {statusStyle.label}

@@ -15,6 +15,7 @@ export interface EmployeeFromAPI {
     lastName: string;
     isActive: boolean;
     empId: string | null;
+    profilePhotoUrl: string | null;
     officeLocationRequired: boolean;
     officeLatitude: number | null;
     officeLongitude: number | null;
@@ -61,7 +62,12 @@ export interface CreateEmployeePayload {
 export interface CreateEmployeeResult {
   empId: string;
   generatedPassword: string;
-  profile: unknown;
+  profile: {
+    id: string;
+    userId: string;
+    department: string;
+    designation: string;
+  };
 }
 
 export interface PersonalForm {
@@ -126,9 +132,11 @@ export interface SalaryForm {
   pfEmployeeContribution: string;
   pfEmployerContribution: string;
   taxRegime: string;
+  accountHolderName: string;
   bankName: string;
   accountNumber: string;
   ifscCode: string;
+  bankMobileNumber: string;
   branchName: string;
   uanNumber: string;
 }
@@ -149,9 +157,11 @@ export interface SalaryDetailsRow {
   pfEmployeeContribution: number;
   pfEmployerContribution: number;
   taxRegime: string;
+  accountHolderName: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;
+  bankMobileNumber: string;
   branchName: string;
   panNumber: string;
   uanNumber: string;

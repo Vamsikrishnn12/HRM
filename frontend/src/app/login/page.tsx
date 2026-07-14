@@ -14,7 +14,7 @@ import {
   Button,
   VStack,
 } from "@chakra-ui/react";
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,10 +35,18 @@ export default function LoginPage() {
   const { login, isAuthenticated, user, authStatus } = useAuth();
   const router = useRouter();
 
+  const destinationFor = (role: "admin" | "employee") => {
+    const fallback = role === "admin" ? "/admin/dashboard" : "/employee/dashboard";
+    if (typeof window === "undefined") return fallback;
+    const requested = new URLSearchParams(window.location.search).get("next");
+    const allowedPrefix = role === "admin" ? "/admin/" : "/employee/";
+    return requested?.startsWith(allowedPrefix) ? requested : fallback;
+  };
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.replace(user.role === "admin" ? "/admin/dashboard" : "/employee/dashboard");
+      router.replace(destinationFor(user.role));
     }
   }, [isAuthenticated, user, router]);
 
@@ -81,7 +89,7 @@ export default function LoginPage() {
     });
 
     if (loggedInUser) {
-      router.replace(loggedInUser.role === "admin" ? "/admin/dashboard" : "/employee/dashboard");
+      router.replace(destinationFor(loggedInUser.role));
     } else {
       setIsSubmitting(false);
     }
@@ -93,54 +101,62 @@ export default function LoginPage() {
   }
 
   return (
-    <Flex minH="100vh">
+    <Flex minH="100vh" bg="surface.bg">
       {/* Left brand panel */}
       <Flex
         display={{ base: "none", lg: "flex" }}
-        w="45%"
-        bgGradient="linear(135deg, #7548b9 0%, #359de9 50%, #1E2548 100%)"
+        w="48%"
+        maxW="760px"
+        bgGradient="linear(145deg, #061F3A 0%, #084F91 48%, #0B8C6A 100%)"
         direction="column"
         justify="center"
         align="center"
-        px={12}
+        px={{ lg: 12, xl: 20 }}
         position="relative"
         overflow="hidden"
       >
         {/* Decorative circles */}
         <Box
           position="absolute"
-          w="300px"
-          h="300px"
+          w="420px"
+          h="420px"
           borderRadius="full"
           bg="whiteAlpha.100"
-          top="-50px"
-          right="-80px"
+          top="-170px"
+          right="-140px"
+          border="1px solid"
+          borderColor="whiteAlpha.200"
         />
         <Box
           position="absolute"
-          w="200px"
-          h="200px"
+          w="360px"
+          h="360px"
           borderRadius="full"
           bg="whiteAlpha.50"
-          bottom="80px"
-          left="-60px"
+          bottom="-190px"
+          left="-120px"
+          border="1px solid"
+          borderColor="whiteAlpha.200"
         />
         <Box
           position="absolute"
-          w="150px"
-          h="150px"
+          w="180px"
+          h="180px"
           borderRadius="full"
           bg="whiteAlpha.50"
-          top="30%"
-          left="10%"
+          top="25%"
+          left="-110px"
+          border="1px solid"
+          borderColor="whiteAlpha.100"
         />
 
-        <Box mb={8}>
+        <Box mb={10} position="relative" zIndex={1}>
           <BrandMark
-            logoSize="80px"
+            logoSize="72px"
             showName
             nameColor="white"
             nameFontSize="3xl"
+            nameAccentColor="accent.300"
             logoBg="whiteAlpha.950"
             logoBorderColor="whiteAlpha.300"
             logoRadius="2xl"
@@ -154,10 +170,11 @@ export default function LoginPage() {
           color="white"
           textAlign="center"
           mb={4}
-          fontWeight="700"
+          fontWeight="800"
           lineHeight="1.3"
         >
-          Human Resource Management System
+          Your people, connected.
+          <br />Your work, simplified.
         </Heading>
         <Text
           color="whiteAlpha.800"
@@ -166,10 +183,19 @@ export default function LoginPage() {
           maxW="380px"
           lineHeight="1.7"
         >
-          Streamline your workforce management with the Zora HR
-          platform. Track attendance, manage leaves, process payroll all in one
-          place.
+          One calm workspace for attendance, leave, payroll, employee records,
+          and the everyday moments that keep your organization moving.
         </Text>
+        <VStack align="stretch" spacing={3} mt={9} w="100%" maxW="390px" position="relative" zIndex={1}>
+          {["One place for every employee", "Clear insights for faster decisions", "Secure workflows built for HR teams"].map((item) => (
+            <Flex key={item} align="center" gap={3} color="whiteAlpha.900">
+              <Flex w="24px" h="24px" borderRadius="full" bg="whiteAlpha.200" align="center" justify="center">
+                <Check size={14} />
+              </Flex>
+              <Text fontSize="sm" fontWeight="600">{item}</Text>
+            </Flex>
+          ))}
+        </VStack>
       </Flex>
 
       {/* Right login form */}
@@ -177,15 +203,30 @@ export default function LoginPage() {
         flex={1}
         align="center"
         justify="center"
-        bg="white"
+        bg="surface.bg"
         px={{ base: 6, md: 12 }}
       >
-        <Box w="100%" maxW="440px">
+        <Box
+          w="100%"
+          maxW="460px"
+          bg="white"
+          border="1px solid"
+          borderColor="surface.border"
+          borderRadius="2xl"
+          boxShadow="elevated"
+          p={{ base: 6, md: 10 }}
+        >
+          <Box display={{ base: "block", lg: "none" }} mb={8}>
+            <BrandMark logoSize="44px" priority />
+          </Box>
+          <Flex w="40px" h="40px" borderRadius="xl" bg="accent.50" color="accent.600" align="center" justify="center" mb={5}>
+            <Sparkles size={19} />
+          </Flex>
           <Heading size="lg" color="text.heading" mb={2}>
             Welcome back
           </Heading>
           <Text color="text.muted" mb={8} fontSize="sm">
-            Sign in to your account to continue
+            Sign in to continue to your Connect HR workspace
           </Text>
 
           {/* Form */}
@@ -198,13 +239,13 @@ export default function LoginPage() {
                 <Input
                   {...register("email")}
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="name@company.com"
                   size="lg"
                   borderRadius="xl"
                   bg="white"
                   border="1px solid"
                   borderColor="surface.border"
-                  _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)" }}
+                  _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(11,114,231,0.15)" }}
                   fontSize="sm"
                   fontWeight="500"
                 />
@@ -225,7 +266,7 @@ export default function LoginPage() {
                     bg="white"
                     border="1px solid"
                     borderColor="surface.border"
-                    _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)" }}
+                    _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(11,114,231,0.15)" }}
                     fontSize="sm"
                     fontWeight="500"
                     pr={12}

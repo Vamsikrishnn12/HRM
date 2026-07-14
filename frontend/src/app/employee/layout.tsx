@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useToast } from "@chakra-ui/react";
 import { useAuth } from "@/context/AuthContext";
 import AppShell from "@/components/layout/AppShell";
@@ -10,6 +11,7 @@ import AuthLoader from "@/components/ui/AuthLoader";
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading, authStatus } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const toast = useToast();
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
         isClosable: true,
         position: "top-right",
       });
-      router.replace("/login");
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
     if (user?.role !== "employee") {

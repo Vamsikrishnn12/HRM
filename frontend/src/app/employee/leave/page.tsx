@@ -242,7 +242,7 @@ export default function EmployeeLeavePage() {
 
       {/* Balance Cards */}
       <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} spacing={4} mb={6}>
-        <BalanceCard label="Casual Leave" used={summary?.used.cl ?? 0} total={summary?.entitlement.cl ?? 0} balance={summary?.balance.cl ?? 0} color="#7548b9" />
+        <BalanceCard label="Casual Leave" used={summary?.used.cl ?? 0} total={summary?.entitlement.cl ?? 0} balance={summary?.balance.cl ?? 0} color="#0B72E7" />
         <BalanceCard label="Sick Leave" used={summary?.used.sl ?? 0} total={summary?.entitlement.sl ?? 0} balance={summary?.balance.sl ?? 0} color="#0D7C47" />
         <BalanceCard label="Earned Leave" used={summary?.used.el ?? 0} total={summary?.entitlement.el ?? 0} balance={summary?.balance.el ?? 0} color="#B7791F" />
         <Box bg="white" borderRadius="xl" p={4} border="1px solid" borderColor="surface.border" shadow="card">
@@ -273,7 +273,7 @@ export default function EmployeeLeavePage() {
           <Flex direction="column" gap={3}>
             <Flex justify="space-between" align="center">
               <Flex align="center" gap={2}>
-                <Briefcase size={16} color="#7548b9" />
+                <Briefcase size={16} color="#0B72E7" />
                 <Text fontSize="sm" color="text.muted">Joining Date</Text>
               </Flex>
               <Text fontSize="sm" fontWeight="600" color="text.heading">
@@ -284,7 +284,7 @@ export default function EmployeeLeavePage() {
             </Flex>
             <Flex justify="space-between" align="center">
               <Flex align="center" gap={2}>
-                <Shield size={16} color="#7548b9" />
+                <Shield size={16} color="#0B72E7" />
                 <Text fontSize="sm" color="text.muted">Status</Text>
               </Flex>
               <Badge
@@ -374,7 +374,7 @@ export default function EmployeeLeavePage() {
                         {new Date(rec.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </Td>
                       <Td borderColor="surface.border">
-                        <Badge px={2} py={0.5} borderRadius="full" bg="#EDE9F5" color="#7548b9" fontSize="xs" fontWeight="600">
+                        <Badge px={2} py={0.5} borderRadius="full" bg="#EDE9F5" color="#0B72E7" fontSize="xs" fontWeight="600">
                           {rec.requestedLeaveType}
                         </Badge>
                         <Text fontSize="2xs" color="text.muted" mt={1}>
@@ -430,7 +430,7 @@ export default function EmployeeLeavePage() {
         <ModalContent borderRadius="xl">
           <ModalHeader borderBottom="1px solid" borderColor="surface.border" fontSize="md" fontWeight="700">
             <Flex align="center" gap={2}>
-              <Send size={18} color="#7548b9" />
+              <Send size={18} color="#0B72E7" />
               Apply Leave
             </Flex>
           </ModalHeader>

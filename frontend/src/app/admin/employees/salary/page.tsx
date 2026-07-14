@@ -51,9 +51,11 @@ type CustomComponentForm = {
 };
 
 type BankingForm = {
+  accountHolderName: string;
   bankName: string;
   accountNumber: string;
   ifscCode: string;
+  mobileNumber: string;
   branchName: string;
   panNumber: string;
   uanNumber: string;
@@ -66,9 +68,11 @@ const emptyCustom: CustomComponentForm = {
 };
 
 const emptyBanking: BankingForm = {
+  accountHolderName: "",
   bankName: "",
   accountNumber: "",
   ifscCode: "",
+  mobileNumber: "",
   branchName: "",
   panNumber: "",
   uanNumber: "",
@@ -152,7 +156,7 @@ function GuidedStepHeader({
         borderRadius="full"
         px={2.5}
         py={1}
-        colorScheme={status === "done" ? "green" : status === "active" ? "purple" : "gray"}
+        colorScheme={status === "done" ? "green" : status === "active" ? "brand" : "gray"}
         textTransform="none"
       >
         {status === "done" ? "Completed" : status === "active" ? "In Progress" : "Pending"}
@@ -185,7 +189,7 @@ function AutoCalculationBanner({
       <Flex align={{ base: "start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap={3}>
         <HStack align="start" spacing={2.5}>
           <Box mt={0.5}>
-            {isAutoCalculating ? <Spinner size="sm" color="brand.400" /> : <Info size={16} color={autoPreviewError ? "#e53e3e" : "#7548b9"} />}
+            {isAutoCalculating ? <Spinner size="sm" color="brand.400" /> : <Info size={16} color={autoPreviewError ? "#e53e3e" : "#0B72E7"} />}
           </Box>
           <Box>
             <Text fontSize="sm" fontWeight="700" color="text.heading">
@@ -469,7 +473,7 @@ function SalaryStructureForm({
   const [customComponents, setCustomComponents] = useState<CustomComponentForm[]>([]);
   const [banking, setBanking] = useState<BankingForm>(emptyBanking);
   const [showCustomComponents, setShowCustomComponents] = useState(false);
-  const [showBankingInfo, setShowBankingInfo] = useState(false);
+  const [showBankingInfo, setShowBankingInfo] = useState(true);
   const [preview, setPreview] = useState<SalaryComputation | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [loadingExisting, setLoadingExisting] = useState(false);
@@ -535,7 +539,7 @@ function SalaryStructureForm({
           setCustomComponents([]);
           setShowCustomComponents(false);
           setBanking(emptyBanking);
-          setShowBankingInfo(false);
+          setShowBankingInfo(true);
           setPreview(null);
           setAutoPreviewError(null);
           setLastPreviewAt("");
@@ -582,21 +586,16 @@ function SalaryStructureForm({
             || row.deductions.some((i) => i.sourceType === "EMPLOYEE_CUSTOM"),
         );
         setBanking({
+          accountHolderName: row.bankingInfo?.accountHolderName || "",
           bankName: row.bankingInfo?.bankName || "",
           accountNumber: row.bankingInfo?.accountNumber || "",
           ifscCode: row.bankingInfo?.ifscCode || "",
+          mobileNumber: row.bankingInfo?.mobileNumber || "",
           branchName: row.bankingInfo?.branchName || "",
           panNumber: row.bankingInfo?.panNumber || "",
           uanNumber: row.bankingInfo?.uanNumber || "",
         });
-        setShowBankingInfo(Boolean(
-          row.bankingInfo?.bankName
-          || row.bankingInfo?.accountNumber
-          || row.bankingInfo?.ifscCode
-          || row.bankingInfo?.branchName
-          || row.bankingInfo?.panNumber
-          || row.bankingInfo?.uanNumber,
-        ));
+        setShowBankingInfo(true);
       } finally {
         if (!cancelled) setLoadingExisting(false);
       }
@@ -675,12 +674,14 @@ function SalaryStructureForm({
           amount: Number(i.amount),
         })),
       bankingInfo: {
-        bankName: banking.bankName,
-        accountNumber: banking.accountNumber,
-        ifscCode: banking.ifscCode,
-        branchName: banking.branchName,
-        panNumber: banking.panNumber,
-        uanNumber: banking.uanNumber,
+        accountHolderName: banking.accountHolderName.trim(),
+        bankName: banking.bankName.trim(),
+        accountNumber: banking.accountNumber.trim(),
+        ifscCode: banking.ifscCode.trim().toUpperCase(),
+        mobileNumber: banking.mobileNumber.trim(),
+        branchName: banking.branchName.trim(),
+        panNumber: banking.panNumber.trim().toUpperCase(),
+        uanNumber: banking.uanNumber.trim(),
       },
     };
   }, [
@@ -786,6 +787,18 @@ function SalaryStructureForm({
     }
     if (invalidOverrideCodes.length > 0) {
       toast({ title: "Fix invalid override values before saving", status: "warning", duration: 2500, isClosable: true });
+      return;
+    }
+    if (banking.accountNumber && !/^\d{6,30}$/.test(banking.accountNumber)) {
+      toast({ title: "Enter a valid bank account number", status: "warning", duration: 2500, isClosable: true });
+      return;
+    }
+    if (banking.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(banking.ifscCode)) {
+      toast({ title: "Enter a valid IFSC code (for example, HDFC0001234)", status: "warning", duration: 3000, isClosable: true });
+      return;
+    }
+    if (banking.mobileNumber && !/^\d{10,15}$/.test(banking.mobileNumber)) {
+      toast({ title: "Enter a valid 10 to 15 digit banking mobile number", status: "warning", duration: 3000, isClosable: true });
       return;
     }
     try {
@@ -955,7 +968,7 @@ function SalaryStructureForm({
                   <Switch
                     isChecked={overrideEnabled}
                     onChange={(e) => setOverrideEnabled(e.target.checked)}
-                    colorScheme="purple"
+                    colorScheme="brand"
                   />
                   <Text fontSize="sm" color="text.muted">
                     {overrideEnabled ? "Manual overrides enabled" : "Template-driven auto mode"}
@@ -1121,10 +1134,10 @@ function SalaryStructureForm({
               <Flex justify="space-between" align={{ base: "start", md: "center" }} gap={2} direction={{ base: "column", md: "row" }}>
                 <Box>
                   <Text fontSize="sm" fontWeight="700" color="text.heading">
-                    Banking Information (Optional)
+                    Employee Banking Details
                   </Text>
                   <Text fontSize="xs" color="text.muted">
-                    Secondary section. Keep this light and fill only if available.
+                    Add the selected employee&apos;s salary credit account information.
                   </Text>
                 </Box>
                 <SecondaryButton size="xs" onClick={() => setShowBankingInfo((prev) => !prev)}>
@@ -1133,9 +1146,11 @@ function SalaryStructureForm({
               </Flex>
               {showBankingInfo ? (
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3} mt={3}>
-                  <Field label="Bank Name"><StyledInput value={banking.bankName} onChange={(e) => setBanking((p) => ({ ...p, bankName: e.target.value }))} /></Field>
-                  <Field label="Account Number"><StyledInput value={banking.accountNumber} onChange={(e) => setBanking((p) => ({ ...p, accountNumber: e.target.value }))} /></Field>
-                  <Field label="IFSC Code"><StyledInput value={banking.ifscCode} onChange={(e) => setBanking((p) => ({ ...p, ifscCode: e.target.value.toUpperCase() }))} /></Field>
+                  <Field label="Account Holder Name"><StyledInput placeholder="Name as per bank account" value={banking.accountHolderName} onChange={(e) => setBanking((p) => ({ ...p, accountHolderName: e.target.value }))} /></Field>
+                  <Field label="Bank Name"><StyledInput placeholder="Bank name" value={banking.bankName} onChange={(e) => setBanking((p) => ({ ...p, bankName: e.target.value }))} /></Field>
+                  <Field label="Account Number"><StyledInput inputMode="numeric" placeholder="Bank account number" value={banking.accountNumber} onChange={(e) => setBanking((p) => ({ ...p, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 30) }))} /></Field>
+                  <Field label="IFSC Code"><StyledInput maxLength={11} placeholder="e.g. HDFC0001234" value={banking.ifscCode} onChange={(e) => setBanking((p) => ({ ...p, ifscCode: e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() }))} /></Field>
+                  <Field label="Banking Mobile Number"><StyledInput inputMode="numeric" placeholder="Registered mobile number" value={banking.mobileNumber} onChange={(e) => setBanking((p) => ({ ...p, mobileNumber: e.target.value.replace(/\D/g, "").slice(0, 15) }))} /></Field>
                   <Field label="Branch Name"><StyledInput value={banking.branchName} onChange={(e) => setBanking((p) => ({ ...p, branchName: e.target.value }))} /></Field>
                   <Field label="PAN Number"><StyledInput value={banking.panNumber} onChange={(e) => setBanking((p) => ({ ...p, panNumber: e.target.value.toUpperCase() }))} /></Field>
                   <Field label="UAN Number"><StyledInput value={banking.uanNumber} onChange={(e) => setBanking((p) => ({ ...p, uanNumber: e.target.value.replace(/\D/g, "") }))} /></Field>

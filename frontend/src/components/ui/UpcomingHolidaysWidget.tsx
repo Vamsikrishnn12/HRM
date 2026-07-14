@@ -28,7 +28,7 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
           w={7}
           h={7}
           borderRadius="lg"
-          bgGradient="linear(135deg, #7548b9, #359de9)"
+          bgGradient="linear(135deg, #0B72E7, #20C997)"
         >
           <CalendarDays size={14} color="white" />
         </Flex>

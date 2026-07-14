@@ -31,7 +31,7 @@ export function StyledInput(props: React.ComponentProps<typeof Input>) {
       border="1px solid"
       borderColor="surface.border"
       _hover={{ borderColor: "brand.200" }}
-      _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)", bg: "white" }}
+      _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(11,114,231,0.15)", bg: "white" }}
       fontSize="sm"
       fontWeight="500"
       autoComplete="off"
@@ -50,7 +50,7 @@ export function StyledSelect(props: React.ComponentProps<typeof Select>) {
       border="1px solid"
       borderColor="surface.border"
       _hover={{ borderColor: "brand.200" }}
-      _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)" }}
+      _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(11,114,231,0.15)" }}
       fontSize="sm"
       fontWeight="500"
       autoComplete="off"

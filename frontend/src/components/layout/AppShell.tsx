@@ -13,7 +13,7 @@ interface AppShellProps {
 function AppContent({ children }: { children: ReactNode }) {
   const { collapsed } = useSidebar();
   const isMobile = useBreakpointValue({ base: true, lg: false });
-  const sidebarWidth = isMobile ? "0px" : collapsed ? "72px" : "260px";
+  const sidebarWidth = isMobile ? "0px" : collapsed ? "76px" : "272px";
 
   return (
     <Flex minH="100vh" bg="surface.bg">
@@ -25,7 +25,7 @@ function AppContent({ children }: { children: ReactNode }) {
         minW={0}
       >
         <Topbar />
-        <Box as="main" p={{ base: 4, md: 6, lg: 8 }} maxW="1440px" mx="auto" w="100%">
+        <Box as="main" p={{ base: 4, md: 6, lg: 7 }} maxW="1500px" mx="auto" w="100%">
           {children}
         </Box>
       </Box>

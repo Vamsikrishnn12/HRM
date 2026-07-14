@@ -1,5 +1,11 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+export const getAssetUrl = (assetPath?: string | null): string | undefined => {
+  if (!assetPath) return undefined;
+  if (/^https?:\/\//i.test(assetPath)) return assetPath;
+  return `${API_BASE.replace(/\/api\/?$/, "")}${assetPath.startsWith("/") ? assetPath : `/${assetPath}`}`;
+};
+
 /**
  * Lightweight fetch wrapper for the HRMS backend.
  *

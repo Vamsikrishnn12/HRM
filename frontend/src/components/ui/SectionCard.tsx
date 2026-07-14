@@ -20,13 +20,13 @@ export default function SectionCard({
   return (
     <Box
       bg="white"
-      borderRadius="2xl"
+      borderRadius="xl"
       border="1px solid"
       borderColor="surface.border"
       shadow="card"
       overflow="hidden"
       transition="all 0.3s cubic-bezier(.4,0,.2,1)"
-      _hover={{ shadow: "soft" }}
+      _hover={{ shadow: "card-hover", borderColor: "brand.100" }}
       {...rest}
     >
       {title && (

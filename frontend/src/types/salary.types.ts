@@ -205,9 +205,11 @@ export interface SaveEmployeeSalaryStructureInput extends SalaryPreviewInput {
     displayOrder?: number;
   }>;
   bankingInfo?: {
+    accountHolderName?: string;
     bankName?: string;
     accountNumber?: string;
     ifscCode?: string;
+    mobileNumber?: string;
     branchName?: string;
     panNumber?: string;
     uanNumber?: string;
@@ -232,9 +234,11 @@ export interface EmployeeSalaryStructureRow {
   notes: string;
   summary: SalaryComputation["summary"];
   bankingInfo: {
+    accountHolderName?: string;
     bankName?: string;
     accountNumber?: string;
     ifscCode?: string;
+    mobileNumber?: string;
     branchName?: string;
     panNumber?: string;
     uanNumber?: string;

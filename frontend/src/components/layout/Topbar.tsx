@@ -38,7 +38,7 @@ export default function Topbar() {
   return (
     <Box
       as="header"
-      h="68px"
+      h="72px"
       bg="white"
       borderBottom="1px solid"
       borderColor="surface.border"
@@ -47,23 +47,24 @@ export default function Topbar() {
       zIndex={10}
       px={{ base: 4, md: 6 }}
       backdropFilter="blur(12px)"
-      bgColor="rgba(255,255,255,0.9)"
+      bgColor="rgba(255,255,255,0.86)"
+      boxShadow="0 1px 0 rgba(8,43,76,0.03)"
     >
       <Flex h="100%" align="center" justify="space-between">
         {/* Search */}
         <InputGroup maxW={{ base: "200px", md: "360px" }} size="sm" display={{ base: "none", sm: "block" }}>
           <InputLeftElement pointerEvents="none">
-            <Search size={16} color="#7C7F99" aria-hidden="true" />
+            <Search size={16} color="#708399" aria-hidden="true" />
           </InputLeftElement>
           <Input
-            placeholder="Search anything..."
+            placeholder="Search people, pages, or actions..."
             borderRadius="xl"
             bg="surface.bg"
             border="1px solid"
             borderColor="surface.border"
             _placeholder={{ color: "text.muted", fontSize: "sm" }}
             _hover={{ borderColor: "brand.200" }}
-            _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(117,72,185,0.15)", bg: "white" }}
+            _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(11,114,231,0.15)", bg: "white" }}
             fontWeight="500"
           />
         </InputGroup>
@@ -87,7 +88,7 @@ export default function Topbar() {
                   position="absolute"
                   top="1"
                   right="1"
-                  bgGradient="linear(135deg, #7548b9, #359de9)"
+                  bgGradient="linear(135deg, #0B72E7, #20C997)"
                   color="white"
                   fontSize="9px"
                   borderRadius="full"
@@ -196,7 +197,7 @@ export default function Topbar() {
                     {user?.role ?? "—"}
                   </Text>
                 </Box>
-                <ChevronDown size={14} color="#7C7F99" />
+                <ChevronDown size={14} color="#708399" />
               </Flex>
             </MenuButton>
             <MenuList borderRadius="xl" shadow="elevated" border="1px solid" borderColor="surface.border" py={2} minW="200px">

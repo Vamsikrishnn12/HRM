@@ -36,8 +36,8 @@ function CircularProgressRing({ value }: { value: number }) {
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
         <defs>
           <linearGradient id="stat-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#7548b9" />
-            <stop offset="100%" stopColor="#359de9" />
+            <stop offset="0%" stopColor="#0B72E7" />
+            <stop offset="100%" stopColor="#20C997" />
           </linearGradient>
         </defs>
         <circle
@@ -45,7 +45,7 @@ function CircularProgressRing({ value }: { value: number }) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#E8E4F0"
+          stroke="#DDE7F0"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -83,20 +83,20 @@ export default function StatCard({
   const Icon = iconMap[icon] ?? FileText;
 
   const changeColor =
-    changeType === "up" ? "#0D7C47" : changeType === "down" ? "#C41E3A" : "#7C7F99";
+    changeType === "up" ? "#0D7C47" : changeType === "down" ? "#C41E3A" : "#708399";
   const changeBg =
-    changeType === "up" ? "#E6F9F0" : changeType === "down" ? "#FEF0F0" : "#F4F2F9";
+    changeType === "up" ? "#E6F9F0" : changeType === "down" ? "#FEF0F0" : "#F5F8FC";
 
   return (
     <Box
       bg="white"
-      borderRadius="2xl"
+      borderRadius="xl"
       p={6}
       border="1px solid"
       borderColor="surface.border"
       shadow="card"
       transition="all 0.3s cubic-bezier(.4,0,.2,1)"
-      _hover={{ shadow: "card-hover", transform: "translateY(-3px)" }}
+      _hover={{ shadow: "card-hover", transform: "translateY(-2px)", borderColor: "brand.100" }}
       position="relative"
       overflow="hidden"
     >
@@ -105,8 +105,8 @@ export default function StatCard({
         top={0}
         left={0}
         right={0}
-        h="3px"
-        bgGradient="linear(135deg, #7548b9, #359de9)"
+        h="4px"
+        bgGradient="linear(135deg, #0B72E7, #20C997)"
         borderTopRadius="2xl"
       />
 

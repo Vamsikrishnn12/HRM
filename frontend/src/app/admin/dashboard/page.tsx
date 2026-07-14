@@ -112,7 +112,7 @@ export default function AdminDashboard() {
   const attendanceBreakdownItems = [
     { label: "Present", value: breakdown?.present ?? 0, tone: "#0D7C47", bg: "#E6F9F0" },
     { label: "Half Day", value: breakdown?.halfDay ?? 0, tone: "#92640D", bg: "#FEF9EC" },
-    { label: "Leave", value: breakdown?.leave ?? 0, tone: "#7548b9", bg: "#F3EEFB" },
+    { label: "Leave", value: breakdown?.leave ?? 0, tone: "#0B72E7", bg: "#EAF5FF" },
     { label: "LOP", value: breakdown?.lop ?? 0, tone: "#C41E3A", bg: "#FEECEF" },
     { label: "Week Off", value: breakdown?.weekOff ?? 0, tone: "#3A5E8C", bg: "#EDF4FC" },
     { label: "Holiday", value: breakdown?.holiday ?? 0, tone: "#2B7A4B", bg: "#EAF8F0" },
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
         borderRadius="3xl"
         border="1px solid"
         borderColor="surface.border"
-        bgGradient="linear(to-br, rgba(117,72,185,0.05), rgba(53,157,233,0.03), #ffffff)"
+        bgGradient="linear(to-br, rgba(11,114,231,0.05), rgba(32,201,151,0.03), #ffffff)"
         mb={8}
       >
         <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={5}>
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
                       w={9}
                       h={9}
                       borderRadius="xl"
-                      bgGradient="linear(135deg, #7548b9, #359de9)"
+                      bgGradient="linear(135deg, #0B72E7, #20C997)"
                       align="center"
                       justify="center"
                       flexShrink={0}

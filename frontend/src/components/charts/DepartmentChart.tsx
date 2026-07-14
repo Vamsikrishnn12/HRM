@@ -47,23 +47,23 @@ export default function DepartmentChart({ data: rawData }: DepartmentChartProps)
       <BarChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
         <defs>
           <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7548b9" stopOpacity={1} />
-            <stop offset="100%" stopColor="#359de9" stopOpacity={0.85} />
+            <stop offset="0%" stopColor="#0B72E7" stopOpacity={1} />
+            <stop offset="100%" stopColor="#20C997" stopOpacity={0.85} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E8E4F0" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#DDE7F0" vertical={false} />
         <XAxis
           dataKey="department"
-          tick={{ fill: "#7C7F99", fontSize: 11 }}
+          tick={{ fill: "#708399", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
-        <YAxis tick={{ fill: "#7C7F99", fontSize: 12 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "#708399", fontSize: 12 }} axisLine={false} tickLine={false} />
         <Tooltip
           contentStyle={{
             borderRadius: "14px",
-            border: "1px solid #E8E4F0",
-            boxShadow: "0 8px 24px rgba(117,72,185,0.10)",
+            border: "1px solid #DDE7F0",
+            boxShadow: "0 8px 24px rgba(11,114,231,0.10)",
             fontSize: "13px",
             fontFamily: "Plus Jakarta Sans, Manrope, sans-serif",
           }}

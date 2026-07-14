@@ -2,7 +2,7 @@
 
 import { Box, Flex, Text } from "@chakra-ui/react";
 import Image from "next/image";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/logobg.png";
 
 interface BrandMarkProps {
   showName?: boolean;
@@ -10,6 +10,7 @@ interface BrandMarkProps {
   nameColor?: string;
   nameFontSize?: string;
   nameFontWeight?: number | string;
+  nameAccentColor?: string;
   gap?: number;
   logoBg?: string;
   logoBorderColor?: string;
@@ -24,6 +25,7 @@ export default function BrandMark({
   nameColor = "text.heading",
   nameFontSize = "lg",
   nameFontWeight = 800,
+  nameAccentColor = "brand.500",
   gap = 2.5,
   logoBg = "white",
   logoBorderColor = "surface.border",
@@ -47,7 +49,7 @@ export default function BrandMark({
       >
         <Image
           src={logoImage}
-          alt="Zora HR logo"
+          alt="Connect HR logo"
           fill
           sizes={logoSize}
           style={{ objectFit: "contain" }}
@@ -55,8 +57,8 @@ export default function BrandMark({
         />
       </Box>
       {showName && (
-        <Text fontSize={nameFontSize} fontWeight={nameFontWeight} color={nameColor} letterSpacing="-0.02em">
-          Zora HR
+        <Text fontSize={nameFontSize} fontWeight={nameFontWeight} color={nameColor} letterSpacing="-0.035em">
+          Connect <Text as="span" color={nameAccentColor}>HR</Text>
         </Text>
       )}
     </Flex>

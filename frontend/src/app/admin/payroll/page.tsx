@@ -92,7 +92,7 @@ export default function PayrollPage() {
 
   const summaryCards = useMemo(
     () => [
-      { label: "Total Records", value: summary?.totalRecords ?? 0, icon: DollarSign, color: "#7548b9", bg: "#EDE9F5" },
+      { label: "Total Records", value: summary?.totalRecords ?? 0, icon: DollarSign, color: "#0B72E7", bg: "#EDE9F5" },
       { label: "Generated", value: summary?.generated ?? 0, icon: TrendingUp, color: "#0D7C47", bg: "#E6F9F0" },
       { label: "Emailed", value: summary?.emailed ?? 0, icon: Mail, color: "#2563EB", bg: "#EFF6FF" },
       { label: "Total Payout", value: `₹${(summary?.totalPayout ?? 0).toLocaleString("en-IN")}`, icon: DollarSign, color: "#B25E09", bg: "#FFF4E5" },
@@ -379,11 +379,11 @@ function ManualPayrollTab({
           <SimpleGrid columns={{ base: 2, sm: 3, md: 6 }} spacing={3} mb={5}>
             {[
               { label: "Working Days", value: preview.workingDays, color: "#475569" },
-              { label: "Eligible Days", value: preview.eligibleWorkingDays, color: "#7548b9" },
+              { label: "Eligible Days", value: preview.eligibleWorkingDays, color: "#0B72E7" },
               { label: "Present Days", value: preview.presentDays, color: "#0D7C47" },
               { label: "Leave Days", value: preview.leaveDays, color: "#2563EB" },
               { label: "LOP Days", value: preview.lopDays, color: "#C41E3A" },
-              { label: "Paid Days", value: preview.payableDays, color: "#7548b9" },
+              { label: "Paid Days", value: preview.payableDays, color: "#0B72E7" },
             ].map((item) => (
               <Box key={item.label} p={3} bg="white" borderRadius="lg" border="1px solid" borderColor="surface.border" textAlign="center">
                 <Text fontSize="xl" fontWeight="700" color={item.color}>{item.value}</Text>
@@ -537,7 +537,7 @@ function BulkGenerateTab({
                   ? "red"
                   : row.status === "PARTIAL_SUCCESS"
                     ? "orange"
-                    : "purple"
+                    : "brand"
             }
             borderRadius="full"
             px={2.5}
@@ -652,7 +652,7 @@ function BulkGenerateTab({
       <Checkbox
         isChecked={overwriteExisting}
         onChange={(e) => setOverwriteExisting(e.target.checked)}
-        colorScheme="purple"
+        colorScheme="brand"
         mb={4}
       >
         Overwrite existing generated records
@@ -826,7 +826,7 @@ function BulkUploadTab({
         {/* File info */}
         <Box p={3} bg="surface.bg" borderRadius="lg" mb={5}>
           <Flex gap={3} align="center">
-            <FileSpreadsheet size={16} color="#7548b9" />
+            <FileSpreadsheet size={16} color="#0B72E7" />
             <Box flex={1}>
               <Text fontSize="sm" fontWeight="600" color="text.heading">{jobStatus.originalFileName || file?.name || "Uploaded file"}</Text>
               <Text fontSize="xs" color="text.muted">
@@ -926,7 +926,7 @@ function BulkUploadTab({
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           disabled={view === "processing"}
         />
-        <Upload size={32} color="#7548b9" style={{ margin: "0 auto 8px" }} />
+        <Upload size={32} color="#0B72E7" style={{ margin: "0 auto 8px" }} />
         {file ? (
           <Text fontSize="sm" fontWeight="600" color="brand.600">{file.name}</Text>
         ) : (

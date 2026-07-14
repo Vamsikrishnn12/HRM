@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   Settings,
   UserCircle,
+  ClipboardPenLine,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,6 +45,7 @@ export const adminRoutes: RouteItem[] = [
 
 export const employeeRoutes: RouteItem[] = [
   { label: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard },
+  { label: "Personal Details", href: "/employee/personal-details", icon: ClipboardPenLine },
   { label: "Attendance", href: "/employee/attendance", icon: CalendarCheck },
   { label: "Leave", href: "/employee/leave", icon: CalendarOff },
   { label: "Payroll", href: "/employee/payroll", icon: Wallet },

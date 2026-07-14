@@ -81,7 +81,7 @@ export default function EmployeePayrollPage() {
         render: (row) => (
           <Flex align="center" gap={2}>
             <Flex w={8} h={8} borderRadius="lg" bg="brand.50" align="center" justify="center">
-              <Calendar size={14} color="#7548b9" />
+              <Calendar size={14} color="#0B72E7" />
             </Flex>
             <Text fontSize="sm" fontWeight="600" color="text.heading">
               {MONTHS[row.month - 1]} {row.year}
@@ -189,7 +189,7 @@ export default function EmployeePayrollPage() {
               <Text fontSize="xl" fontWeight="700" color="text.heading" mt={1}>{records.length}</Text>
             </Box>
             <Flex w={10} h={10} borderRadius="lg" bg="#EDE9F5" align="center" justify="center">
-              <FileText size={20} color="#7548b9" />
+              <FileText size={20} color="#0B72E7" />
             </Flex>
           </Flex>
         </Box>
@@ -235,7 +235,7 @@ export default function EmployeePayrollPage() {
           ) : records.length === 0 ? (
             <Flex direction="column" align="center" py={12} textAlign="center">
               <Flex w={14} h={14} borderRadius="2xl" bg="brand.50" align="center" justify="center" mb={4}>
-                <Wallet size={24} color="#7548b9" />
+                <Wallet size={24} color="#0B72E7" />
               </Flex>
               <Text fontWeight="600" color="text.heading" mb={1}>No Payslips Yet</Text>
               <Text color="text.muted" fontSize="sm">Your payslips for {year} will appear here once generated.</Text>

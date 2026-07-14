@@ -67,7 +67,7 @@ function NavItem({
             w="3px"
             h="20px"
             borderRadius="full"
-            bgGradient="linear(to-b, #7548b9, #359de9)"
+            bgGradient="linear(to-b, #0B72E7, #20C997)"
           />
         )}
         <Icon size={20} aria-hidden="true" />
@@ -202,7 +202,7 @@ function SidebarContent({
     <>
       {/* Logo area */}
       <Flex
-        h="68px"
+        h="72px"
         align="center"
         justify={collapsed ? "center" : "flex-start"}
         px={collapsed ? 0 : 5}
@@ -212,11 +212,12 @@ function SidebarContent({
       >
         <BrandMark
           showName={!collapsed}
-          logoSize="36px"
+          logoSize="40px"
           nameFontSize="lg"
           nameColor="text.heading"
-          logoRadius="xl"
-          logoShadow="soft"
+          logoRadius="lg"
+          logoShadow="none"
+          logoBorderColor="transparent"
         />
       </Flex>
 
@@ -239,7 +240,7 @@ function SidebarContent({
       {!collapsed && (
         <Box px={5} pt={2} pb={1}>
           <Text fontSize="10px" fontWeight="700" color="text.muted" textTransform="uppercase" letterSpacing="widest">
-            Menu
+            Workspace
           </Text>
         </Box>
       )}
@@ -348,9 +349,9 @@ export default function Sidebar() {
   return (
     <Box
       as="aside"
-      w={collapsed ? "72px" : "260px"}
+      w={collapsed ? "76px" : "272px"}
       minH="100vh"
-      bg="white"
+      bgGradient="linear(to-b, #FFFFFF 0%, #F8FBFD 72%, #F0FAF7 100%)"
       borderRight="1px solid"
       borderColor="surface.border"
       shadow="sidebar"

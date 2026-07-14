@@ -2,22 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 @layer base {
   html {
-    font-family: "Plus Jakarta Sans", "Manrope", system-ui, sans-serif;
+    font-family: "DM Sans", "Manrope", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    background-color: #F4F2F9;
-    color: #3B3F5C;
+    background-color: #F5F8FC;
+    color: #334E68;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: "Plus Jakarta Sans", "Manrope", system-ui, sans-serif;
+    font-family: "Manrope", "DM Sans", system-ui, sans-serif;
   }
 }
 
@@ -32,17 +32,17 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D1C3EC;
+  background: #B8CCE0;
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A58FD8;
+  background: #7FA6C8;
 }
 
 /* Focus ring consistency */
 *:focus-visible {
-  outline: 2px solid #7548b9;
+  outline: 2px solid #0B72E7;
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -60,17 +60,17 @@ button {
 
 /* Selection color */
 ::selection {
-  background: rgba(117, 72, 185, 0.15);
-  color: #1E2548;
+  background: rgba(11, 114, 231, 0.16);
+  color: #082B4C;
 }
 
 /* Gradient utilities */
 .gradient-brand {
-  background: linear-gradient(135deg, #7548b9, #359de9);
+  background: linear-gradient(135deg, #0B72E7, #20C997);
 }
 
 .gradient-brand-text {
-  background: linear-gradient(135deg, #7548b9, #359de9);
+  background: linear-gradient(135deg, #0B72E7, #20C997);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

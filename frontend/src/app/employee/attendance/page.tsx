@@ -757,7 +757,7 @@ export default function EmployeeAttendancePage() {
                 opacity={display.isMuted ? 0.65 : 1}
                 boxShadow={
                   isSelected
-                    ? "0 0 0 1px rgba(117,72,185,0.35), 0 14px 28px -20px rgba(117,72,185,0.7)"
+                    ? "0 0 0 1px rgba(11,114,231,0.35), 0 14px 28px -20px rgba(11,114,231,0.7)"
                     : "0 6px 18px -18px rgba(73, 64, 111, 0.55)"
                 }
               >
