@@ -238,7 +238,7 @@ export default function EmployeePayrollPage() {
                 <Wallet size={24} color="#0B72E7" />
               </Flex>
               <Text fontWeight="600" color="text.heading" mb={1}>No Payslips Yet</Text>
-              <Text color="text.muted" fontSize="sm">Your payslips for {year} will appear here once generated.</Text>
+              <Text color="text.muted" fontSize="sm">Your payslips for {year} will appear here after HR releases them.</Text>
             </Flex>
           ) : (
             <DataTable<PayrollRecordType> columns={columns} data={records} keyField="id" />

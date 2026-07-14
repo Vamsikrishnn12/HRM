@@ -73,6 +73,7 @@ export interface PayrollRecord {
   remarks: string | null;
   hasPayslip: boolean;
   payslipFileName: string | null;
+  isReleased: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -209,6 +210,9 @@ export const payrollApi = {
   getRecord: (id: string) => api.get<PayrollRecord>(`${BASE}/records/${id}`),
 
   emailPayslip: (id: string) => api.post(`${BASE}/records/${id}/email`),
+
+  releasePayslip: (id: string) =>
+    api.post<PayrollRecord>(`${BASE}/records/${id}/release`),
 
   downloadTemplate: () => `${API_BASE}${BASE}/template`,
 

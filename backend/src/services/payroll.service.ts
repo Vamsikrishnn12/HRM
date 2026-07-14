@@ -575,13 +575,28 @@ export class PayrollService {
       if (org?.companyName) companyName = org.companyName;
     } catch { /* use default */ }
 
-    if (transporter && env.SMTP_FROM) {
+    const sender = env.SMTP_FROM || env.SMTP_USER;
+    if (!transporter || !sender) {
+      throw ApiError.badRequest(
+        'Email service is not configured. Add SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS in the backend environment.',
+        'SMTP_NOT_CONFIGURED',
+      );
+    }
+
+    if (transporter && sender) {
       await transporter.sendMail({
-        from: `"${env.SMTP_FROM_NAME}" <${env.SMTP_FROM}>`,
+        from: `"${env.SMTP_FROM_NAME}" <${sender}>`,
         to: email,
         subject: `Your Payslip for ${periodStr}`,
         html: buildPayslipEmailHtml(empName, periodStr, Number(record.netPay), companyName),
         attachments: [{ filename: pdf.fileName, content: pdf.buffer }],
+      }).catch((error: any) => {
+        console.error('Payslip email delivery failed:', error?.message || error);
+        throw new ApiError(
+          'Unable to send the email. Verify the Gmail address and App Password in the backend environment, then redeploy.',
+          'SMTP_DELIVERY_FAILED',
+          502,
+        );
       });
 
       await this.repo.updateRecord(record.id, { status: PayrollRecordStatus.EMAILED } as any);
@@ -633,6 +648,18 @@ export class PayrollService {
     const record = await this.repo.findRecordById(recordId);
     if (!record) throw ApiError.notFound('Payroll record not found');
     return this.formatRecord(record);
+  }
+
+  async releasePayslip(recordId: string) {
+    const record = await this.repo.findRecordById(recordId);
+    if (!record) throw ApiError.notFound('Payroll record not found');
+    if (record.status === PayrollRecordStatus.DRAFT) {
+      throw ApiError.badRequest('Generate the payroll before releasing the payslip');
+    }
+    const doc = record.payslipDocument || (await this.repo.findDocByRecordId(recordId));
+    if (!doc) throw ApiError.badRequest('Payslip document is not ready');
+    await this.repo.updateDocument(doc.id, { filePath: 'released' } as any);
+    return this.formatRecord(await this.repo.findRecordById(recordId) as PayrollRecord);
   }
 
   async getEmployeePayslips(employeeId: string, year?: number) {
@@ -902,6 +929,7 @@ export class PayrollService {
           emailed++;
         }
         if (options.publishToPortal) {
+          await this.releasePayslip(record.id);
           portalPublished++;
         }
       } catch (err: any) {
@@ -1732,6 +1760,7 @@ export class PayrollService {
       remarks: r.remarks,
       hasPayslip: !!r.payslipDocument,
       payslipFileName: r.payslipDocument?.fileName || null,
+      isReleased: r.payslipDocument?.filePath === 'released',
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
     };

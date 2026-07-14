@@ -70,7 +70,8 @@ export class PayrollRepository {
       .createQueryBuilder('pr')
       .leftJoinAndSelect('pr.payslipDocument', 'pd')
       .where('pr.employeeId = :employeeId', { employeeId })
-      .andWhere('pr.status != :draft', { draft: PayrollRecordStatus.DRAFT });
+      .andWhere('pr.status != :draft', { draft: PayrollRecordStatus.DRAFT })
+      .andWhere('pd.filePath = :releasedMarker', { releasedMarker: 'released' });
     if (filters?.year) qb.andWhere('pr.year = :year', { year: filters.year });
     return qb.orderBy('pr.year', 'DESC').addOrderBy('pr.month', 'DESC').getMany();
   }

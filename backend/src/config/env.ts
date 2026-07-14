@@ -40,6 +40,17 @@ const optionalPort = z.preprocess(
   z.coerce.number().positive().optional(),
 );
 
+const optionalSmtpPassword = z.preprocess(
+  (value) => {
+    const normalized = normalizeEnvValue(value);
+    if (typeof normalized !== 'string' || normalized === '') return undefined;
+    // Gmail displays app passwords in four groups; SMTP expects the 16
+    // characters without spaces.
+    return normalized.replace(/\s+/g, '');
+  },
+  z.string().optional(),
+);
+
 const envSchema = z.object({
   // One canonical connection string for the active database.
   DATABASE_URL: z.preprocess(normalizeEnvValue, z.string().url()),
@@ -65,7 +76,7 @@ const envSchema = z.object({
   SMTP_HOST: optionalString,
   SMTP_PORT: optionalPort,
   SMTP_USER: optionalString,
-  SMTP_PASS: optionalString,
+  SMTP_PASS: optionalSmtpPassword,
   SMTP_FROM: optionalEmail,
   SMTP_FROM_NAME: z.string().default('Connect HR'),
   CHROME_PATH: optionalString,

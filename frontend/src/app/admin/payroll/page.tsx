@@ -31,6 +31,8 @@ import {
   Plus,
   FileSpreadsheet,
   Search,
+  Send,
+  CheckCircle2,
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
@@ -102,6 +104,7 @@ export default function PayrollPage() {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [emailingId, setEmailingId] = useState<string | null>(null);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
 
   const columns = useMemo<Column<PayrollRecordType>[]>(
     () => [
@@ -150,7 +153,7 @@ export default function PayrollPage() {
       {
         key: "actions" as any,
         header: "Actions",
-        width: "120px",
+        width: "220px",
         render: (row) => (
           <Flex gap={1}>
             {row.hasPayslip && (
@@ -177,11 +180,30 @@ export default function PayrollPage() {
                 />
               </Tooltip>
             )}
+            {row.hasPayslip && !row.isReleased && (
+              <Tooltip label="Release to Employee Portal" hasArrow>
+                <SecondaryButton
+                  size="xs"
+                  leftIcon={<Send size={13} />}
+                  isLoading={releasingId === row.id}
+                  onClick={() => handleRelease(row.id)}
+                >
+                  Release
+                </SecondaryButton>
+              </Tooltip>
+            )}
+            {row.isReleased && (
+              <Tooltip label="Released to employee" hasArrow>
+                <Badge colorScheme="green" display="flex" alignItems="center" gap={1} px={2} py={1} borderRadius="md">
+                  <CheckCircle2 size={12} /> Released
+                </Badge>
+              </Tooltip>
+            )}
           </Flex>
         ),
       },
     ],
-    [],
+    [downloadingId, emailingId, releasingId],
   );
 
   const handleDownload = async (id: string) => {
@@ -205,6 +227,25 @@ export default function PayrollPage() {
       toast({ title: "Email failed", description: err.message, status: "error", duration: 3500, isClosable: true });
     } finally {
       setEmailingId(null);
+    }
+  };
+
+  const handleRelease = async (id: string) => {
+    setReleasingId(id);
+    try {
+      await payrollApi.releasePayslip(id);
+      toast({
+        title: "Payslip released",
+        description: "The employee can now view and download it from their portal.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      await fetchData();
+    } catch (err: any) {
+      toast({ title: "Release failed", description: err.message, status: "error", duration: 3500, isClosable: true });
+    } finally {
+      setReleasingId(null);
     }
   };
 

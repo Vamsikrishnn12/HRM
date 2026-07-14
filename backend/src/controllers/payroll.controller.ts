@@ -162,6 +162,11 @@ export class PayrollController {
     ApiResponse.success(res, result.message, null);
   }
 
+  static async releasePayslip(req: Request, res: Response): Promise<void> {
+    const result = await payrollService.releasePayslip(req.params.id as string);
+    ApiResponse.success(res, 'Payslip released to employee portal', result);
+  }
+
   // ─── Admin: Download template ───
   static async downloadTemplate(_req: Request, res: Response): Promise<void> {
     const buffer = payrollService.generateExcelTemplate();
@@ -237,6 +242,7 @@ export class PayrollController {
     if (record.employeeId !== userId) {
       throw ApiError.forbidden('Not your payslip');
     }
+    if (!record.isReleased) throw ApiError.forbidden('This payslip has not been released yet');
     ApiResponse.success(res, 'Payslip detail', record);
   }
 
@@ -248,6 +254,7 @@ export class PayrollController {
     if (record.employeeId !== userId) {
       throw ApiError.forbidden('Not your payslip');
     }
+    if (!record.isReleased) throw ApiError.forbidden('This payslip has not been released yet');
     const pdf = await payrollService.getPayslipPdf(req.params.id as string);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${pdf.fileName}"`);

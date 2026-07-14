@@ -60,6 +60,7 @@ router.post('/generate', roleMiddleware('ADMIN'), asyncHandler(PayrollController
 router.post('/import', roleMiddleware('ADMIN'), upload.single('file'), asyncHandler(PayrollController.bulkImport));
 router.get('/import/:jobId', roleMiddleware('ADMIN'), asyncHandler(PayrollController.importStatus));
 router.post('/records/:id/email', roleMiddleware('ADMIN'), asyncHandler(PayrollController.emailPayslip));
+router.post('/records/:id/release', roleMiddleware('ADMIN'), asyncHandler(PayrollController.releasePayslip));
 
 // ═══════ Employee routes ═══════
 router.get('/my-payslips', asyncHandler(PayrollController.myPayslips));
