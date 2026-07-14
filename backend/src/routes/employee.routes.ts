@@ -3,8 +3,27 @@ import { EmployeeController } from '../controllers/employee.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+
+const PHOTO_DIR = path.resolve('uploads', 'profile-photos');
+fs.mkdirSync(PHOTO_DIR, { recursive: true });
+
+const photoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, PHOTO_DIR),
+    filename: (_req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Profile photo must be a JPG, PNG, or WEBP image'));
+  },
+});
 
 // All employee routes require ADMIN role
 router.use(authMiddleware, roleMiddleware('ADMIN'));
@@ -75,6 +94,12 @@ router.get('/', asyncHandler(EmployeeController.list));
  *         description: Employee dropdown list
  */
 router.get('/dropdown', asyncHandler(EmployeeController.dropdown));
+
+router.post(
+  '/:id/photo',
+  photoUpload.single('photo'),
+  asyncHandler(EmployeeController.uploadPhoto),
+);
 
 /**
  * @swagger

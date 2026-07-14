@@ -35,6 +35,9 @@ export class User {
   @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   empId: string | null;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  profilePhotoUrl: string | null;
+
   @Column({ type: 'enum', enum: UserRole, default: UserRole.EMPLOYEE })
   role: UserRole;
 

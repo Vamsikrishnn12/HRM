@@ -31,24 +31,10 @@ import { EmployeeStatutoryBreakdown } from '../entities/EmployeeStatutoryBreakdo
 
 const isProduction = env.NODE_ENV === 'production';
 
-// Build connection options — prefer DATABASE_URL (Neon / managed Postgres)
-const connectionOptions = env.DATABASE_URL
-  ? {
-      type: 'postgres' as const,
-      url: env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-    }
-  : {
-      type: 'postgres' as const,
-      host: env.DATABASE_HOST,
-      port: env.DATABASE_PORT,
-      username: env.DATABASE_USER,
-      password: env.DATABASE_PASSWORD,
-      database: env.DATABASE_NAME,
-    };
-
 export const AppDataSource = new DataSource({
-  ...connectionOptions,
+  type: 'postgres',
+  url: env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
   synchronize: !isProduction,
   logging: !isProduction,
   entities: [

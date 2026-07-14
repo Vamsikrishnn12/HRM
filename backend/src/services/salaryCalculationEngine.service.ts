@@ -109,10 +109,35 @@ export class SalaryCalculationEngineService {
     const overrides = this.normalizeOverrides(input.componentOverrides);
     const componentStates = this.normalizeStates(input.componentStates);
 
+    const grossExcludesEmployerPf = Boolean(config.metadata?.grossExcludesEmployerPf);
+    const pfEnabledForGross =
+      input.statutoryOverrides?.pfApplicable ??
+      Boolean(config.pfConfig?.pfApplicable && config.pfConfig?.defaultEnabled);
+    const employerPfRateForGross =
+      input.statutoryOverrides?.employerPfRate != null
+        ? input.statutoryOverrides.employerPfRate
+        : Number(config.pfConfig?.employerPfRate || 0);
+    const employerPfBasisForGross =
+      config.metadata?.employerPfBasis === 'HALF_MONTHLY_CTC'
+        ? monthlyCtc / 2
+        : monthlyCtc;
+    const employerPfExcludedAmount =
+      grossExcludesEmployerPf && pfEnabledForGross
+        ? round2(
+            toPositive(
+              applyRounding(
+                (employerPfBasisForGross * employerPfRateForGross) / 100,
+                statutoryRule,
+              ),
+            ),
+          )
+        : 0;
+    const configuredGross = round2(toPositive(monthlyCtc - employerPfExcludedAmount));
+
     const context: Record<string, number> = {
       CTC: computedAnnualCtc,
       MONTHLY_CTC: monthlyCtc,
-      GROSS: monthlyCtc,
+      GROSS: configuredGross,
       BASIC_PLUS_HRA: 0,
     };
 
@@ -133,7 +158,7 @@ export class SalaryCalculationEngineService {
       overrides,
       componentStates,
       roundingRule: componentRule,
-      residualBasis: 'MONTHLY_CTC',
+      residualBasis: 'GROSS',
     });
 
     const gross = round2(
@@ -378,6 +403,11 @@ export class SalaryCalculationEngineService {
           ? overrides.employerPfRate
           : Number(config.pfConfig.employerPfRate || 0);
       const pensionRate = Number(config.pfConfig.pensionRate || 0);
+      const employerPfBasisMode = String(config.metadata?.employerPfBasis || '');
+      const employerPfWage =
+        employerPfBasisMode === 'HALF_MONTHLY_CTC'
+          ? Number(context.MONTHLY_CTC || 0) / 2
+          : limitedWage;
 
       const employeePf =
         config.pfConfig.pfCalculationMode === StatutoryCalculationMode.FIXED
@@ -386,7 +416,7 @@ export class SalaryCalculationEngineService {
       const employerPf =
         config.pfConfig.pfCalculationMode === StatutoryCalculationMode.FIXED
           ? Number(config.pfConfig.employerPfFixedAmount || 0)
-          : (limitedWage * employerRate) / 100;
+          : (employerPfWage * employerRate) / 100;
       const pension =
         config.pfConfig.pfCalculationMode === StatutoryCalculationMode.FIXED
           ? Number(config.pfConfig.pensionFixedAmount || 0)
@@ -418,9 +448,11 @@ export class SalaryCalculationEngineService {
           config.pfConfig.pfCalculationMode === StatutoryCalculationMode.PERCENTAGE
             ? employerRate
             : null,
-        basisAmount: round2(limitedWage),
-        wageBasis: config.pfConfig.pfWageBasis,
-        metadata: {},
+        basisAmount: round2(employerPfWage),
+        wageBasis: employerPfBasisMode || config.pfConfig.pfWageBasis,
+        metadata: {
+          excludedFromGross: Boolean(config.metadata?.grossExcludesEmployerPf),
+        },
       });
       statutory.push({
         statutoryType: StatutoryType.PF,

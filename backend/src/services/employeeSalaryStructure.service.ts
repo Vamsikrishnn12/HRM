@@ -36,9 +36,11 @@ interface SaveEmployeeSalaryStructureInput extends SalaryPreviewInput {
   overrideEnabled?: boolean;
   customComponents?: CustomEmployeeComponentInput[];
   bankingInfo?: {
+    accountHolderName?: string;
     bankName?: string;
     accountNumber?: string;
     ifscCode?: string;
+    mobileNumber?: string;
     branchName?: string;
     panNumber?: string;
     uanNumber?: string;
@@ -210,8 +212,10 @@ export class EmployeeSalaryStructureService {
       pfEmployerContribution: pfEmployer,
       taxRegime: structure.taxRegime,
       bankName: bankingInfo?.bankName || null,
+      accountHolderName: bankingInfo?.accountHolderName || null,
       accountNumber: bankingInfo?.accountNumber || null,
       ifscCode: bankingInfo?.ifscCode || null,
+      bankMobileNumber: bankingInfo?.mobileNumber || null,
       branchName: bankingInfo?.branchName || null,
       panNumber: bankingInfo?.panNumber || null,
       uanNumber: bankingInfo?.uanNumber || null,

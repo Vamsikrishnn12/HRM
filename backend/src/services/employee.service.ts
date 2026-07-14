@@ -6,6 +6,8 @@ import { EmailService } from './email.service';
 import { hashPassword } from '../utils/password';
 import { ApiError } from '../utils/apiError';
 import { UserRole } from '../entities/User.entity';
+import fs from 'fs';
+import path from 'path';
 
 interface CreateEmployeeInput {
   firstName: string;
@@ -148,6 +150,7 @@ export class EmployeeService {
         lastName: p.user.lastName,
         isActive: p.user.isActive,
         empId: p.user.empId,
+        profilePhotoUrl: p.user.profilePhotoUrl,
         officeLocationRequired: p.user.officeLocationRequired,
         officeLatitude: p.user.officeLatitude,
         officeLongitude: p.user.officeLongitude,
@@ -190,6 +193,7 @@ export class EmployeeService {
         lastName: profile.user.lastName,
         isActive: profile.user.isActive,
         empId: profile.user.empId,
+        profilePhotoUrl: profile.user.profilePhotoUrl,
         officeLocationRequired: profile.user.officeLocationRequired,
         officeLatitude: profile.user.officeLatitude,
         officeLongitude: profile.user.officeLongitude,
@@ -258,5 +262,24 @@ export class EmployeeService {
     }
 
     return this.getEmployee(id);
+  }
+
+  async updateProfilePhoto(id: string, file: Express.Multer.File) {
+    const profile = await this.employeeRepo.findById(id);
+    if (!profile) {
+      fs.unlink(file.path, () => undefined);
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+
+    const previousPhoto = profile.user.profilePhotoUrl;
+    const profilePhotoUrl = `/uploads/profile-photos/${file.filename}`;
+    await this.userRepo.update(profile.userId, { profilePhotoUrl });
+
+    if (previousPhoto?.startsWith('/uploads/profile-photos/')) {
+      const previousPath = path.resolve(previousPhoto.replace(/^\//, ''));
+      fs.unlink(previousPath, () => undefined);
+    }
+
+    return { profilePhotoUrl };
   }
 }

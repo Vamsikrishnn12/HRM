@@ -7,6 +7,21 @@ import { ApiError } from '../utils/apiError';
 const personalDetailsService = new PersonalDetailsService();
 
 export class PersonalDetailsController {
+  static async getMe(req: Request, res: Response): Promise<void> {
+    const result = await personalDetailsService.getByUserId(req.user!.userId);
+    ApiResponse.success(res, 'Personal details retrieved', result);
+  }
+
+  static async saveMe(req: Request, res: Response): Promise<void> {
+    const parsed = savePersonalSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`);
+      throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
+    }
+    const result = await personalDetailsService.savePersonal(req.user!.userId, parsed.data);
+    ApiResponse.success(res, 'Personal details saved', result);
+  }
+
   static async list(_req: Request, res: Response): Promise<void> {
     const result = await personalDetailsService.listAll();
     ApiResponse.success(res, 'Personal details retrieved', result);

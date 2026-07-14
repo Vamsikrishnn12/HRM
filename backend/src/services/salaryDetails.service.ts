@@ -14,9 +14,11 @@ interface SalaryInput {
   pfEmployeeContribution?: number;
   pfEmployerContribution?: number;
   taxRegime?: string;
+  accountHolderName?: string;
   accountNumber?: string;
   ifscCode?: string;
   bankName?: string;
+  bankMobileNumber?: string;
   branchName?: string;
   panNumber?: string;
   uanNumber?: string;
@@ -73,6 +75,8 @@ export class SalaryDetailsService {
       accountNumber: input.accountNumber || null,
       ifscCode: input.ifscCode || null,
       bankName: input.bankName || null,
+      accountHolderName: input.accountHolderName || null,
+      bankMobileNumber: input.bankMobileNumber || null,
       branchName: input.branchName || null,
       panNumber: input.panNumber || null,
       uanNumber: input.uanNumber || null,
@@ -101,6 +105,8 @@ export class SalaryDetailsService {
       accountNumber: input.accountNumber || null,
       ifscCode: input.ifscCode || null,
       bankName: input.bankName || null,
+      accountHolderName: input.accountHolderName || null,
+      bankMobileNumber: input.bankMobileNumber || null,
       branchName: input.branchName || null,
       panNumber: input.panNumber || null,
       uanNumber: input.uanNumber || null,
@@ -160,6 +166,8 @@ export class SalaryDetailsService {
       accountNumber: r.accountNumber || '',
       ifscCode: r.ifscCode || '',
       bankName: r.bankName || '',
+      accountHolderName: r.accountHolderName || '',
+      bankMobileNumber: r.bankMobileNumber || '',
       branchName: r.branchName || '',
       panNumber: r.panNumber || '',
       uanNumber: r.uanNumber || '',

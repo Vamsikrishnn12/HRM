@@ -36,12 +36,14 @@ export class EmailService {
     password: string,
     firstName: string,
   ): Promise<void> {
-    const subject = 'Your HRMS Account Credentials';
+    const subject = 'Welcome to Connect HR - Your account is ready';
     const html = this.loadTemplate('credentials', {
       firstName,
       empId,
       email,
       password,
+      loginUrl: `${env.APP_URL}/login`,
+      personalDetailsUrl: `${env.APP_URL}/employee/personal-details`,
       year: new Date().getFullYear().toString(),
     });
 
@@ -51,6 +53,13 @@ export class EmailService {
         to: email,
         subject,
         html,
+        attachments: [
+          {
+            filename: 'connecthr-logo.png',
+            path: path.join(TEMPLATES_DIR, 'logobg.png'),
+            cid: 'connecthr-logo',
+          },
+        ],
       });
       console.log('Credentials email sent', { email, empId });
     } else {

@@ -52,4 +52,13 @@ export class EmployeeController {
     const result = await employeeService.updateEmployee(id, parsed.data);
     ApiResponse.success(res, 'Employee updated successfully', result);
   }
+
+  static async uploadPhoto(req: Request, res: Response): Promise<void> {
+    const id = req.params.id as string;
+    if (!req.file) {
+      throw ApiError.badRequest('Please select a profile photo', 'PHOTO_REQUIRED');
+    }
+    const result = await employeeService.updateProfilePhoto(id, req.file);
+    ApiResponse.success(res, 'Profile photo updated successfully', result);
+  }
 }

@@ -21,9 +21,11 @@ export const saveSalarySchema = z.object({
   pfEmployerContribution: z.number().min(0).optional().default(0),
   taxRegime: z.string().max(10).optional().default('New'),
   // Banking
+  accountHolderName: z.string().max(120).optional().default(''),
   accountNumber: z.string().max(30).optional().default(''),
   ifscCode: z.string().max(20).optional().default(''),
   bankName: z.string().max(100).optional().default(''),
+  bankMobileNumber: z.string().max(15).optional().default(''),
   branchName: z.string().max(100).optional().default(''),
   panNumber: z.string().max(10).optional().default(''),
   uanNumber: z.string().max(20).optional().default(''),

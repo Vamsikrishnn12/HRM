@@ -6,6 +6,9 @@ import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
+router.get('/me', authMiddleware, roleMiddleware('EMPLOYEE'), asyncHandler(PersonalDetailsController.getMe));
+router.put('/me', authMiddleware, roleMiddleware('EMPLOYEE'), asyncHandler(PersonalDetailsController.saveMe));
+
 router.use(authMiddleware, roleMiddleware('ADMIN'));
 
 /**

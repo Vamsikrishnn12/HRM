@@ -66,6 +66,12 @@ export class SalaryDetails {
   @Column({ type: 'varchar', length: 100, nullable: true })
   bankName: string | null;
 
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  accountHolderName: string | null;
+
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  bankMobileNumber: string | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   branchName: string | null;
 

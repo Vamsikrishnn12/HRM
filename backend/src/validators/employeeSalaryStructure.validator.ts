@@ -39,9 +39,11 @@ const customComponentSchema = z.object({
 });
 
 const bankingInfoSchema = z.object({
+  accountHolderName: z.string().max(120).optional(),
   bankName: z.string().max(100).optional(),
   accountNumber: z.string().max(30).optional(),
   ifscCode: z.string().max(20).optional(),
+  mobileNumber: z.string().max(15).optional(),
   branchName: z.string().max(100).optional(),
   panNumber: z.string().max(10).optional(),
   uanNumber: z.string().max(20).optional(),
