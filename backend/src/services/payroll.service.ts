@@ -128,6 +128,15 @@ export class PayrollService {
     // Check for duplicate
     const existing = await this.repo.findExistingRecord(input.employeeId, input.month, input.year);
     if (existing && existing.status !== PayrollRecordStatus.DRAFT) {
+      // A serverless PDF error may have saved the payroll record before its
+      // document metadata. Repair that partial generation safely on retry.
+      if (!existing.payslipDocument) {
+        await this.generateAndAttachPdf(
+          existing,
+          (existing.employeeSnapshot || {}) as Record<string, unknown>,
+        );
+        return this.formatRecord(await this.repo.findRecordById(existing.id) as PayrollRecord);
+      }
       throw ApiError.conflict(
         `Payroll already generated for ${user.firstName} ${user.lastName} — ${input.month}/${input.year}`,
         'PAYROLL_DUPLICATE',
@@ -468,19 +477,20 @@ export class PayrollService {
     };
 
     const fileName = `payslip_${String(snapshot.employeeCode || record.employeeId).replace(/[^a-zA-Z0-9]/g, '_')}_${record.month}_${record.year}.pdf`;
-    const result = await generatePayslipPdf(data, fileName);
+    // The PDF is generated on demand by getPayslipPdf(). Keeping only metadata
+    // here avoids depending on a temporary serverless filesystem during save.
 
     // Check if document already exists
     const existingDoc = await this.repo.findDocByRecordId(record.id);
     if (existingDoc) {
       await this.repo.updateDocument(existingDoc.id, {
-        fileName: result.fileName,
+        fileName,
         filePath: 'generated-on-demand',
       } as any);
     } else {
       await this.repo.createDocument({
         payrollRecordId: record.id,
-        fileName: result.fileName,
+        fileName,
         filePath: 'generated-on-demand',
       });
     }
