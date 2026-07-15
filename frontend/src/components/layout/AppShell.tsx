@@ -3,6 +3,7 @@
 import { Box, Flex, useBreakpointValue } from "@chakra-ui/react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import MobileBottomNav from "./MobileBottomNav";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import type { ReactNode } from "react";
 
@@ -25,10 +26,11 @@ function AppContent({ children }: { children: ReactNode }) {
         minW={0}
       >
         <Topbar />
-        <Box as="main" p={{ base: 4, md: 6, lg: 7 }} maxW="1500px" mx="auto" w="100%">
+        <Box as="main" p={{ base: 4, md: 6, lg: 7 }} pb={{ base: "calc(88px + env(safe-area-inset-bottom))", lg: 7 }} maxW="1500px" mx="auto" w="100%">
           {children}
         </Box>
       </Box>
+      <MobileBottomNav />
     </Flex>
   );
 }

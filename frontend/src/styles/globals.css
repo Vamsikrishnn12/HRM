@@ -9,15 +9,27 @@
     font-family: "DM Sans", "Manrope", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100%;
+    background-color: #F5F8FC;
   }
 
   body {
     background-color: #F5F8FC;
     color: #334E68;
+    min-height: 100%;
+    margin: 0;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: "Manrope", "DM Sans", system-ui, sans-serif;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
   }
 }
 
