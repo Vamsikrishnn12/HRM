@@ -39,3 +39,9 @@ export const updateEmployeeSchema = z.object({
   officeLongitude: z.number().min(-180).max(180).nullable().optional(),
   officeRadiusMeters: z.number().positive().nullable().optional(),
 });
+
+export const offboardEmployeeSchema = z.object({
+  lastWorkingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Last working date must be YYYY-MM-DD'),
+  reason: z.enum(['RESIGNED', 'TERMINATED', 'CONTRACT_ENDED', 'ABSCONDED', 'OTHER']),
+  notes: z.string().trim().max(1000).optional(),
+});

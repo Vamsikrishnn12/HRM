@@ -25,6 +25,7 @@ import {
   ModalBody,
   ModalCloseButton,
   ModalContent,
+  ModalFooter,
   ModalHeader,
   ModalOverlay,
   Select,
@@ -32,6 +33,7 @@ import {
   Spinner,
   Switch,
   Text,
+  Textarea,
   useDisclosure,
   useToast,
   VStack,
@@ -50,6 +52,8 @@ import {
   Search,
   Upload,
   UserRound,
+  UserMinus,
+  AlertTriangle,
   X,
 } from "lucide-react";
 import { documentsApi, employeeApi } from "@/api";
@@ -237,8 +241,8 @@ function EmployeeDetailsModal({ isOpen, onClose, employee }: { isOpen: boolean; 
             <Box pb={1}>
               <HStack flexWrap="wrap">
                 <Text fontSize="xl" fontWeight="800" color="text.heading">{fullName}</Text>
-                <Badge bg={employee.user.isActive ? "accent.50" : "red.50"} color={employee.user.isActive ? "accent.700" : "red.600"}>
-                  {employee.user.isActive ? "Active" : "Inactive"}
+                <Badge bg={employee.employmentStatus === "OFFBOARDED" ? "orange.50" : employee.user.isActive ? "accent.50" : "red.50"} color={employee.employmentStatus === "OFFBOARDED" ? "orange.700" : employee.user.isActive ? "accent.700" : "red.600"}>
+                  {employee.employmentStatus === "OFFBOARDED" ? "Offboarded" : employee.user.isActive ? "Active" : "Inactive"}
                 </Badge>
               </HStack>
               <Text fontSize="sm" color="text.muted" mt={1}>{employee.designation} · {employee.department}</Text>
@@ -254,6 +258,14 @@ function EmployeeDetailsModal({ isOpen, onClose, employee }: { isOpen: boolean; 
             <DetailItem icon={<CalendarDays size={16} />} label="Date of joining" value={employee.dateOfJoining} />
             <DetailItem icon={<UserRound size={16} />} label="Reporting manager" value={employee.reportingManager} />
             <DetailItem icon={<CalendarDays size={16} />} label="Shift schedule" value={employee.shiftSchedule} />
+            {employee.employmentStatus === "OFFBOARDED" && (
+              <>
+                <DetailItem icon={<UserMinus size={16} />} label="Employment status" value="Left company / Offboarded" />
+                <DetailItem icon={<CalendarDays size={16} />} label="Last working date" value={employee.lastWorkingDate} />
+                <DetailItem icon={<FileText size={16} />} label="Offboarding reason" value={employee.offboardingReason?.replaceAll("_", " ")} />
+                <DetailItem icon={<FileText size={16} />} label="Offboarding notes" value={employee.offboardingNotes} />
+              </>
+            )}
           </SimpleGrid>
 
           <Divider my={5} />
@@ -303,6 +315,13 @@ function EmployeeForm({
   });
   const [isActive, setIsActive] = useState(emp?.user.isActive ?? true);
   const [saving, setSaving] = useState(false);
+  const [offboarding, setOffboarding] = useState(false);
+  const [offboardForm, setOffboardForm] = useState({
+    lastWorkingDate: new Date().toISOString().slice(0, 10),
+    reason: "RESIGNED" as "RESIGNED" | "TERMINATED" | "CONTRACT_ENDED" | "ABSCONDED" | "OTHER",
+    notes: "",
+  });
+  const offboardModal = useDisclosure();
   const toast = useToast();
 
   const updateForm = (key: keyof AddEmployeeFormState, value: string | boolean) => setForm((old) => ({ ...old, [key]: value }));
@@ -379,6 +398,29 @@ function EmployeeForm({
     }
   };
 
+  const offboardEmployee = async () => {
+    if (!emp || !offboardForm.lastWorkingDate || !offboardForm.reason) return;
+    setOffboarding(true);
+    try {
+      await employeeApi.offboard(emp.id, {
+        lastWorkingDate: offboardForm.lastWorkingDate,
+        reason: offboardForm.reason,
+        notes: offboardForm.notes || undefined,
+      });
+      toast({
+        title: "Employee offboarded",
+        description: "The employment record was saved and login access was disabled.",
+        status: "success",
+      });
+      offboardModal.onClose();
+      onDone();
+    } catch (error: any) {
+      toast({ title: "Could not offboard employee", description: error?.message, status: "error" });
+    } finally {
+      setOffboarding(false);
+    }
+  };
+
   return (
     <Box>
       <Flex justify="space-between" align="center" mb={4}>
@@ -443,8 +485,8 @@ function EmployeeForm({
         <Text fontWeight="800" color="text.heading" mb={4}>Login access</Text>
         {mode === "edit" && (
           <FormControl display="flex" alignItems="center" justifyContent="space-between" mb={4} p={4} bg="surface.bg" borderRadius="lg">
-            <Box><FormLabel mb={0}>Account active</FormLabel><Text fontSize="xs" color="text.muted">Allow this employee to sign in</Text></Box>
-            <Switch isChecked={isActive} onChange={(e) => setIsActive(e.target.checked)} colorScheme="brand" />
+            <Box><FormLabel mb={0}>Account active</FormLabel><Text fontSize="xs" color="text.muted">{emp?.employmentStatus === "OFFBOARDED" ? "Offboarded employees cannot sign in" : "Allow this employee to sign in"}</Text></Box>
+            <Switch isChecked={isActive} isDisabled={emp?.employmentStatus === "OFFBOARDED"} onChange={(e) => setIsActive(e.target.checked)} colorScheme="brand" />
           </FormControl>
         )}
         <Checkbox isChecked={form.allowLoginOnlyInsideOffice} onChange={(e) => updateForm("allowLoginOnlyInsideOffice", e.target.checked)} colorScheme="brand">
@@ -460,8 +502,61 @@ function EmployeeForm({
       </SectionCard>
 
       <SectionCard>
-        <Flex justify="flex-end" gap={3}><SecondaryButton onClick={onCancel}>Cancel</SecondaryButton><PrimaryButton onClick={save} isLoading={saving}>{mode === "edit" ? "Save changes" : "Create employee"}</PrimaryButton></Flex>
+        <Flex justify="space-between" gap={3} direction={{ base: "column", sm: "row" }}>
+          <Box>
+            {mode === "edit" && emp?.employmentStatus !== "OFFBOARDED" && (
+              <SecondaryButton leftIcon={<UserMinus size={16} />} color="red.600" borderColor="red.200" onClick={offboardModal.onOpen}>
+                Offboard employee
+              </SecondaryButton>
+            )}
+            {mode === "edit" && emp?.employmentStatus === "OFFBOARDED" && (
+              <Badge colorScheme="orange" px={3} py={2} borderRadius="md">Employee left company on {emp.lastWorkingDate}</Badge>
+            )}
+          </Box>
+          <Flex justify="flex-end" gap={3}><SecondaryButton onClick={onCancel}>Cancel</SecondaryButton><PrimaryButton onClick={save} isLoading={saving}>{mode === "edit" ? "Save changes" : "Create employee"}</PrimaryButton></Flex>
+        </Flex>
       </SectionCard>
+
+      <Modal isOpen={offboardModal.isOpen} onClose={offboardModal.onClose} isCentered>
+        <ModalOverlay bg="rgba(6,31,58,.58)" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl">
+          <ModalHeader>
+            <HStack color="red.600"><AlertTriangle size={20} /><Text>Offboard employee</Text></HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Alert status="warning" borderRadius="lg" mb={5}>
+              <AlertIcon />
+              <AlertDescription>
+                This marks {editRow?.name} as having left the company and immediately disables login access. Existing HR records will remain saved.
+              </AlertDescription>
+            </Alert>
+            <VStack spacing={4} align="stretch">
+              <Field label="Last working date" required>
+                <StyledInput type="date" max={new Date().toISOString().slice(0, 10)} value={offboardForm.lastWorkingDate} onChange={(e) => setOffboardForm((form) => ({ ...form, lastWorkingDate: e.target.value }))} />
+              </Field>
+              <Field label="Reason" required>
+                <StyledSelect value={offboardForm.reason} onChange={(e) => setOffboardForm((form) => ({ ...form, reason: e.target.value as typeof form.reason }))}>
+                  <option value="RESIGNED">Resigned</option>
+                  <option value="TERMINATED">Terminated</option>
+                  <option value="CONTRACT_ENDED">Contract ended</option>
+                  <option value="ABSCONDED">Absconded</option>
+                  <option value="OTHER">Other</option>
+                </StyledSelect>
+              </Field>
+              <Field label="Notes (optional)">
+                <Textarea value={offboardForm.notes} onChange={(e) => setOffboardForm((form) => ({ ...form, notes: e.target.value }))} placeholder="Exit details, handover notes, or other comments" resize="vertical" />
+              </Field>
+            </VStack>
+          </ModalBody>
+          <ModalFooter gap={3}>
+            <SecondaryButton onClick={offboardModal.onClose}>Cancel</SecondaryButton>
+            <PrimaryButton bg="red.600" _hover={{ bg: "red.700" }} leftIcon={<UserMinus size={16} />} onClick={offboardEmployee} isLoading={offboarding}>
+              Confirm offboarding
+            </PrimaryButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }
@@ -478,7 +573,12 @@ function EmployeeCard({ row, onView, onEdit }: { row: EmployeeRow; onView: () =>
             <Text fontWeight="800" color="text.heading" noOfLines={1}>{row.name}</Text>
             <Text fontSize="sm" color="text.muted" noOfLines={1}>{row.designation}</Text>
             <HStack mt={2} spacing={2} flexWrap="wrap">
-              <Badge bg={row.status === "Active" ? "accent.50" : "red.50"} color={row.status === "Active" ? "accent.700" : "red.600"}>{row.status}</Badge>
+              <Badge
+                bg={row.status === "Active" ? "accent.50" : row.status === "Offboarded" ? "orange.50" : "red.50"}
+                color={row.status === "Active" ? "accent.700" : row.status === "Offboarded" ? "orange.700" : "red.600"}
+              >
+                {row.status === "Offboarded" ? "Left company" : row.status}
+              </Badge>
               <Badge variant="outline" borderColor="brand.200" color="brand.700">{row.department}</Badge>
             </HStack>
           </Box>
@@ -521,7 +621,7 @@ export default function EmployeeDirectory() {
         email: employee.user.email,
         department: employee.department,
         designation: employee.designation,
-        status: employee.user.isActive ? "Active" : "Inactive",
+        status: employee.employmentStatus === "OFFBOARDED" ? "Offboarded" : employee.user.isActive ? "Active" : "Inactive",
         joinDate: employee.dateOfJoining,
         raw: employee,
       })));

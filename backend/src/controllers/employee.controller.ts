@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { EmployeeService } from '../services/employee.service';
 import {
   createEmployeeSchema,
+  offboardEmployeeSchema,
   updateEmployeeSchema,
 } from '../validators/employee.validator';
 import { ApiResponse } from '../utils/apiResponse';
@@ -51,6 +52,19 @@ export class EmployeeController {
 
     const result = await employeeService.updateEmployee(id, parsed.data);
     ApiResponse.success(res, 'Employee updated successfully', result);
+  }
+
+  static async offboard(req: Request, res: Response): Promise<void> {
+    const id = req.params.id as string;
+    const parsed = offboardEmployeeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw ApiError.badRequest(
+        parsed.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
+        'VALIDATION_ERROR',
+      );
+    }
+    const result = await employeeService.offboardEmployee(id, parsed.data);
+    ApiResponse.success(res, 'Employee offboarded successfully', result);
   }
 
   static async uploadPhoto(req: Request, res: Response): Promise<void> {

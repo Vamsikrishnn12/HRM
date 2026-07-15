@@ -13,6 +13,7 @@ import {
 import { LeavePolicySlab } from '../entities/LeavePolicySlab.entity';
 import { AttendanceService } from './attendance.service';
 import { AlternateSaturdayRule } from '../entities/OrgSettings.entity';
+import { NotificationService } from './notification.service';
 
 // ── Input types ──
 
@@ -34,6 +35,7 @@ export class LeaveService {
   private settingsRepo: SettingsRepository;
   private emailService: EmailService;
   private attendanceService: AttendanceService;
+  private notificationService: NotificationService;
 
   constructor() {
     this.leaveRepo = new LeaveRepository();
@@ -41,6 +43,7 @@ export class LeaveService {
     this.settingsRepo = new SettingsRepository();
     this.emailService = new EmailService();
     this.attendanceService = new AttendanceService();
+    this.notificationService = new NotificationService();
   }
 
   // ══════════════════════════════════════════════════════
@@ -506,6 +509,13 @@ export class LeaveService {
     this.sendLeaveAppliedEmails(profile.user, request).catch((err) =>
       console.error('Failed to send leave applied email', (err as Error).message),
     );
+    const employeeName = `${profile.user.firstName} ${profile.user.lastName}`;
+    this.notificationService.notifyAdmins(
+      'LEAVE_REQUEST',
+      'New leave request',
+      `${employeeName} applied for ${String(leaveType).replace(/_/g, ' ')} leave.`,
+      '/admin/leave',
+    ).catch((err) => console.error('Failed to create leave notification', err.message));
 
     return this.formatRequest(request, profile.user);
   }
@@ -524,6 +534,12 @@ export class LeaveService {
 
     request.status = LeaveStatus.CANCELLED;
     await this.leaveRepo.saveRequest(request);
+    this.notificationService.notifyAdmins(
+      'LEAVE_CANCELLED',
+      'Leave request cancelled',
+      'An employee cancelled a pending leave request.',
+      '/admin/leave',
+    ).catch((err) => console.error('Failed to create leave notification', err.message));
     return this.formatRequest(request);
   }
 
@@ -710,6 +726,13 @@ export class LeaveService {
         console.error('Failed to send approval email', (err as Error).message),
       );
     }
+    this.notificationService.notifyUser(
+      request.employeeId,
+      'LEAVE_APPROVED',
+      'Leave request approved',
+      `Your leave request was approved as ${String(approvedLeaveType).replace(/_/g, ' ')}.`,
+      '/employee/leave',
+    ).catch((err) => console.error('Failed to create leave notification', err.message));
 
     return this.formatRequest(request, profile?.user);
   }
@@ -736,6 +759,13 @@ export class LeaveService {
         console.error('Failed to send rejection email', (err as Error).message),
       );
     }
+    this.notificationService.notifyUser(
+      request.employeeId,
+      'LEAVE_REJECTED',
+      'Leave request rejected',
+      remarks ? `Your leave request was rejected: ${remarks}` : 'Your leave request was rejected by HR.',
+      '/employee/leave',
+    ).catch((err) => console.error('Failed to create leave notification', err.message));
 
     return this.formatRequest(request, profile?.user);
   }
@@ -787,6 +817,14 @@ export class LeaveService {
           console.error('Failed to send override status email', (err as Error).message),
         );
       }
+      const approved = request.status === LeaveStatus.APPROVED;
+      this.notificationService.notifyUser(
+        request.employeeId,
+        approved ? 'LEAVE_APPROVED' : 'LEAVE_REJECTED',
+        approved ? 'Leave request approved' : 'Leave request rejected',
+        approved ? 'HR approved your leave request.' : 'HR rejected your leave request.',
+        '/employee/leave',
+      ).catch((err) => console.error('Failed to create leave notification', err.message));
     }
 
     return this.formatRequest(request);

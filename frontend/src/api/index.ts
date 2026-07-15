@@ -6,6 +6,8 @@ export { leaveApi } from "./leave.api";
 export { payrollApi } from "./payroll.api";
 export { dashboardApi } from "./dashboard.api";
 export { profileApi, sharedDashboardApi } from "./profile.api";
+export { notificationApi } from "./notification.api";
+export type { NotificationItem } from "./notification.api";
 export type { DashboardSummary } from "./dashboard.api";
 export type { ProfileData, UpcomingBirthday, UpcomingHoliday } from "./profile.api";
 export type { OrgSettings, Holiday } from "./settings.api";

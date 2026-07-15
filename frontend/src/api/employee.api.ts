@@ -29,6 +29,12 @@ export const employeeApi = {
   update: (id: string, payload: Record<string, unknown>) =>
     api.patch(`/employees/${id}`, payload),
 
+  offboard: (id: string, payload: {
+    lastWorkingDate: string;
+    reason: "RESIGNED" | "TERMINATED" | "CONTRACT_ENDED" | "ABSCONDED" | "OTHER";
+    notes?: string;
+  }) => api.post<EmployeeFromAPI>(`/employees/${id}/offboard`, payload),
+
   uploadPhoto: (id: string, photo: File) => {
     const formData = new FormData();
     formData.append("photo", photo);
@@ -114,4 +120,7 @@ export const documentsApi = {
 
   remove: (id: string) =>
     api.delete(`/documents/${id}`),
+
+  download: (id: string, fileName: string) =>
+    api.downloadBlob(`/documents/${id}/download`, fileName),
 };

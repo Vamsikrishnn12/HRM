@@ -28,6 +28,7 @@ import { SalaryTemplateComponent } from '../entities/SalaryTemplateComponent.ent
 import { EmployeeSalaryStructure } from '../entities/EmployeeSalaryStructure.entity';
 import { EmployeeSalaryComponent } from '../entities/EmployeeSalaryComponent.entity';
 import { EmployeeStatutoryBreakdown } from '../entities/EmployeeStatutoryBreakdown.entity';
+import { Notification } from '../entities/Notification.entity';
 
 const isProduction = env.NODE_ENV === 'production';
 
@@ -66,7 +67,8 @@ export const AppDataSource = new DataSource({
     EmployeeSalaryStructure,
     EmployeeSalaryComponent,
     EmployeeStatutoryBreakdown,
+    Notification,
   ],
-  migrations: ['src/migrations/*.ts', 'dist/migrations/*.js'],
+  migrations: isProduction ? ['dist/migrations/*.js'] : ['src/migrations/*.ts'],
   subscribers: [],
 });

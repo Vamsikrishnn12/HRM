@@ -11,6 +11,26 @@ import { transporter } from '../config/mail';
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 
 export class EmailService {
+  private getSender(): string | undefined {
+    return env.SMTP_FROM || env.SMTP_USER;
+  }
+
+  private async sendMail(options: Record<string, unknown>): Promise<void> {
+    const sender = this.getSender();
+    if (!transporter || !sender) {
+      throw new Error('SMTP is not configured in the backend environment');
+    }
+    try {
+      await transporter.sendMail({
+        ...options,
+        from: `"${env.SMTP_FROM_NAME}" <${sender}>`,
+      });
+    } catch (error: any) {
+      const code = error?.code || error?.responseCode || 'SMTP_ERROR';
+      throw new Error(`Email delivery failed (${code}). Verify Gmail App Password and SMTP settings.`);
+    }
+  }
+
   private loadTemplate(
     templateName: string,
     variables: Record<string, string>,
@@ -47,9 +67,8 @@ export class EmailService {
       year: new Date().getFullYear().toString(),
     });
 
-    if (transporter && env.SMTP_FROM) {
-      await transporter.sendMail({
-        from: `"${env.SMTP_FROM_NAME}" <${env.SMTP_FROM}>`,
+    if (transporter && this.getSender()) {
+      await this.sendMail({
         to: email,
         subject,
         html,
@@ -78,9 +97,8 @@ export class EmailService {
   ): Promise<void> {
     const html = this.loadTemplate(templateName, variables);
 
-    if (transporter && env.SMTP_FROM) {
-      await transporter.sendMail({
-        from: `"${env.SMTP_FROM_NAME}" <${env.SMTP_FROM}>`,
+    if (transporter && this.getSender()) {
+      await this.sendMail({
         to,
         subject,
         html,

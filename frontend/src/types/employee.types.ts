@@ -8,6 +8,11 @@ export interface EmployeeFromAPI {
   dateOfJoining: string;
   reportingManager: string;
   shiftSchedule: string;
+  employmentStatus: "ACTIVE" | "OFFBOARDED";
+  lastWorkingDate: string | null;
+  offboardingReason: string | null;
+  offboardingNotes: string | null;
+  offboardedAt: string | null;
   user: {
     id: string;
     email: string;
@@ -31,7 +36,7 @@ export interface EmployeeRow {
   email: string;
   department: string;
   designation: string;
-  status: "Active" | "Inactive";
+  status: "Active" | "Inactive" | "Offboarded";
   joinDate: string;
   raw: EmployeeFromAPI;
 }

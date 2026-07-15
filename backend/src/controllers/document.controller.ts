@@ -2,8 +2,10 @@ import { Request, Response } from 'express';
 import { DocumentService } from '../services/document.service';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
+import { NotificationService } from '../services/notification.service';
 
 const documentService = new DocumentService();
+const notificationService = new NotificationService();
 
 export class DocumentController {
   static async list(_req: Request, res: Response): Promise<void> {
@@ -25,6 +27,8 @@ export class DocumentController {
     }
     const documentType = (req.body.documentType as string) || 'Other';
     const result = await documentService.upload(userId, files, documentType);
+    notificationService.notifyUser(userId, 'DOCUMENTS_UPDATED', 'Employee documents updated', `HR uploaded ${documentType} document${files.length > 1 ? 's' : ''} to your record.`, '/employee/profile')
+      .catch((err) => console.error('Failed to create document notification', err.message));
     ApiResponse.success(res, 'Documents uploaded', result);
   }
 
@@ -32,5 +36,19 @@ export class DocumentController {
     const id = req.params.id as string;
     await documentService.deleteDocument(id);
     ApiResponse.success(res, 'Document deleted', null);
+  }
+
+  static async view(req: Request, res: Response): Promise<void> {
+    const file = await documentService.getFile(req.params.id as string);
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.originalName)}"`);
+    res.send(file.buffer);
+  }
+
+  static async download(req: Request, res: Response): Promise<void> {
+    const file = await documentService.getFile(req.params.id as string);
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalName)}"`);
+    res.send(file.buffer);
   }
 }

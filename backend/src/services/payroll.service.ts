@@ -28,6 +28,7 @@ import {
   StatutoryComponentSide,
   StatutoryType,
 } from '../salary/salary.enums';
+import { NotificationService } from './notification.service';
 
 interface AttendanceComputation {
   workingDays: number;
@@ -659,6 +660,14 @@ export class PayrollService {
     const doc = record.payslipDocument || (await this.repo.findDocByRecordId(recordId));
     if (!doc) throw ApiError.badRequest('Payslip document is not ready');
     await this.repo.updateDocument(doc.id, { filePath: 'released' } as any);
+    const period = `${record.month}/${record.year}`;
+    new NotificationService().notifyUser(
+      record.employeeId,
+      'PAYSLIP_RELEASED',
+      'Payslip released',
+      `Your payslip for ${period} is now available to view and download.`,
+      '/employee/payroll',
+    ).catch((err) => console.error('Failed to create payslip notification', err.message));
     return this.formatRecord(await this.repo.findRecordById(recordId) as PayrollRecord);
   }
 

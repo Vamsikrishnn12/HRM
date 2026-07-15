@@ -22,6 +22,7 @@ import payrollRoutes from './routes/payroll.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import profileRoutes from './routes/profile.routes';
 import employeeSalaryStructureRoutes from './routes/employeeSalaryStructure.routes';
+import notificationRoutes from './routes/notification.routes';
 import { ensureBackendReady } from './config/bootstrap';
 import { uploadRoot } from './utils/uploadPath';
 
@@ -108,6 +109,7 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/salary-structures', employeeSalaryStructureRoutes);
 
 // Serve uploaded files

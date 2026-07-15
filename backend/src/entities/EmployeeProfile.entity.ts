@@ -35,6 +35,21 @@ export class EmployeeProfile {
   @Column({ type: 'varchar', length: 100 })
   shiftSchedule: string;
 
+  @Column({ type: 'varchar', length: 20, default: 'ACTIVE' })
+  employmentStatus: 'ACTIVE' | 'OFFBOARDED';
+
+  @Column({ type: 'date', nullable: true })
+  lastWorkingDate: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  offboardingReason: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  offboardingNotes: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  offboardedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

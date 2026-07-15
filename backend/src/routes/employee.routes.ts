@@ -128,6 +128,8 @@ router.post(
  */
 router.get('/:id', asyncHandler(EmployeeController.getById));
 
+router.post('/:id/offboard', asyncHandler(EmployeeController.offboard));
+
 /**
  * @swagger
  * /api/employees/{id}:

@@ -40,10 +40,6 @@ import EmployeeSelector from "@/components/ui/EmployeeSelector";
 import type { DocumentRow } from "@/types";
 
 /** Server origin (no /api suffix) — used for static file URLs */
-const SERVER_BASE = (
-  process.env.NEXT_PUBLIC_API_URL || "https://hrm-lilac-one.vercel.app/api"
-).replace(/\/api\/?$/, "");
-
 const DOCUMENT_TYPES = [
   "Aadhaar",
   "PAN Card",
@@ -94,6 +90,7 @@ function ViewModal({
   onClose: () => void;
   record: DocumentRow | null;
 }) {
+  const toast = useToast();
   if (!record) return null;
   const InfoRow = ({ label, value }: { label: string; value: string }) => (
     <Flex justify="space-between" py={1.5} borderBottom="1px solid" borderColor="gray.50">
@@ -103,7 +100,14 @@ function ViewModal({
   );
 
   const isPreviewable = record.mimeType.startsWith("image/") || record.mimeType === "application/pdf";
-  const fileUrl = `${SERVER_BASE}/${record.filePath}`;
+  const fileUrl = record.filePath.startsWith("http") ? record.filePath : null;
+  const download = async () => {
+    try {
+      await documentsApi.download(record.id, record.originalName);
+    } catch (error: any) {
+      toast({ title: "Download failed", description: error?.message, status: "error", duration: 4000, isClosable: true });
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
@@ -123,7 +127,7 @@ function ViewModal({
           <InfoRow label="Employee" value={`${record.employeeName} (${record.empId})`} />
           <InfoRow label="Email" value={record.email} />
 
-          {isPreviewable && (
+          {isPreviewable && fileUrl && (
             <Box mt={4} border="1px solid" borderColor="surface.border" borderRadius="lg" overflow="hidden">
               {record.mimeType.startsWith("image/") ? (
                 <Box as="img" src={fileUrl} alt={record.originalName} w="100%" maxH="400px" objectFit="contain" bg="gray.50" />
@@ -133,13 +137,15 @@ function ViewModal({
             </Box>
           )}
 
+          {isPreviewable && !fileUrl && (
+            <Box mt={4} p={4} borderRadius="lg" bg="orange.50" color="orange.700" fontSize="sm">
+              This file was uploaded to temporary storage and is no longer available. Delete this record and upload the document again.
+            </Box>
+          )}
+
           <Flex mt={4} justify="flex-end">
             <Button
-              as="a"
-              href={fileUrl}
-              download={record.originalName}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={download}
               size="sm"
               colorScheme="brand"
               leftIcon={<Download size={14} />}
@@ -300,6 +306,14 @@ export default function DocumentsPage() {
     fetchRecords();
   };
 
+  const handleDownload = async (row: DocumentRow) => {
+    try {
+      await documentsApi.download(row.id, row.originalName);
+    } catch (error: any) {
+      toast({ title: "Download failed", description: error?.message, status: "error", duration: 4000, isClosable: true });
+    }
+  };
+
   const columns: Column<DocumentRow>[] = [
     {
       key: "empId",
@@ -370,11 +384,7 @@ export default function DocumentsPage() {
             variant="ghost"
             color="text.muted"
             _hover={{ color: "green.500", bg: "green.50" }}
-            as="a"
-            href={`${SERVER_BASE}/${row.filePath}`}
-            download={row.originalName}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => handleDownload(row)}
           />
           <IconButton
             aria-label="Delete"

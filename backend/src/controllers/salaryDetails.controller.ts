@@ -3,8 +3,10 @@ import { SalaryDetailsService } from '../services/salaryDetails.service';
 import { saveSalarySchema } from '../validators/salaryDetails.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
+import { NotificationService } from '../services/notification.service';
 
 const salaryDetailsService = new SalaryDetailsService();
+const notificationService = new NotificationService();
 
 export class SalaryDetailsController {
   static async list(_req: Request, res: Response): Promise<void> {
@@ -34,6 +36,8 @@ export class SalaryDetailsController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await salaryDetailsService.saveSalary(userId, parsed.data);
+    notificationService.notifyUser(userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
+      .catch((err) => console.error('Failed to create salary notification', err.message));
     ApiResponse.success(res, 'Salary details saved', result);
   }
 
@@ -47,6 +51,10 @@ export class SalaryDetailsController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await salaryDetailsService.updateById(id, parsed.data);
+    if ((result as any)?.userId) {
+      notificationService.notifyUser((result as any).userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
+        .catch((err) => console.error('Failed to create salary notification', err.message));
+    }
     ApiResponse.success(res, 'Salary details updated', result);
   }
 }

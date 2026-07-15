@@ -3,8 +3,10 @@ import { PersonalDetailsService } from '../services/personalDetails.service';
 import { savePersonalSchema } from '../validators/personalDetails.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
+import { NotificationService } from '../services/notification.service';
 
 const personalDetailsService = new PersonalDetailsService();
+const notificationService = new NotificationService();
 
 export class PersonalDetailsController {
   static async getMe(req: Request, res: Response): Promise<void> {
@@ -49,6 +51,8 @@ export class PersonalDetailsController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await personalDetailsService.savePersonal(userId, parsed.data);
+    notificationService.notifyUser(userId, 'PERSONAL_DETAILS_UPDATED', 'Personal details updated', 'HR updated your personal information.', '/employee/personal-details')
+      .catch((err) => console.error('Failed to create personal details notification', err.message));
     ApiResponse.success(res, 'Personal details saved', result);
   }
 
@@ -62,6 +66,10 @@ export class PersonalDetailsController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await personalDetailsService.updateById(id, parsed.data);
+    if ((result as any)?.userId) {
+      notificationService.notifyUser((result as any).userId, 'PERSONAL_DETAILS_UPDATED', 'Personal details updated', 'HR updated your personal information.', '/employee/personal-details')
+        .catch((err) => console.error('Failed to create personal details notification', err.message));
+    }
     ApiResponse.success(res, 'Personal details updated', result);
   }
 }

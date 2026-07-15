@@ -17,13 +17,15 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${randomUUID()}${ext}`);
-  },
-});
+const storage = process.env.VERCEL
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+      filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${randomUUID()}${ext}`);
+      },
+    });
 
 const ALLOWED_MIMES = [
   'application/pdf',
@@ -58,6 +60,9 @@ router.post(
   upload.array('files', 20),
   asyncHandler(DocumentController.upload),
 );
+
+router.get('/:id/view', asyncHandler(DocumentController.view));
+router.get('/:id/download', asyncHandler(DocumentController.download));
 
 router.delete('/:id', asyncHandler(DocumentController.remove));
 

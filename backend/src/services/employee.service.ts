@@ -11,6 +11,7 @@ import path from 'path';
 import { getUploadPath } from '../utils/uploadPath';
 import { del, put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
+import { NotificationService } from './notification.service';
 
 interface CreateEmployeeInput {
   firstName: string;
@@ -44,17 +45,25 @@ interface UpdateEmployeeInput {
   officeRadiusMeters?: number | null;
 }
 
+interface OffboardEmployeeInput {
+  lastWorkingDate: string;
+  reason: 'RESIGNED' | 'TERMINATED' | 'CONTRACT_ENDED' | 'ABSCONDED' | 'OTHER';
+  notes?: string;
+}
+
 export class EmployeeService {
   private userRepo: UserRepository;
   private employeeRepo: EmployeeRepository;
   private tokenService: TokenService;
   private emailService: EmailService;
+  private notificationService: NotificationService;
 
   constructor() {
     this.userRepo = new UserRepository();
     this.employeeRepo = new EmployeeRepository();
     this.tokenService = new TokenService();
     this.emailService = new EmailService();
+    this.notificationService = new NotificationService();
   }
 
   private generatePassword(): string {
@@ -146,6 +155,11 @@ export class EmployeeService {
       dateOfJoining: p.dateOfJoining,
       reportingManager: p.reportingManager,
       shiftSchedule: p.shiftSchedule,
+      employmentStatus: p.employmentStatus || 'ACTIVE',
+      lastWorkingDate: p.lastWorkingDate,
+      offboardingReason: p.offboardingReason,
+      offboardingNotes: p.offboardingNotes,
+      offboardedAt: p.offboardedAt,
       user: {
         id: p.user.id,
         email: p.user.email,
@@ -189,6 +203,11 @@ export class EmployeeService {
       dateOfJoining: profile.dateOfJoining,
       reportingManager: profile.reportingManager,
       shiftSchedule: profile.shiftSchedule,
+      employmentStatus: profile.employmentStatus || 'ACTIVE',
+      lastWorkingDate: profile.lastWorkingDate,
+      offboardingReason: profile.offboardingReason,
+      offboardingNotes: profile.offboardingNotes,
+      offboardedAt: profile.offboardedAt,
       user: {
         id: profile.user.id,
         email: profile.user.email,
@@ -210,6 +229,12 @@ export class EmployeeService {
     const profile = await this.employeeRepo.findById(id);
     if (!profile) {
       throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+    if (profile.employmentStatus === 'OFFBOARDED' && input.isActive === true) {
+      throw ApiError.badRequest(
+        'Offboarded employees cannot be reactivated from login access',
+        'EMPLOYEE_OFFBOARDED',
+      );
     }
 
     // Build user updates
@@ -264,6 +289,49 @@ export class EmployeeService {
       await this.employeeRepo.update(id, profileUpdates);
     }
 
+    const updated = await this.getEmployee(id);
+    this.notificationService.notifyUser(
+      profile.userId,
+      'EMPLOYEE_DETAILS_UPDATED',
+      'Employment details updated',
+      'HR updated your employee profile or login settings.',
+      '/employee/profile',
+    ).catch((err) => console.error('Failed to create employee update notification', err.message));
+    return updated;
+  }
+
+  async offboardEmployee(id: string, input: OffboardEmployeeInput) {
+    const profile = await this.employeeRepo.findById(id);
+    if (!profile) {
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+    if (profile.employmentStatus === 'OFFBOARDED') {
+      throw ApiError.conflict('Employee is already offboarded', 'EMPLOYEE_ALREADY_OFFBOARDED');
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    if (input.lastWorkingDate > today) {
+      throw ApiError.badRequest('Last working date cannot be in the future', 'INVALID_LAST_WORKING_DATE');
+    }
+
+    await this.employeeRepo.update(id, {
+      employmentStatus: 'OFFBOARDED',
+      lastWorkingDate: input.lastWorkingDate,
+      offboardingReason: input.reason,
+      offboardingNotes: input.notes?.trim() || null,
+      offboardedAt: new Date(),
+    });
+    await this.userRepo.update(profile.userId, { isActive: false });
+    await this.tokenService.revokeAllUserTokens(profile.userId);
+
+    this.notificationService.notifyUser(
+      profile.userId,
+      'EMPLOYEE_OFFBOARDED',
+      'Employment status updated',
+      `Your employment record was marked as offboarded effective ${input.lastWorkingDate}.`,
+      '/employee/profile',
+    ).catch((err) => console.error('Failed to create offboarding notification', err.message));
+
     return this.getEmployee(id);
   }
 
@@ -300,6 +368,13 @@ export class EmployeeService {
     }
 
     await this.userRepo.update(profile.userId, { profilePhotoUrl });
+    this.notificationService.notifyUser(
+      profile.userId,
+      'PROFILE_PHOTO_UPDATED',
+      'Profile photo updated',
+      'HR updated your employee profile photo.',
+      '/employee/profile',
+    ).catch((err) => console.error('Failed to create photo notification', err.message));
 
     if (previousPhoto?.includes('.blob.vercel-storage.com/') && process.env.BLOB_READ_WRITE_TOKEN) {
       await del(previousPhoto).catch(() => undefined);
