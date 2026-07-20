@@ -67,6 +67,8 @@ export interface CreateEmployeePayload {
 export interface CreateEmployeeResult {
   empId: string;
   generatedPassword: string;
+  emailSent: boolean;
+  emailError?: string;
   profile: {
     id: string;
     userId: string;

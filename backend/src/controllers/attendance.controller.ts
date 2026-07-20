@@ -18,6 +18,7 @@ import {
 } from '../validators/attendance.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
+import { deleteAttendancePhoto, saveAttendancePhoto } from '../utils/attendancePhoto';
 
 const attendanceService = new AttendanceService();
 
@@ -61,14 +62,40 @@ export class AttendanceController {
 
   static async punch(req: Request, res: Response): Promise<void> {
     const data = parseOrThrow(punchActionSchema, req.body);
-    const result = await attendanceService.punchAction(req.user!.userId, data as any);
-    ApiResponse.success(res, 'Punch recorded successfully', result);
+    if (data.punchType === 'CHECK_IN' && !req.file) {
+      throw ApiError.badRequest('Take a camera photo before punching in', 'PUNCH_IN_PHOTO_REQUIRED');
+    }
+
+    let photoUrl: string | undefined;
+    try {
+      if (data.punchType === 'CHECK_IN' && req.file) {
+        photoUrl = await saveAttendancePhoto(req.user!.userId, req.file);
+      }
+      const result = await attendanceService.punchAction(req.user!.userId, {
+        ...data,
+        photoUrl,
+      } as any);
+      ApiResponse.success(res, 'Punch recorded successfully', result);
+    } catch (error) {
+      if (photoUrl) await deleteAttendancePhoto(photoUrl);
+      throw error;
+    }
   }
 
   static async startWork(req: Request, res: Response): Promise<void> {
     const data = parseOrThrow(startWorkSchema, req.body);
-    const result = await attendanceService.startWork(req.user!.userId, data);
-    ApiResponse.success(res, 'Attendance started successfully', result);
+    if (!req.file) {
+      throw ApiError.badRequest('Take a camera photo before punching in', 'PUNCH_IN_PHOTO_REQUIRED');
+    }
+    let photoUrl: string | undefined;
+    try {
+      photoUrl = await saveAttendancePhoto(req.user!.userId, req.file);
+      const result = await attendanceService.startWork(req.user!.userId, { ...data, photoUrl });
+      ApiResponse.success(res, 'Attendance started successfully', result);
+    } catch (error) {
+      if (photoUrl) await deleteAttendancePhoto(photoUrl);
+      throw error;
+    }
   }
 
   static async endWork(req: Request, res: Response): Promise<void> {

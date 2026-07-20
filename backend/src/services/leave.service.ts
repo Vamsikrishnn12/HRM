@@ -506,7 +506,7 @@ export class LeaveService {
       policySnapshot,
     });
 
-    this.sendLeaveAppliedEmails(profile.user, request).catch((err) =>
+    await this.sendLeaveAppliedEmails(profile.user, request).catch((err) =>
       console.error('Failed to send leave applied email', (err as Error).message),
     );
     const employeeName = `${profile.user.firstName} ${profile.user.lastName}`;
@@ -722,7 +722,7 @@ export class LeaveService {
     // Send email
     const profile = await this.employeeRepo.findByUserId(request.employeeId);
     if (profile?.user) {
-      this.sendLeaveStatusEmail(profile.user, request, 'approved').catch((err) =>
+      await this.sendLeaveStatusEmail(profile.user, request, 'approved').catch((err) =>
         console.error('Failed to send approval email', (err as Error).message),
       );
     }
@@ -755,7 +755,7 @@ export class LeaveService {
 
     const profile = await this.employeeRepo.findByUserId(request.employeeId);
     if (profile?.user) {
-      this.sendLeaveStatusEmail(profile.user, request, 'rejected').catch((err) =>
+      await this.sendLeaveStatusEmail(profile.user, request, 'rejected').catch((err) =>
         console.error('Failed to send rejection email', (err as Error).message),
       );
     }
@@ -813,7 +813,7 @@ export class LeaveService {
       const profile = await this.employeeRepo.findByUserId(request.employeeId);
       if (profile?.user) {
         const action = request.status === LeaveStatus.APPROVED ? 'approved' : 'rejected';
-        this.sendLeaveStatusEmail(profile.user, request, action).catch((err) =>
+        await this.sendLeaveStatusEmail(profile.user, request, action).catch((err) =>
           console.error('Failed to send override status email', (err as Error).message),
         );
       }

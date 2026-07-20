@@ -15,6 +15,7 @@ import {
   Flex,
   HStack,
   IconButton,
+  Image,
   Input,
   InputGroup,
   InputLeftElement,
@@ -60,6 +61,7 @@ import {
   type RegularizationRequest,
 } from "@/api/attendance.api";
 import { employeeApi } from "@/api/employee.api";
+import { getAssetUrl } from "@/lib/api";
 
 const STATUS_COLORS: Record<AttendanceStatusType, { bg: string; color: string; label: string }> = {
   PRESENT: { bg: "#E6F9F0", color: "#0D7C47", label: "Present" },
@@ -573,8 +575,30 @@ export default function AdminAttendancePage() {
                   ) : (
                     <Flex direction="column" gap={2}>
                       {dayDetail.punches.map((p) => (
-                        <HStack key={p.id} justify="space-between" border="1px solid" borderColor="surface.border" borderRadius="md" px={2.5} py={2}>
-                          <Text fontSize="sm" fontWeight="600">{p.type === "CHECK_IN" ? "Punch In" : "Punch Out"} {formatTime(p.time)}</Text>
+                        <HStack key={p.id} justify="space-between" align="center" border="1px solid" borderColor="surface.border" borderRadius="md" px={2.5} py={2}>
+                          <HStack spacing={3}>
+                            {p.photoUrl ? (
+                              <Box as="a" href={getAssetUrl(p.photoUrl)} target="_blank" rel="noreferrer" flexShrink={0}>
+                                <Image
+                                  src={getAssetUrl(p.photoUrl)}
+                                  alt={`${p.type === "CHECK_IN" ? "Punch in" : "Punch out"} verification`}
+                                  boxSize="52px"
+                                  objectFit="cover"
+                                  borderRadius="md"
+                                  border="1px solid"
+                                  borderColor="surface.border"
+                                />
+                              </Box>
+                            ) : p.type === "CHECK_IN" ? (
+                              <Flex boxSize="52px" bg="gray.50" borderRadius="md" align="center" justify="center" flexShrink={0}>
+                                <Text fontSize="9px" color="text.muted" textAlign="center">No photo</Text>
+                              </Flex>
+                            ) : null}
+                            <Box>
+                              <Text fontSize="sm" fontWeight="600">{p.type === "CHECK_IN" ? "Punch In" : "Punch Out"} {formatTime(p.time)}</Text>
+                              {p.photoUrl && <Text fontSize="xs" color="brand.500">Click photo to view</Text>}
+                            </Box>
+                          </HStack>
                           <Badge borderRadius="full" bg={p.isInsideOffice ? "#EAF8F0" : "#FFF3E8"} color={p.isInsideOffice ? "#0F7A46" : "#C7681B"}>{p.isInsideOffice ? "Inside" : "Remote/Outside"}</Badge>
                         </HStack>
                       ))}

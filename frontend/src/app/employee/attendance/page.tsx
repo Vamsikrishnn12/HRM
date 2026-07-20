@@ -29,6 +29,7 @@ import {
 import { Calendar, ChevronLeft, ChevronRight, LogIn, LogOut, MapPin, Timer } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
+import PunchCameraModal from "@/components/attendance/PunchCameraModal";
 import {
   attendanceApi,
   type AttendanceAccessMode,
@@ -337,6 +338,7 @@ export default function EmployeeAttendancePage() {
 
   const regularizationModal = useDisclosure();
   const permissionModal = useDisclosure();
+  const punchCamera = useDisclosure();
 
   const [regularizationForm, setRegularizationForm] = useState({
     date: toDateInput(new Date()),
@@ -386,7 +388,7 @@ export default function EmployeeAttendancePage() {
     loadAll();
   }, [loadAll]);
 
-  const handlePunch = async () => {
+  const submitPunch = async (photo?: File) => {
     if (!todayState) return;
     setSubmitting(true);
     try {
@@ -396,6 +398,7 @@ export default function EmployeeAttendancePage() {
         punchType: todayState.nextPunchType,
         ...coords,
         remarks: hasLocation ? undefined : "Remote punch from attendance page",
+        photo,
       });
       toast({
         title: todayState.nextPunchType === "CHECK_IN" ? "Punch in successful" : "Punch out successful",
@@ -404,6 +407,7 @@ export default function EmployeeAttendancePage() {
         isClosable: true,
         position: "top-right",
       });
+      punchCamera.onClose();
       await loadAll();
     } catch (err: any) {
       toast({
@@ -417,6 +421,14 @@ export default function EmployeeAttendancePage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePunch = () => {
+    if (todayState?.nextPunchType === "CHECK_IN") {
+      punchCamera.onOpen();
+      return;
+    }
+    void submitPunch();
   };
 
   const handleRegularizationSubmit = async () => {
@@ -645,6 +657,12 @@ export default function EmployeeAttendancePage() {
 
   return (
     <Box>
+      <PunchCameraModal
+        isOpen={punchCamera.isOpen}
+        onClose={punchCamera.onClose}
+        onConfirm={submitPunch}
+        isSubmitting={submitting}
+      />
       <PageHeader title="Attendance" subtitle="Monthly attendance grid, dynamic punch flow, and smart day-level actions" />
 
       <SectionCard

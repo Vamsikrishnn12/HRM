@@ -126,16 +126,27 @@ export class EmployeeService {
       shiftSchedule: input.shiftSchedule,
     });
 
-    // Send credentials email in background — don't block employee creation
-    this.emailService
-      .sendCredentials(input.email, empId, generatedPassword, input.firstName)
-      .catch((err) =>
-        console.error('Failed to send credentials email', (err as Error).message),
+    // Await delivery because Vercel may pause background work after responding.
+    let emailSent = false;
+    let emailError: string | undefined;
+    try {
+      await this.emailService.sendCredentials(
+        input.email,
+        empId,
+        generatedPassword,
+        input.firstName,
       );
+      emailSent = true;
+    } catch (error) {
+      emailError = (error as Error).message;
+      console.error('Failed to send credentials email', emailError);
+    }
 
     return {
       empId,
       generatedPassword,
+      emailSent,
+      emailError,
       profile: {
         id: profile.id,
         department: profile.department,

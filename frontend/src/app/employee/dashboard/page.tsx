@@ -17,6 +17,7 @@ import {
   Th,
   Thead,
   Tr,
+  useDisclosure,
   useToast,
 } from "@chakra-ui/react";
 import { CalendarCheck, Clock3, LogIn, LogOut, MapPin, Timer } from "lucide-react";
@@ -24,6 +25,7 @@ import { useAuth } from "@/context/AuthContext";
 import SectionCard from "@/components/ui/SectionCard";
 import UpcomingBirthdaysWidget from "@/components/ui/UpcomingBirthdaysWidget";
 import UpcomingHolidaysWidget from "@/components/ui/UpcomingHolidaysWidget";
+import PunchCameraModal from "@/components/attendance/PunchCameraModal";
 import {
   attendanceApi,
   type AttendanceRecord,
@@ -95,6 +97,7 @@ export default function EmployeeDashboard() {
   const [history, setHistory] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [punchLoading, setPunchLoading] = useState(false);
+  const punchCamera = useDisclosure();
 
   const fetchData = useCallback(async () => {
     try {
@@ -121,7 +124,7 @@ export default function EmployeeDashboard() {
     fetchData();
   }, [fetchData]);
 
-  const handlePunch = async () => {
+  const submitPunch = async (photo?: File) => {
     if (!todayState) return;
     setPunchLoading(true);
     try {
@@ -131,6 +134,7 @@ export default function EmployeeDashboard() {
         punchType: todayState.nextPunchType,
         ...coords,
         remarks: hasLocation ? undefined : "Remote punch from employee dashboard",
+        photo,
       });
 
       toast({
@@ -140,6 +144,7 @@ export default function EmployeeDashboard() {
         isClosable: true,
         position: "top-right",
       });
+      punchCamera.onClose();
       await fetchData();
     } catch (err: any) {
       toast({
@@ -153,6 +158,14 @@ export default function EmployeeDashboard() {
     } finally {
       setPunchLoading(false);
     }
+  };
+
+  const handlePunch = () => {
+    if (todayState?.nextPunchType === "CHECK_IN") {
+      punchCamera.onOpen();
+      return;
+    }
+    void submitPunch();
   };
 
   const todayAttendance = todayState?.attendance;
@@ -178,6 +191,12 @@ export default function EmployeeDashboard() {
 
   return (
     <Box>
+      <PunchCameraModal
+        isOpen={punchCamera.isOpen}
+        onClose={punchCamera.onClose}
+        onConfirm={submitPunch}
+        isSubmitting={punchLoading}
+      />
       <Flex justify="space-between" align={{ base: "flex-start", md: "center" }} mb={6} direction={{ base: "column", md: "row" }} gap={3}>
         <Box>
           <Heading size="lg" color="text.heading" mb={1}>

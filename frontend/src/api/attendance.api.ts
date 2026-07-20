@@ -82,6 +82,7 @@ export interface AttendancePunchEvent {
   isInsideOffice: boolean;
   source: AttendancePunchSource;
   remarks: string | null;
+  photoUrl: string | null;
   isManualOverride: boolean;
   sessionOrder: number;
   policyViolation: boolean;
@@ -372,10 +373,32 @@ export const attendanceApi = {
     source?: AttendancePunchSource;
     remarks?: string;
     punchedAt?: string;
-  }) => api.post<PunchActionResult>("/attendance/me/punch", data),
+    photo?: File;
+  }) => {
+    const formData = new FormData();
+    formData.append("punchType", data.punchType);
+    if (data.latitude != null) formData.append("latitude", String(data.latitude));
+    if (data.longitude != null) formData.append("longitude", String(data.longitude));
+    if (data.source) formData.append("source", data.source);
+    if (data.remarks) formData.append("remarks", data.remarks);
+    if (data.punchedAt) formData.append("punchedAt", data.punchedAt);
+    if (data.photo) formData.append("photo", data.photo, data.photo.name);
+    return api.postFormData<PunchActionResult>("/attendance/me/punch", formData);
+  },
 
-  startWork: (data?: { latitude?: number; longitude?: number; source?: AttendancePunchSource }) =>
-    api.post<AttendanceRecord>("/attendance/me/start-work", data ?? {}),
+  startWork: (data: {
+    photo: File;
+    latitude?: number;
+    longitude?: number;
+    source?: AttendancePunchSource;
+  }) => {
+    const formData = new FormData();
+    formData.append("photo", data.photo, data.photo.name);
+    if (data.latitude != null) formData.append("latitude", String(data.latitude));
+    if (data.longitude != null) formData.append("longitude", String(data.longitude));
+    if (data.source) formData.append("source", data.source);
+    return api.postFormData<AttendanceRecord>("/attendance/me/start-work", formData);
+  },
 
   endWork: (data?: { latitude?: number; longitude?: number; source?: AttendancePunchSource; eodDescription?: string }) =>
     api.post<AttendanceRecord>("/attendance/me/end-work", data ?? {}),

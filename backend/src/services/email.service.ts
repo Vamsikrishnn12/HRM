@@ -27,7 +27,8 @@ export class EmailService {
       });
     } catch (error: any) {
       const code = error?.code || error?.responseCode || 'SMTP_ERROR';
-      throw new Error(`Email delivery failed (${code}). Verify Gmail App Password and SMTP settings.`);
+      const detail = error?.response || error?.message || 'SMTP connection failed';
+      throw new Error(`Email delivery failed (${code}: ${detail}). Verify the SMTP credentials and sender settings.`);
     }
   }
 

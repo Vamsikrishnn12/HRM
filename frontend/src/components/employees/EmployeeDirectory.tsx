@@ -288,7 +288,7 @@ function EmployeeForm({
 }: {
   mode: "add" | "edit";
   editRow?: EmployeeRow | null;
-  onDone: (created?: { empId: string; generatedPassword: string }) => void;
+  onDone: (created?: { empId: string; generatedPassword: string; emailSent: boolean; emailError?: string }) => void;
   onCancel: () => void;
 }) {
   const emp = editRow?.raw;
@@ -388,8 +388,19 @@ function EmployeeForm({
         });
         if (photo) await employeeApi.uploadPhoto(result.profile.id, photo);
         await uploadSelectedDocuments(result.profile.userId);
-        toast({ title: "Employee created", status: "success" });
-        onDone({ empId: result.empId, generatedPassword: result.generatedPassword });
+        toast({
+          title: result.emailSent ? "Employee created and email sent" : "Employee created, but email was not sent",
+          description: result.emailSent ? undefined : result.emailError,
+          status: result.emailSent ? "success" : "warning",
+          duration: result.emailSent ? 3000 : 7000,
+          isClosable: true,
+        });
+        onDone({
+          empId: result.empId,
+          generatedPassword: result.generatedPassword,
+          emailSent: result.emailSent,
+          emailError: result.emailError,
+        });
       }
     } catch (error: any) {
       toast({ title: "Could not save employee", description: error?.message, status: "error" });
@@ -606,7 +617,7 @@ export default function EmployeeDirectory() {
   const [screen, setScreen] = useState<"list" | "add" | "edit" | "created">("list");
   const [editRow, setEditRow] = useState<EmployeeRow | null>(null);
   const [selected, setSelected] = useState<EmployeeFromAPI | null>(null);
-  const [created, setCreated] = useState<{ empId: string; generatedPassword: string } | null>(null);
+  const [created, setCreated] = useState<{ empId: string; generatedPassword: string; emailSent: boolean; emailError?: string } | null>(null);
   const modal = useDisclosure();
   const toast = useToast();
 
@@ -642,7 +653,7 @@ export default function EmployeeDirectory() {
     })
     .sort((a, b) => sort === "joined" ? b.joinDate.localeCompare(a.joinDate) : a.name.localeCompare(b.name)), [employees, search, department, sort]);
 
-  const done = (result?: { empId: string; generatedPassword: string }) => {
+  const done = (result?: { empId: string; generatedPassword: string; emailSent: boolean; emailError?: string }) => {
     setEditRow(null);
     if (result) { setCreated(result); setScreen("created"); }
     else setScreen("list");
@@ -656,7 +667,7 @@ export default function EmployeeDirectory() {
   if (screen === "created" && created) {
     return (
       <Box><PageHeader title="Employee created" subtitle="The new employee is ready to use Connect HR." />
-        <SectionCard><Alert status="success" borderRadius="xl" variant="subtle" flexDirection="column" textAlign="center" py={9}><AlertIcon boxSize="40px" mr={0} /><AlertTitle mt={4}>Account created successfully</AlertTitle><AlertDescription mt={2}><Text mb={3}>Credentials were sent by email and can also be shared manually.</Text><Box bg="white" p={4} borderRadius="lg" textAlign="left"><Text><strong>Employee ID:</strong> <Code>{created.empId}</Code></Text><Text mt={1}><strong>Password:</strong> <Code>{created.generatedPassword}</Code></Text></Box></AlertDescription></Alert><Flex justify="center" gap={3} mt={6}><PrimaryButton onClick={() => { setCreated(null); setScreen("add"); }}>Add another</PrimaryButton><SecondaryButton onClick={() => { setCreated(null); setScreen("list"); }}>View directory</SecondaryButton></Flex></SectionCard>
+        <SectionCard><Alert status={created.emailSent ? "success" : "warning"} borderRadius="xl" variant="subtle" flexDirection="column" textAlign="center" py={9}><AlertIcon boxSize="40px" mr={0} /><AlertTitle mt={4}>Account created successfully</AlertTitle><AlertDescription mt={2}><Text mb={3}>{created.emailSent ? "Credentials were sent by email and can also be shared manually." : "The email provider could not deliver the message. Share these credentials manually, then check the backend SMTP settings."}</Text>{!created.emailSent && created.emailError && <Text mb={3} fontSize="xs" color="orange.700">{created.emailError}</Text>}<Box bg="white" p={4} borderRadius="lg" textAlign="left"><Text><strong>Employee ID:</strong> <Code>{created.empId}</Code></Text><Text mt={1}><strong>Password:</strong> <Code>{created.generatedPassword}</Code></Text></Box></AlertDescription></Alert><Flex justify="center" gap={3} mt={6}><PrimaryButton onClick={() => { setCreated(null); setScreen("add"); }}>Add another</PrimaryButton><SecondaryButton onClick={() => { setCreated(null); setScreen("list"); }}>View directory</SecondaryButton></Flex></SectionCard>
       </Box>
     );
   }

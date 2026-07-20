@@ -3,16 +3,26 @@ import { AttendanceController } from '../controllers/attendance.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
+import multer from 'multer';
 
 const router = Router();
+
+const punchPhotoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 3 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Punch photo must be a JPG, PNG, or WEBP image'));
+  },
+});
 
 router.use(authMiddleware);
 
 // Employee attendance routes
 router.get('/me/today', asyncHandler(AttendanceController.getMyToday));
 router.get('/me/state', asyncHandler(AttendanceController.getMyState));
-router.post('/me/punch', asyncHandler(AttendanceController.punch));
-router.post('/me/start-work', asyncHandler(AttendanceController.startWork));
+router.post('/me/punch', punchPhotoUpload.single('photo'), asyncHandler(AttendanceController.punch));
+router.post('/me/start-work', punchPhotoUpload.single('photo'), asyncHandler(AttendanceController.startWork));
 router.post('/me/end-work', asyncHandler(AttendanceController.endWork));
 router.get('/me/history', asyncHandler(AttendanceController.getMyHistory));
 router.get('/me/monthly', asyncHandler(AttendanceController.getMyMonthly));

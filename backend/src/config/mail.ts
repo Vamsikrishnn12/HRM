@@ -7,20 +7,23 @@ const smtpReady =
   !!env.SMTP_HOST && !!env.SMTP_PORT && !!env.SMTP_USER && !!env.SMTP_PASS;
 
 if (smtpReady) {
-  const isGmail = env.SMTP_HOST?.toLowerCase() === 'smtp.gmail.com';
+  // Gmail STARTTLS on 587 is more reliable from serverless environments than
+  // holding an implicit-TLS socket open on 465.
+  const smtpPort = process.env.VERCEL && env.SMTP_HOST?.toLowerCase() === 'smtp.gmail.com'
+    ? 587
+    : env.SMTP_PORT!;
   transporter = nodemailer.createTransport({
-    ...(isGmail ? { service: 'gmail' } : {}),
     host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465,
-    requireTLS: env.SMTP_PORT === 587,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    requireTLS: smtpPort === 587,
     auth: {
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
     },
-    connectionTimeout: 20_000,
-    greetingTimeout: 20_000,
-    socketTimeout: 45_000,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
     tls: {
       minVersion: 'TLSv1.2',
       servername: env.SMTP_HOST,

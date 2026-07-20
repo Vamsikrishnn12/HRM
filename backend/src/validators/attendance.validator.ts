@@ -22,8 +22,8 @@ export const attendanceStatusSchema = z.enum([
 ]);
 
 const geoSchema = z.object({
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
 });
 
 export const startWorkSchema = geoSchema.extend({

@@ -33,10 +33,12 @@ interface PunchActionInput extends GeoInput {
   remarks?: string;
   punchedAt?: string;
   isManualOverride?: boolean;
+  photoUrl?: string;
 }
 
 interface StartWorkInput extends GeoInput {
   source?: PunchSource;
+  photoUrl?: string;
 }
 
 interface EndWorkInput extends GeoInput {
@@ -243,6 +245,13 @@ export class AttendanceService {
       throw ApiError.badRequest('Invalid punchedAt timestamp', 'INVALID_PUNCH_TIMESTAMP');
     }
 
+    if (input.punchType === PunchType.CHECK_IN && !input.photoUrl) {
+      throw ApiError.badRequest(
+        'A live camera photo is required to punch in',
+        'PUNCH_IN_PHOTO_REQUIRED',
+      );
+    }
+
     const date = this.toDateKey(punchedAt);
     const stateBefore = await this.buildDayState(employeeId, date, policy, false);
     const accessPolicy = await this.resolveAccessPolicy(employeeId, date, policy);
@@ -293,6 +302,7 @@ export class AttendanceService {
       isInsideOffice: geo.withinGeoFence,
       source: input.source ?? PunchSource.WEB,
       remarks: input.remarks ?? null,
+      photoUrl: input.photoUrl ?? null,
       isManualOverride: Boolean(input.isManualOverride),
       sessionOrder,
       policyViolation: geo.policyViolation,
@@ -341,6 +351,7 @@ export class AttendanceService {
       latitude: input.latitude,
       longitude: input.longitude,
       source: input.source ?? PunchSource.WEB,
+      photoUrl: input.photoUrl,
     });
     return result.attendance;
   }

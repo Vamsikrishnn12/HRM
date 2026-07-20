@@ -52,6 +52,9 @@ export class AttendancePunch {
   @Column({ type: 'varchar', length: 500, nullable: true })
   remarks: string | null;
 
+  @Column({ type: 'varchar', length: 1000, nullable: true })
+  photoUrl: string | null;
+
   @Column({ type: 'boolean', default: false })
   isManualOverride: boolean;
 
