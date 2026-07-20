@@ -954,7 +954,7 @@ export default function EmployeeAttendancePage() {
                 isLoading={submitting}
                 isDisabled={!todayState?.canPunchToday}
               >
-                {todayState?.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"}
+                {!todayState ? "Attendance unavailable" : todayState.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"}
               </Button>
 
               <Button variant="outline" onClick={loadAll}>Refresh</Button>

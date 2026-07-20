@@ -235,7 +235,10 @@ export default function EmployeeDashboard() {
               <Metric label="Active" value={formatMinutes(todayAttendance?.totalWorkMinutes ?? 0)} />
               <Metric label="Break" value={formatMinutes(todayAttendance?.totalBreakMinutes ?? 0)} />
               <Metric label="Late By" value={formatDuration(todayAttendance?.lateMinutes)} />
-              <Metric label="Next Action" value={todayState?.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"} />
+              <Metric
+                label="Next Action"
+                value={!todayState ? "-" : todayState.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"}
+              />
             </SimpleGrid>
 
             <HStack spacing={4} color="text.muted" fontSize="xs" flexWrap="wrap">
@@ -257,7 +260,7 @@ export default function EmployeeDashboard() {
                 isDisabled={!canPunch}
                 flex={{ base: 1, lg: "unset" }}
               >
-                {todayState?.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"}
+                {!todayState ? "Attendance unavailable" : todayState.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"}
               </Button>
               <Button
                 variant="outline"
