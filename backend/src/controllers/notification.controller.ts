@@ -14,7 +14,7 @@ const subscriptionSchema = z.object({
 
 export class NotificationController {
   static async pushConfig(_req: Request, res: Response): Promise<void> {
-    ApiResponse.success(res, 'Push notification configuration retrieved', pushService.getPublicConfig());
+    ApiResponse.success(res, 'Push notification configuration retrieved', await pushService.getPublicConfig());
   }
 
   static async pushStatus(req: Request, res: Response): Promise<void> {
@@ -42,7 +42,7 @@ export class NotificationController {
   }
 
   static async subscribe(req: Request, res: Response): Promise<void> {
-    if (!pushService.isConfigured()) {
+    if (!(await pushService.isConfigured())) {
       throw ApiError.badRequest('Push service is not configured on the server', 'PUSH_NOT_CONFIGURED');
     }
     const parsed = subscriptionSchema.safeParse(req.body);

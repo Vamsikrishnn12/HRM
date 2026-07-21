@@ -25,29 +25,53 @@ export interface PushDeliveryResult {
 }
 
 export class PushNotificationService {
+  private static cachedKeys: { publicKey: string; privateKey: string } | null = null;
   private get repo() {
     return AppDataSource.getRepository(PushSubscription);
   }
 
-  isConfigured(): boolean {
-    return Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY);
+  private async getKeys(): Promise<{ publicKey: string; privateKey: string } | null> {
+    if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
+      return { publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY };
+    }
+    if (PushNotificationService.cachedKeys) return PushNotificationService.cachedKeys;
+    try {
+      const rows = await AppDataSource.query(
+        `SELECT "value" FROM "app_runtime_config" WHERE "key" = 'web_push_vapid' LIMIT 1`,
+      );
+      if (!rows[0]?.value) return null;
+      const parsed = JSON.parse(rows[0].value);
+      if (!parsed.publicKey || !parsed.privateKey) return null;
+      PushNotificationService.cachedKeys = parsed;
+      return parsed;
+    } catch (error: any) {
+      console.error('Unable to load generated VAPID keys', error?.message || error);
+      return null;
+    }
   }
 
-  getPublicConfig() {
-    return { configured: this.isConfigured(), publicKey: env.VAPID_PUBLIC_KEY || null };
+  async isConfigured(): Promise<boolean> {
+    return Boolean(await this.getKeys());
+  }
+
+  async getPublicConfig() {
+    const keys = await this.getKeys();
+    return { configured: Boolean(keys), publicKey: keys?.publicKey || null };
   }
 
   async getStatus(userId: string) {
+    const configured = await this.isConfigured();
     const subscriptionCount = await this.repo.count({ where: { userId } });
-    return { configured: this.isConfigured(), subscriptionCount, enabled: this.isConfigured() && subscriptionCount > 0 };
+    return { configured, subscriptionCount, enabled: configured && subscriptionCount > 0 };
   }
 
-  private configure(): boolean {
-    if (!this.isConfigured()) return false;
+  private async configure(): Promise<boolean> {
+    const keys = await this.getKeys();
+    if (!keys) return false;
     webPush.setVapidDetails(
       env.VAPID_SUBJECT || `mailto:${env.ADMIN_EMAIL}`,
-      env.VAPID_PUBLIC_KEY!,
-      env.VAPID_PRIVATE_KEY!,
+      keys.publicKey,
+      keys.privateKey,
     );
     return true;
   }
@@ -68,7 +92,7 @@ export class PushNotificationService {
   }
 
   async sendToUser(userId: string, payload: PushPayload): Promise<PushDeliveryResult> {
-    if (!this.configure()) return { configured: false, subscriptions: 0, delivered: 0, expired: 0, failed: 0 };
+    if (!(await this.configure())) return { configured: false, subscriptions: 0, delivered: 0, expired: 0, failed: 0 };
     const subscriptions = await this.repo.find({ where: { userId } });
     const result: PushDeliveryResult = {
       configured: true,

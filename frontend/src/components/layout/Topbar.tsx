@@ -178,11 +178,20 @@ export default function Topbar() {
           <Input placeholder="Search people, pages, or actions..." borderRadius="xl" bg="surface.bg" border="1px solid" borderColor="surface.border" _placeholder={{ color: "text.muted", fontSize: "sm" }} _hover={{ borderColor: "brand.200" }} _focus={{ borderColor: "brand.400", boxShadow: "0 0 0 3px rgba(11,114,231,0.15)", bg: "white" }} fontWeight="500" />
         </InputGroup>
 
-        <Flex align="center" gap={1}>
+        <Flex align="center" gap={{ base: 1.5, md: 1 }} ml="auto">
           <Popover placement="bottom-end" onOpen={loadNotifications}>
             <PopoverTrigger>
               <Box position="relative">
-                <IconButton aria-label="Notifications" icon={<Bell size={18} />} variant="ghost" color="text.muted" size="sm" borderRadius="xl" _hover={{ bg: "brand.50", color: "brand.400" }} />
+                <IconButton
+                  aria-label="Notifications"
+                  icon={<Bell size={18} />}
+                  variant="ghost"
+                  color="text.muted"
+                  size={{ base: "md", md: "sm" }}
+                  borderRadius="xl"
+                  bg={{ base: "surface.bg", md: "transparent" }}
+                  _hover={{ bg: "brand.50", color: "brand.400" }}
+                />
                 {unreadCount > 0 && (
                   <Badge position="absolute" top="0" right="0" bgGradient="linear(135deg, #0B72E7, #20C997)" color="white" fontSize="9px" borderRadius="full" minW="18px" h="18px" display="flex" alignItems="center" justifyContent="center" border="2px solid white">
                     {unreadCount > 99 ? "99+" : unreadCount}
@@ -249,7 +258,7 @@ export default function Topbar() {
           <IconButton aria-label="Settings" icon={<Settings size={18} />} variant="ghost" color="text.muted" size="sm" borderRadius="xl" _hover={{ bg: "brand.50", color: "brand.400" }} display={{ base: "none", md: "flex" }} onClick={() => router.push(settingsPath)} />
 
           <Menu>
-            <MenuButton as={Flex} align="center" gap={2} ml={2} px={2.5} py={1.5} borderRadius="xl" cursor="pointer" _hover={{ bg: "brand.50" }} transition="all 0.25s" border="1px solid" borderColor="transparent">
+            <MenuButton as={Flex} align="center" gap={2} ml={{ base: 0, md: 2 }} px={{ base: 1, md: 2.5 }} py={1.5} borderRadius="xl" cursor="pointer" _hover={{ bg: "brand.50" }} transition="all 0.25s" border="1px solid" borderColor="transparent">
               <Flex align="center" gap={2}>
                 <Avatar size="sm" name={user ? `${user.firstName} ${user.lastName}` : "User"} bg="brand.400" color="white" fontSize="xs" border="2px solid" borderColor="brand.100" />
                 <Box display={{ base: "none", md: "block" }}>

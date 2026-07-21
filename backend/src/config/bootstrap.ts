@@ -1,5 +1,7 @@
 import { AppDataSource } from './database';
 import { seedAdmin } from '../seed/seedAdmin';
+import webPush from 'web-push';
+import { env } from './env';
 
 let bootstrapPromise: Promise<void> | null = null;
 
@@ -44,6 +46,22 @@ export const ensureBackendReady = async (): Promise<void> => {
       await AppDataSource.query(
         `CREATE INDEX IF NOT EXISTS "IDX_push_subscriptions_user" ON "push_subscriptions" ("userId")`,
       );
+      await AppDataSource.query(`CREATE TABLE IF NOT EXISTS "app_runtime_config" (
+        "key" character varying(100) NOT NULL,
+        "value" text NOT NULL,
+        "createdAt" timestamp NOT NULL DEFAULT now(),
+        "updatedAt" timestamp NOT NULL DEFAULT now(),
+        CONSTRAINT "PK_app_runtime_config" PRIMARY KEY ("key")
+      )`);
+      if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
+        const generated = webPush.generateVAPIDKeys();
+        await AppDataSource.query(
+          `INSERT INTO "app_runtime_config" ("key", "value")
+           VALUES ('web_push_vapid', $1)
+           ON CONFLICT ("key") DO NOTHING`,
+          [JSON.stringify(generated)],
+        );
+      }
       await seedAdmin();
     })().catch((error) => {
       bootstrapPromise = null;
