@@ -14,6 +14,7 @@ import { randomUUID } from 'crypto';
 import { NotificationService } from './notification.service';
 
 interface CreateEmployeeInput {
+  empId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -77,11 +78,21 @@ export class EmployeeService {
   }
 
   async createEmployee(input: CreateEmployeeInput) {
-    const existing = await this.userRepo.findByEmail(input.email);
-    if (existing) {
+    const empId = input.empId.trim().toUpperCase();
+    const [existingEmail, existingEmpId] = await Promise.all([
+      this.userRepo.findByEmail(input.email),
+      this.userRepo.findByEmpId(empId),
+    ]);
+    if (existingEmail) {
       throw ApiError.conflict(
         'An employee with this email already exists',
         'EMPLOYEE_DUPLICATE_EMAIL',
+      );
+    }
+    if (existingEmpId) {
+      throw ApiError.conflict(
+        `Employee ID ${empId} is already in use`,
+        'EMPLOYEE_DUPLICATE_ID',
       );
     }
 
@@ -98,7 +109,6 @@ export class EmployeeService {
       }
     }
 
-    const empId = await this.userRepo.generateNextEmpId();
     const generatedPassword = this.generatePassword();
     const hashedPassword = await hashPassword(generatedPassword);
 

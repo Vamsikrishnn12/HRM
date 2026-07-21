@@ -49,6 +49,7 @@ export interface DropdownEmployee {
 }
 
 export interface CreateEmployeePayload {
+  empId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -205,6 +206,7 @@ export interface DocumentRow {
 }
 
 export interface AddEmployeeFormState {
+  empId: string;
   firstName: string;
   lastName: string;
   email: string;

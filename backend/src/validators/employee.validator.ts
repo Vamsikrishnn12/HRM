@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
 export const createEmployeeSchema = z.object({
+  empId: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .min(2, 'Employee ID must contain at least 2 characters')
+    .max(20, 'Employee ID cannot exceed 20 characters')
+    .regex(/^[A-Z0-9][A-Z0-9_-]*$/, 'Employee ID can contain only letters, numbers, hyphens, and underscores'),
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
   email: z.string().email('Invalid email format').trim().toLowerCase(),

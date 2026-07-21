@@ -65,6 +65,7 @@ import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import type { AddEmployeeFormState, EmployeeFromAPI, EmployeeRow } from "@/types";
 
 const initialFormState: AddEmployeeFormState = {
+  empId: "",
   firstName: "",
   lastName: "",
   email: "",
@@ -79,6 +80,32 @@ const initialFormState: AddEmployeeFormState = {
   officeLongitude: "",
   officeRadiusMeters: "",
 };
+
+const departments = [
+  "Developer",
+  "Digital Marketing",
+  "Human Resources",
+  "Business Development",
+  "Design",
+  "Quality Assurance",
+  "DevOps",
+  "Finance",
+];
+
+const designationSuggestions = [
+  "Manual Tester",
+  "Automation Tester",
+  "QA Engineer",
+  "QA Lead",
+  "Software Developer",
+  "Senior Software Developer",
+  "UI/UX Designer",
+  "Digital Marketing Executive",
+  "Business Development Executive",
+  "HR Executive",
+  "DevOps Engineer",
+  "Finance Executive",
+];
 
 function PhotoPicker({
   name,
@@ -293,6 +320,7 @@ function EmployeeForm({
 }) {
   const emp = editRow?.raw;
   const [form, setForm] = useState<AddEmployeeFormState>(emp ? {
+    empId: emp.user.empId || "",
     firstName: emp.user.firstName,
     lastName: emp.user.lastName,
     email: emp.user.email,
@@ -337,7 +365,7 @@ function EmployeeForm({
   };
 
   const save = async () => {
-    if (!form.firstName || !form.lastName || !form.email || !form.department || !form.designation || !form.dateOfJoining || !form.reportingManager || !form.shiftSchedule) {
+    if ((mode === "add" && !form.empId.trim()) || !form.firstName || !form.lastName || !form.email || !form.department || !form.designation || !form.dateOfJoining || !form.reportingManager || !form.shiftSchedule) {
       toast({ title: "Please complete all required fields", status: "warning" });
       return;
     }
@@ -374,6 +402,7 @@ function EmployeeForm({
         onDone();
       } else {
         const result = await employeeApi.create({
+          empId: form.empId.trim().toUpperCase(),
           firstName: form.firstName,
           lastName: form.lastName,
           email: form.email,
@@ -451,15 +480,40 @@ function EmployeeForm({
         <Divider my={6} />
         <Text fontWeight="800" color="text.heading" mb={4}>Basic information</Text>
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <Field label="Employee ID" required>
+            <StyledInput
+              value={form.empId}
+              placeholder="e.g. EMP001 or LUX-1024"
+              isReadOnly={mode === "edit"}
+              bg={mode === "edit" ? "surface.bg" : "white"}
+              textTransform="uppercase"
+              maxLength={20}
+              onChange={(e) => updateForm("empId", e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))}
+            />
+            <Text mt={1.5} fontSize="xs" color="text.muted">
+              {mode === "edit" ? "Employee ID cannot be changed after account creation." : "Enter a unique ID using letters, numbers, hyphens, or underscores."}
+            </Text>
+          </Field>
           <Field label="First name" required><StyledInput value={form.firstName} onChange={(e) => updateForm("firstName", e.target.value)} /></Field>
           <Field label="Last name" required><StyledInput value={form.lastName} onChange={(e) => updateForm("lastName", e.target.value)} /></Field>
           <Field label="Work email" required><StyledInput type="email" value={form.email} isReadOnly={mode === "edit"} bg={mode === "edit" ? "surface.bg" : "white"} onChange={(e) => updateForm("email", e.target.value)} /></Field>
           <Field label="Department" required>
             <StyledSelect placeholder="Select department" value={form.department} onChange={(e) => updateForm("department", e.target.value)}>
-              {["Developer", "Digital Marketing", "Human Resources", "Business Development", "Design", "Quality Assurance", "DevOps", "Finance"].map((item) => <option key={item} value={item}>{item}</option>)}
+              {departments.map((item) => <option key={item} value={item}>{item}</option>)}
             </StyledSelect>
           </Field>
-          <Field label="Designation" required><StyledInput value={form.designation} onChange={(e) => updateForm("designation", e.target.value)} /></Field>
+          <Field label="Designation / Job title" required>
+            <StyledInput
+              list="employee-designation-options"
+              placeholder="e.g. Manual Tester"
+              value={form.designation}
+              onChange={(e) => updateForm("designation", e.target.value)}
+            />
+            <datalist id="employee-designation-options">
+              {designationSuggestions.map((item) => <option key={item} value={item} />)}
+            </datalist>
+            <Text mt={1.5} fontSize="xs" color="text.muted">Choose a suggestion or type any custom job title.</Text>
+          </Field>
           <Field label="Employment type" required>
             <StyledSelect value={form.employmentType} onChange={(e) => updateForm("employmentType", e.target.value)}><option value="Fresher">Fresher</option><option value="Experienced">Experienced</option></StyledSelect>
           </Field>

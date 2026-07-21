@@ -13,6 +13,10 @@ export class UserRepository {
     return this.repo.findOne({ where: { email } });
   }
 
+  async findByEmpId(empId: string): Promise<User | null> {
+    return this.repo.findOne({ where: { empId } });
+  }
+
   async findById(id: string): Promise<User | null> {
     return this.repo.findOne({ where: { id } });
   }
@@ -49,13 +53,4 @@ export class UserRepository {
     return this.repo.count();
   }
 
-  async generateNextEmpId(): Promise<string> {
-    const result = await this.repo
-      .createQueryBuilder('user')
-      .select("MAX(CAST(SUBSTRING(user.empId FROM 4) AS INTEGER))", 'maxNum')
-      .where("user.empId IS NOT NULL")
-      .getRawOne();
-    const next = (result?.maxNum || 0) + 1;
-    return `EMP${String(next).padStart(3, '0')}`;
-  }
 }
