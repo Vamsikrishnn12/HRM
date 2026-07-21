@@ -29,6 +29,8 @@ import { uploadRoot } from './utils/uploadPath';
 const app = express();
 app.set('trust proxy', 1);
 
+const backendRevision = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local';
+
 const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
 const isAllowedOrigin = (origin: string): boolean =>
   allowedOrigins.some((allowed) => {
@@ -73,6 +75,10 @@ app.use(cookieParser());
 
 // Request ID
 app.use(requestIdMiddleware);
+app.use((_req, res, next) => {
+  res.setHeader('X-Connect-HR-Revision', backendRevision);
+  next();
+});
 
 // Vercel starts the Express application without running server.ts. Initialize
 // TypeORM lazily and reuse the connection while the function instance is warm.
@@ -94,7 +100,12 @@ app.get('/', (_req, res) => {
 });
 
 app.get('/api/health', (_req, res) => {
-  res.json({ success: true, message: 'HRMS API is running', timestamp: new Date().toISOString() });
+  res.json({
+    success: true,
+    message: 'HRMS API is running',
+    revision: backendRevision,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // --------------- Routes ---------------
