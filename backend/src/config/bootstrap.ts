@@ -12,6 +12,17 @@ export const ensureBackendReady = async (): Promise<void> => {
   if (!bootstrapPromise) {
     bootstrapPromise = (async () => {
       await AppDataSource.initialize();
+      // Production intentionally keeps TypeORM synchronize disabled for
+      // established databases. A brand-new Neon database, however, has no
+      // schema for migrations/runtime patches to update. Bootstrap the entity
+      // schema only when the core users table is absent; existing databases
+      // are never synchronized or rewritten by this path.
+      const [schemaState] = await AppDataSource.query(
+        `SELECT to_regclass('public.users') AS "usersTable"`,
+      );
+      if (!schemaState?.usersTable) {
+        await AppDataSource.synchronize();
+      }
       // Vercel runs the TypeScript serverless entry directly and does not run
       // the package's production migration command. Keep additive runtime
       // schema changes idempotent so a newly deployed function can safely
