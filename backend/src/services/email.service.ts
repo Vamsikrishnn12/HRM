@@ -121,6 +121,7 @@ export class EmailService {
       email,
       password,
       loginUrl: `${env.APP_URL}/login`,
+      appUrl: env.APP_URL,
       personalDetailsUrl: `${env.APP_URL}/employee/personal-details`,
       year: new Date().getFullYear().toString(),
     });
