@@ -81,6 +81,9 @@ const envSchema = z.object({
   SMTP_FROM_NAME: z.string().default('Connect HR'),
   CHROME_PATH: optionalString,
   BLOB_READ_WRITE_TOKEN: optionalString,
+  VAPID_PUBLIC_KEY: optionalString,
+  VAPID_PRIVATE_KEY: optionalString,
+  VAPID_SUBJECT: optionalString,
 });
 
 const parsed = envSchema.safeParse(process.env);

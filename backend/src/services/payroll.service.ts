@@ -685,7 +685,7 @@ export class PayrollService {
     if (!doc) throw ApiError.badRequest('Payslip document is not ready');
     await this.repo.updateDocument(doc.id, { filePath: 'released' } as any);
     const period = `${record.month}/${record.year}`;
-    new NotificationService().notifyUser(
+    await new NotificationService().notifyUser(
       record.employeeId,
       'PAYSLIP_RELEASED',
       'Payslip released',

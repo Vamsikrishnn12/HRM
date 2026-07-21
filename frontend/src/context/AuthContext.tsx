@@ -18,7 +18,7 @@ import {
   getAccessToken,
   ApiError,
 } from "@/lib/api";
-import { authApi } from "@/api";
+import { authApi, notificationApi } from "@/api";
 import type {
   User,
   UserRole,
@@ -169,6 +169,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager?.getSubscription();
+        if (subscription) {
+          await notificationApi.unsubscribePush(subscription.endpoint).catch(() => undefined);
+          await subscription.unsubscribe().catch(() => false);
+        }
+      }
       await authApi.logout();
     } catch {
       // best-effort — still clear local state

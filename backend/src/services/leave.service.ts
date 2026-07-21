@@ -510,7 +510,7 @@ export class LeaveService {
       console.error('Failed to send leave applied email', (err as Error).message),
     );
     const employeeName = `${profile.user.firstName} ${profile.user.lastName}`;
-    this.notificationService.notifyAdmins(
+    await this.notificationService.notifyAdmins(
       'LEAVE_REQUEST',
       'New leave request',
       `${employeeName} applied for ${String(leaveType).replace(/_/g, ' ')} leave.`,
@@ -534,7 +534,7 @@ export class LeaveService {
 
     request.status = LeaveStatus.CANCELLED;
     await this.leaveRepo.saveRequest(request);
-    this.notificationService.notifyAdmins(
+    await this.notificationService.notifyAdmins(
       'LEAVE_CANCELLED',
       'Leave request cancelled',
       'An employee cancelled a pending leave request.',
@@ -726,7 +726,7 @@ export class LeaveService {
         console.error('Failed to send approval email', (err as Error).message),
       );
     }
-    this.notificationService.notifyUser(
+    await this.notificationService.notifyUser(
       request.employeeId,
       'LEAVE_APPROVED',
       'Leave request approved',
@@ -759,7 +759,7 @@ export class LeaveService {
         console.error('Failed to send rejection email', (err as Error).message),
       );
     }
-    this.notificationService.notifyUser(
+    await this.notificationService.notifyUser(
       request.employeeId,
       'LEAVE_REJECTED',
       'Leave request rejected',
@@ -818,7 +818,7 @@ export class LeaveService {
         );
       }
       const approved = request.status === LeaveStatus.APPROVED;
-      this.notificationService.notifyUser(
+      await this.notificationService.notifyUser(
         request.employeeId,
         approved ? 'LEAVE_APPROVED' : 'LEAVE_REJECTED',
         approved ? 'Leave request approved' : 'Leave request rejected',

@@ -36,7 +36,7 @@ export class SalaryDetailsController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await salaryDetailsService.saveSalary(userId, parsed.data);
-    notificationService.notifyUser(userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
+    await notificationService.notifyUser(userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
       .catch((err) => console.error('Failed to create salary notification', err.message));
     ApiResponse.success(res, 'Salary details saved', result);
   }
@@ -52,7 +52,7 @@ export class SalaryDetailsController {
     }
     const result = await salaryDetailsService.updateById(id, parsed.data);
     if ((result as any)?.userId) {
-      notificationService.notifyUser((result as any).userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
+      await notificationService.notifyUser((result as any).userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
         .catch((err) => console.error('Failed to create salary notification', err.message));
     }
     ApiResponse.success(res, 'Salary details updated', result);

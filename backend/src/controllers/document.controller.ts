@@ -27,7 +27,7 @@ export class DocumentController {
     }
     const documentType = (req.body.documentType as string) || 'Other';
     const result = await documentService.upload(userId, files, documentType);
-    notificationService.notifyUser(userId, 'DOCUMENTS_UPDATED', 'Employee documents updated', `HR uploaded ${documentType} document${files.length > 1 ? 's' : ''} to your record.`, '/employee/profile')
+    await notificationService.notifyUser(userId, 'DOCUMENTS_UPDATED', 'Employee documents updated', `HR uploaded ${documentType} document${files.length > 1 ? 's' : ''} to your record.`, '/employee/profile')
       .catch((err) => console.error('Failed to create document notification', err.message));
     ApiResponse.success(res, 'Documents uploaded', result);
   }

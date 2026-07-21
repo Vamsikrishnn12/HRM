@@ -5,6 +5,7 @@ import {
   Avatar, Badge, Box, Button, Center, Flex, IconButton, Input, InputGroup,
   InputLeftElement, Menu, MenuButton, MenuDivider, MenuItem, MenuList,
   Popover, PopoverBody, PopoverContent, PopoverTrigger, Spinner, Text, VStack,
+  useToast,
 } from "@chakra-ui/react";
 import { Bell, BellRing, ChevronDown, LogOut, Search, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,10 +27,13 @@ function relativeTime(value: string): string {
 export default function Topbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const toast = useToast();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [deviceNotificationPermission, setDeviceNotificationPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+  const [enablingDeviceNotifications, setEnablingDeviceNotifications] = useState(false);
+  const [pushSubscriptionActive, setPushSubscriptionActive] = useState(false);
   const knownNotificationIds = useRef<Set<string> | null>(null);
 
   const loadNotifications = useCallback(async () => {
@@ -67,21 +71,56 @@ export default function Topbar() {
 
   useEffect(() => {
     setDeviceNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
+    if ("serviceWorker" in navigator && "PushManager" in window) {
+      navigator.serviceWorker.ready
+        .then((registration) => registration.pushManager.getSubscription())
+        .then((subscription) => setPushSubscriptionActive(Boolean(subscription)))
+        .catch(() => setPushSubscriptionActive(false));
+    }
     loadNotifications();
     const timer = window.setInterval(loadNotifications, 30_000);
     return () => window.clearInterval(timer);
   }, [loadNotifications]);
 
   const enableDeviceNotifications = async () => {
-    if (!("Notification" in window)) return;
-    const permission = await Notification.requestPermission();
-    setDeviceNotificationPermission(permission);
-    if (permission === "granted") {
-      new Notification("Connect HR notifications enabled", {
-        body: "You will now receive important HR and app update alerts on this device.",
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      toast({ title: "Push notifications are not supported on this device", status: "warning", duration: 3500, isClosable: true });
+      return;
+    }
+    setEnablingDeviceNotifications(true);
+    try {
+      const config = await notificationApi.getPushConfig();
+      if (!config.configured || !config.publicKey) {
+        throw new Error("Push notification service is not configured yet");
+      }
+      const permission = await Notification.requestPermission();
+      setDeviceNotificationPermission(permission);
+      if (permission !== "granted") {
+        throw new Error("Notification permission was not allowed");
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(config.publicKey) as BufferSource,
+        });
+      }
+      await notificationApi.subscribePush(subscription.toJSON());
+      setPushSubscriptionActive(true);
+      await registration.showNotification("Connect HR notifications enabled", {
+        body: "Important HR alerts will now reach this device, even when the app is closed.",
         icon: "/icon-192.png",
+        badge: "/icon-192.png",
         tag: "connect-hr-notifications-enabled",
+        data: { actionUrl: "/employee/dashboard" },
       });
+      toast({ title: "Mobile notifications enabled", status: "success", duration: 2500, isClosable: true });
+    } catch (error: any) {
+      toast({ title: "Could not enable notifications", description: error?.message, status: "error", duration: 4000, isClosable: true });
+    } finally {
+      setEnablingDeviceNotifications(false);
     }
   };
 
@@ -133,13 +172,13 @@ export default function Topbar() {
                   </Box>
                   {unreadCount > 0 && <Button size="xs" variant="ghost" colorScheme="blue" onClick={markAllRead}>Mark all read</Button>}
                 </Flex>
-                {deviceNotificationPermission === "default" && (
+                {(deviceNotificationPermission === "default" || (deviceNotificationPermission === "granted" && !pushSubscriptionActive)) && (
                   <Flex px={4} py={3} bg="linear-gradient(90deg, #EAF5FF 0%, #E9FBF6 100%)" align="center" justify="space-between" gap={3} borderBottom="1px solid" borderColor="surface.border">
                     <Flex align="center" gap={2} minW={0}>
                       <BellRing size={16} color="#075FC7" />
                       <Text fontSize="xs" color="text.body" fontWeight="600">Get alerts on this device</Text>
                     </Flex>
-                    <Button size="xs" colorScheme="blue" onClick={enableDeviceNotifications} flexShrink={0}>Enable</Button>
+                    <Button size="xs" colorScheme="blue" onClick={enableDeviceNotifications} isLoading={enablingDeviceNotifications} flexShrink={0}>Enable</Button>
                   </Flex>
                 )}
                 {loadingNotifications && notifications.length === 0 ? (
@@ -190,4 +229,11 @@ export default function Topbar() {
       </Flex>
     </Box>
   );
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  return Uint8Array.from(Array.from(raw).map((char) => char.charCodeAt(0)));
 }

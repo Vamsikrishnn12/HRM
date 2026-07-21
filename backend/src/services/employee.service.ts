@@ -301,7 +301,7 @@ export class EmployeeService {
     }
 
     const updated = await this.getEmployee(id);
-    this.notificationService.notifyUser(
+    await this.notificationService.notifyUser(
       profile.userId,
       'EMPLOYEE_DETAILS_UPDATED',
       'Employment details updated',
@@ -335,7 +335,7 @@ export class EmployeeService {
     await this.userRepo.update(profile.userId, { isActive: false });
     await this.tokenService.revokeAllUserTokens(profile.userId);
 
-    this.notificationService.notifyUser(
+    await this.notificationService.notifyUser(
       profile.userId,
       'EMPLOYEE_OFFBOARDED',
       'Employment status updated',
@@ -379,7 +379,7 @@ export class EmployeeService {
     }
 
     await this.userRepo.update(profile.userId, { profilePhotoUrl });
-    this.notificationService.notifyUser(
+    await this.notificationService.notifyUser(
       profile.userId,
       'PROFILE_PHOTO_UPDATED',
       'Profile photo updated',

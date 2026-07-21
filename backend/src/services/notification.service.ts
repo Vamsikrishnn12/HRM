@@ -2,6 +2,7 @@ import { AppDataSource } from '../config/database';
 import { Notification } from '../entities/Notification.entity';
 import { User, UserRole } from '../entities/User.entity';
 import { ApiError } from '../utils/apiError';
+import { PushNotificationService } from './pushNotification.service';
 
 export interface CreateNotificationInput {
   recipientId: string;
@@ -12,12 +13,21 @@ export interface CreateNotificationInput {
 }
 
 export class NotificationService {
+  private pushService = new PushNotificationService();
   private get repo() {
     return AppDataSource.getRepository(Notification);
   }
 
   async create(input: CreateNotificationInput) {
-    return this.repo.save(this.repo.create({ ...input, actionUrl: input.actionUrl || null }));
+    const notification = await this.repo.save(this.repo.create({ ...input, actionUrl: input.actionUrl || null }));
+    await this.pushService.sendToUser(input.recipientId, {
+      title: input.title,
+      message: input.message,
+      actionUrl: input.actionUrl,
+      notificationId: notification.id,
+      type: input.type,
+    }).catch((error) => console.error('Failed to send push notification', error?.message || error));
+    return notification;
   }
 
   async notifyUser(recipientId: string, type: string, title: string, message: string, actionUrl?: string) {
@@ -30,13 +40,23 @@ export class NotificationService {
       select: ['id'],
     });
     if (!admins.length) return [];
-    return this.repo.save(admins.map((admin) => this.repo.create({
+    const notifications = await this.repo.save(admins.map((admin) => this.repo.create({
       recipientId: admin.id,
       type,
       title,
       message,
       actionUrl: actionUrl || null,
     })));
+    await Promise.all(notifications.map((notification) =>
+      this.pushService.sendToUser(notification.recipientId, {
+        title: notification.title,
+        message: notification.message,
+        actionUrl: notification.actionUrl,
+        notificationId: notification.id,
+        type: notification.type,
+      }).catch((error) => console.error('Failed to send admin push notification', error?.message || error)),
+    ));
+    return notifications;
   }
 
   async list(recipientId: string, limit = 20) {

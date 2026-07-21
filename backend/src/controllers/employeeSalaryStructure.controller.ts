@@ -45,7 +45,7 @@ export class EmployeeSalaryStructureController {
       throw ApiError.badRequest(messages.join('; '), 'VALIDATION_ERROR');
     }
     const result = await service.saveForEmployee(userId, parsed.data as any);
-    notificationService.notifyUser(userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
+    await notificationService.notifyUser(userId, 'SALARY_UPDATED', 'Salary and banking details updated', 'HR updated your salary structure or banking information.', '/employee/payroll')
       .catch((err) => console.error('Failed to create salary structure notification', err.message));
     ApiResponse.success(res, 'Employee salary structure saved', result);
   }
