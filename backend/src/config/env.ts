@@ -16,6 +16,14 @@ const normalizeEnvValue = (value: unknown): unknown => {
   return trimmed;
 };
 
+const normalizeNamedEnvValue = (name: string) => (value: unknown): unknown => {
+  let normalized = normalizeEnvValue(value);
+  if (typeof normalized === 'string' && normalized.startsWith(`${name}=`)) {
+    normalized = normalizeEnvValue(normalized.slice(name.length + 1));
+  }
+  return normalized;
+};
+
 const optionalString = z.preprocess(
   (value) => {
     const normalized = normalizeEnvValue(value);
@@ -53,7 +61,7 @@ const optionalSmtpPassword = z.preprocess(
 
 const envSchema = z.object({
   // One canonical connection string for the active database.
-  DATABASE_URL: z.preprocess(normalizeEnvValue, z.string().url()),
+  DATABASE_URL: z.preprocess(normalizeNamedEnvValue('DATABASE_URL'), z.string().url()),
 
   JWT_ACCESS_SECRET: z.string().min(10),
   JWT_REFRESH_SECRET: z.string().min(10),
@@ -67,10 +75,10 @@ const envSchema = z.object({
   APP_URL: z.string().url().default('http://localhost:3000'),
   COOKIE_SAME_SITE: z.enum(['strict', 'lax', 'none']).optional(),
 
-  ADMIN_EMAIL: z.string().email().default('admin@hrms.com'),
-  ADMIN_PASSWORD: z.string().min(6).default('Admin@123'),
-  ADMIN_FIRST_NAME: z.string().default('System'),
-  ADMIN_LAST_NAME: z.string().default('Admin'),
+  ADMIN_EMAIL: z.preprocess(normalizeNamedEnvValue('ADMIN_EMAIL'), z.string().email().default('admin@hrms.com')),
+  ADMIN_PASSWORD: z.preprocess(normalizeNamedEnvValue('ADMIN_PASSWORD'), z.string().min(6).default('Admin@123')),
+  ADMIN_FIRST_NAME: z.preprocess(normalizeNamedEnvValue('ADMIN_FIRST_NAME'), z.string().default('System')),
+  ADMIN_LAST_NAME: z.preprocess(normalizeNamedEnvValue('ADMIN_LAST_NAME'), z.string().default('Admin')),
 
   // SMTP (optional – when not set, credentials are logged to console)
   SMTP_HOST: optionalString,

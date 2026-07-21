@@ -93,7 +93,8 @@ async function request<T = unknown>(
   }
 
   // 401 — attempt silent token refresh, then retry once
-  if (res.status === 401 && retry) {
+  const canAttemptRefresh = retry && endpoint !== "/auth/login" && endpoint !== "/auth/refresh";
+  if (res.status === 401 && canAttemptRefresh) {
     const refreshed = await silentRefresh();
     if (refreshed) {
       return request<T>(endpoint, options, false);
