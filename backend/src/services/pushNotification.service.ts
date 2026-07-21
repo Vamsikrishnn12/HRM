@@ -16,6 +16,14 @@ export interface PushPayload {
   type?: string;
 }
 
+export interface PushDeliveryResult {
+  configured: boolean;
+  subscriptions: number;
+  delivered: number;
+  expired: number;
+  failed: number;
+}
+
 export class PushNotificationService {
   private get repo() {
     return AppDataSource.getRepository(PushSubscription);
@@ -27,6 +35,11 @@ export class PushNotificationService {
 
   getPublicConfig() {
     return { configured: this.isConfigured(), publicKey: env.VAPID_PUBLIC_KEY || null };
+  }
+
+  async getStatus(userId: string) {
+    const subscriptionCount = await this.repo.count({ where: { userId } });
+    return { configured: this.isConfigured(), subscriptionCount, enabled: this.isConfigured() && subscriptionCount > 0 };
   }
 
   private configure(): boolean {
@@ -54,10 +67,17 @@ export class PushNotificationService {
     await this.repo.delete({ userId, endpoint });
   }
 
-  async sendToUser(userId: string, payload: PushPayload): Promise<void> {
-    if (!this.configure()) return;
+  async sendToUser(userId: string, payload: PushPayload): Promise<PushDeliveryResult> {
+    if (!this.configure()) return { configured: false, subscriptions: 0, delivered: 0, expired: 0, failed: 0 };
     const subscriptions = await this.repo.find({ where: { userId } });
-    if (!subscriptions.length) return;
+    const result: PushDeliveryResult = {
+      configured: true,
+      subscriptions: subscriptions.length,
+      delivered: 0,
+      expired: 0,
+      failed: 0,
+    };
+    if (!subscriptions.length) return result;
 
     await Promise.allSettled(subscriptions.map(async (subscription) => {
       try {
@@ -69,13 +89,17 @@ export class PushNotificationService {
           JSON.stringify(payload),
           { TTL: 60 * 60 * 24, urgency: 'high' },
         );
+        result.delivered += 1;
       } catch (error: any) {
         if (error?.statusCode === 404 || error?.statusCode === 410) {
           await this.repo.delete(subscription.id);
+          result.expired += 1;
           return;
         }
+        result.failed += 1;
         console.error('Push notification delivery failed', error?.message || error);
       }
     }));
+    return result;
   }
 }

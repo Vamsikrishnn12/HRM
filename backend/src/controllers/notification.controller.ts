@@ -17,7 +17,34 @@ export class NotificationController {
     ApiResponse.success(res, 'Push notification configuration retrieved', pushService.getPublicConfig());
   }
 
+  static async pushStatus(req: Request, res: Response): Promise<void> {
+    const result = await pushService.getStatus(req.user!.userId);
+    ApiResponse.success(res, 'Push notification status retrieved', result);
+  }
+
+  static async testPush(req: Request, res: Response): Promise<void> {
+    const result = await pushService.sendToUser(req.user!.userId, {
+      title: 'Connect HR test notification',
+      message: 'Mobile push notifications are working correctly on this device.',
+      actionUrl: req.user!.role === 'ADMIN' ? '/admin/dashboard' : '/employee/dashboard',
+      type: 'PUSH_TEST',
+    });
+    if (!result.configured) {
+      throw ApiError.badRequest('Push service is not configured on the server', 'PUSH_NOT_CONFIGURED');
+    }
+    if (result.subscriptions === 0) {
+      throw ApiError.badRequest('No mobile device is registered for this account', 'PUSH_DEVICE_NOT_REGISTERED');
+    }
+    if (result.delivered === 0) {
+      throw ApiError.badRequest('The push provider could not deliver the test notification', 'PUSH_DELIVERY_FAILED');
+    }
+    ApiResponse.success(res, 'Test notification sent', result);
+  }
+
   static async subscribe(req: Request, res: Response): Promise<void> {
+    if (!pushService.isConfigured()) {
+      throw ApiError.badRequest('Push service is not configured on the server', 'PUSH_NOT_CONFIGURED');
+    }
     const parsed = subscriptionSchema.safeParse(req.body);
     if (!parsed.success) throw ApiError.badRequest('Invalid push subscription', 'INVALID_PUSH_SUBSCRIPTION');
     await pushService.subscribe(req.user!.userId, parsed.data, req.get('user-agent'));

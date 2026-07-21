@@ -2,6 +2,9 @@ import path from 'path';
 import fs from 'fs';
 import { env } from '../config/env';
 import { transporter } from '../config/mail';
+import { AppDataSource } from '../config/database';
+import { OrgSettings } from '../entities/OrgSettings.entity';
+import { getUploadPath } from '../utils/uploadPath';
 
 /**
  * Resolve the templates directory.
@@ -46,9 +49,61 @@ export class EmailService {
 
     for (const [key, value] of Object.entries(variables)) {
       // Use split/join for safe literal replacement (no regex special-char issues)
-      html = html.split(`{{${key}}}`).join(value);
+      html = html.split(`{{${key}}}`).join(this.escapeHtml(value));
     }
     return html;
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  private async getBranding() {
+    let companyName = 'Connect HR';
+    let companyAddress = '';
+    let companyLegalLine = '';
+    let logoPath = path.join(TEMPLATES_DIR, 'logobg.png');
+
+    try {
+      const org = await AppDataSource.getRepository(OrgSettings).findOne({ where: {} });
+      if (org) {
+        companyName = org.companyName || companyName;
+        companyAddress = org.companyAddress || '';
+        companyLegalLine = [
+          org.cinNumber ? `CIN: ${org.cinNumber}` : '',
+          org.gstNumber ? `GSTIN: ${org.gstNumber}` : '',
+          ...(org.payslipAdditionalFields || []).map((field) => `${field.label}: ${field.value}`),
+        ].filter(Boolean).join('  |  ');
+
+        if (org.companyLogoUrl?.startsWith('/uploads/company-logos/')) {
+          const localLogo = getUploadPath('company-logos', path.basename(org.companyLogoUrl));
+          if (fs.existsSync(localLogo)) logoPath = localLogo;
+        } else if (org.companyLogoUrl && /^https?:\/\//i.test(org.companyLogoUrl)) {
+          logoPath = org.companyLogoUrl;
+        }
+      }
+    } catch (error: any) {
+      console.error('Unable to load email branding; using defaults', error?.message || error);
+    }
+
+    return {
+      variables: {
+        companyName,
+        companyAddress,
+        companyLegalLine,
+        companyWebsite: env.APP_URL,
+      },
+      attachment: {
+        filename: `company-logo${path.extname(new URL(logoPath, 'https://local.invalid').pathname) || '.png'}`,
+        path: logoPath,
+        cid: 'company-logo',
+      },
+    };
   }
 
   async sendCredentials(
@@ -57,8 +112,10 @@ export class EmailService {
     password: string,
     firstName: string,
   ): Promise<void> {
+    const branding = await this.getBranding();
     const subject = 'Welcome to Connect HR - Your account is ready';
     const html = this.loadTemplate('credentials', {
+      ...branding.variables,
       firstName,
       empId,
       email,
@@ -75,9 +132,7 @@ export class EmailService {
         html,
         attachments: [
           {
-            filename: 'connecthr-logo.png',
-            path: path.join(TEMPLATES_DIR, 'logobg.png'),
-            cid: 'connecthr-logo',
+            ...branding.attachment,
           },
         ],
       });
@@ -96,13 +151,15 @@ export class EmailService {
     templateName: string,
     variables: Record<string, string>,
   ): Promise<void> {
-    const html = this.loadTemplate(templateName, variables);
+    const branding = await this.getBranding();
+    const html = this.loadTemplate(templateName, { ...branding.variables, ...variables });
 
     if (transporter && this.getSender()) {
       await this.sendMail({
         to,
         subject,
         html,
+        attachments: [branding.attachment],
       });
       console.log(`Email sent: ${subject}`, { to });
     } else {

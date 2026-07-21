@@ -927,6 +927,11 @@ export class LeaveService {
         reason: request.reason,
         treatmentNote: request.treatmentNote || 'Request will follow organization leave policy during approval.',
         status: 'PENDING',
+        statusTitle: 'Request received',
+        statusMessage: 'Your leave request is now with the HR team for review.',
+        statusAccent: '#B7791F',
+        statusSoft: '#FFF8E1',
+        statusIcon: '... ',
         year: new Date().getFullYear().toString(),
       },
     );
@@ -953,6 +958,13 @@ export class LeaveService {
         daysOrHours,
         status: action.toUpperCase(),
         statusClass: action,
+        statusTitle: action === 'approved' ? 'Your leave is approved' : 'Your leave was not approved',
+        statusMessage: action === 'approved'
+          ? 'Your request has been reviewed and approved by HR.'
+          : 'Your request has been reviewed and rejected by HR.',
+        statusAccent: action === 'approved' ? '#0D7C47' : '#C41E3A',
+        statusSoft: action === 'approved' ? '#E6F9F0' : '#FEE7E7',
+        statusIcon: action === 'approved' ? 'OK' : '!',
         adminRemarks: request.adminRemarks || 'No remarks',
         year: new Date().getFullYear().toString(),
       },
@@ -960,15 +972,21 @@ export class LeaveService {
   }
 
   private getDateRangeString(request: LeaveRequest): string {
+    const formatDate = (value: string | null): string => {
+      if (!value) return '-';
+      return new Date(`${value}T00:00:00`).toLocaleDateString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+    };
     if (request.requestMode === RequestMode.FULL_DAY) {
       return request.startDate === request.endDate
-        ? request.startDate!
-        : `${request.startDate} to ${request.endDate}`;
+        ? formatDate(request.startDate)
+        : `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
     }
     if (request.requestMode === RequestMode.HALF_DAY) {
-      return `${request.date} (${request.halfDaySession})`;
+      return `${formatDate(request.date)} (${request.halfDaySession === HalfDaySession.FN ? 'First half' : 'Second half'})`;
     }
-    return `${request.date} (${request.fromTime} - ${request.toTime})`;
+    return `${formatDate(request.date)} (${request.fromTime?.slice(0, 5)} - ${request.toTime?.slice(0, 5)})`;
   }
 
   // ══════════════════════════════════════════════════════

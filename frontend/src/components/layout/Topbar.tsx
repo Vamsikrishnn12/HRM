@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Avatar, Badge, Box, Button, Center, Flex, IconButton, Input, InputGroup,
+  Avatar, Badge, Box, Button, Center, Flex, HStack, IconButton, Input, InputGroup,
   InputLeftElement, Menu, MenuButton, MenuDivider, MenuItem, MenuList,
   Popover, PopoverBody, PopoverContent, PopoverTrigger, Spinner, Text, VStack,
   useToast,
@@ -34,6 +34,8 @@ export default function Topbar() {
   const [deviceNotificationPermission, setDeviceNotificationPermission] = useState<NotificationPermission | "unsupported">("unsupported");
   const [enablingDeviceNotifications, setEnablingDeviceNotifications] = useState(false);
   const [pushSubscriptionActive, setPushSubscriptionActive] = useState(false);
+  const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
+  const [testingPush, setTestingPush] = useState(false);
   const knownNotificationIds = useRef<Set<string> | null>(null);
 
   const loadNotifications = useCallback(async () => {
@@ -71,12 +73,23 @@ export default function Topbar() {
 
   useEffect(() => {
     setDeviceNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      navigator.serviceWorker.ready
-        .then((registration) => registration.pushManager.getSubscription())
-        .then((subscription) => setPushSubscriptionActive(Boolean(subscription)))
-        .catch(() => setPushSubscriptionActive(false));
-    }
+    const synchronizePush = async () => {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+      try {
+        const config = await notificationApi.getPushConfig();
+        setPushConfigured(config.configured);
+        if (!config.configured || !config.publicKey || Notification.permission !== "granted") {
+          setPushSubscriptionActive(false);
+          return;
+        }
+        const subscription = await ensurePushSubscription(config.publicKey);
+        await notificationApi.subscribePush(subscription.toJSON());
+        setPushSubscriptionActive(true);
+      } catch {
+        setPushSubscriptionActive(false);
+      }
+    };
+    synchronizePush();
     loadNotifications();
     const timer = window.setInterval(loadNotifications, 30_000);
     return () => window.clearInterval(timer);
@@ -90,6 +103,7 @@ export default function Topbar() {
     setEnablingDeviceNotifications(true);
     try {
       const config = await notificationApi.getPushConfig();
+      setPushConfigured(config.configured);
       if (!config.configured || !config.publicKey) {
         throw new Error("Push notification service is not configured yet");
       }
@@ -100,13 +114,7 @@ export default function Topbar() {
       }
 
       const registration = await navigator.serviceWorker.ready;
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(config.publicKey) as BufferSource,
-        });
-      }
+      const subscription = await ensurePushSubscription(config.publicKey);
       await notificationApi.subscribePush(subscription.toJSON());
       setPushSubscriptionActive(true);
       await registration.showNotification("Connect HR notifications enabled", {
@@ -121,6 +129,25 @@ export default function Topbar() {
       toast({ title: "Could not enable notifications", description: error?.message, status: "error", duration: 4000, isClosable: true });
     } finally {
       setEnablingDeviceNotifications(false);
+    }
+  };
+
+  const sendTestPush = async () => {
+    setTestingPush(true);
+    try {
+      const result = await notificationApi.testPush();
+      toast({
+        title: result.delivered > 0 ? "Test notification sent" : "Notification was not delivered",
+        description: result.delivered > 0 ? "Check your phone notification panel and sound settings." : "Please enable notifications again.",
+        status: result.delivered > 0 ? "success" : "warning",
+        duration: 3500,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({ title: "Test notification failed", description: error?.message, status: "error", duration: 4000, isClosable: true });
+      setPushSubscriptionActive(false);
+    } finally {
+      setTestingPush(false);
     }
   };
 
@@ -181,6 +208,20 @@ export default function Topbar() {
                     <Button size="xs" colorScheme="blue" onClick={enableDeviceNotifications} isLoading={enablingDeviceNotifications} flexShrink={0}>Enable</Button>
                   </Flex>
                 )}
+                {pushConfigured === false && (
+                  <Box px={4} py={2.5} bg="orange.50" borderBottom="1px solid" borderColor="orange.100">
+                    <Text fontSize="xs" color="orange.800" fontWeight="600">Mobile push is waiting for server configuration.</Text>
+                  </Box>
+                )}
+                {pushSubscriptionActive && (
+                  <Flex px={4} py={2.5} align="center" justify="space-between" bg="green.50" borderBottom="1px solid" borderColor="green.100">
+                    <HStack spacing={2} color="green.700">
+                      <BellRing size={14} />
+                      <Text fontSize="xs" fontWeight="700">Mobile alerts active</Text>
+                    </HStack>
+                    <Button size="xs" variant="ghost" colorScheme="green" onClick={sendTestPush} isLoading={testingPush}>Send test</Button>
+                  </Flex>
+                )}
                 {loadingNotifications && notifications.length === 0 ? (
                   <Center py={10}><Spinner size="sm" color="brand.500" /></Center>
                 ) : notifications.length === 0 ? (
@@ -236,4 +277,28 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = window.atob(base64);
   return Uint8Array.from(Array.from(raw).map((char) => char.charCodeAt(0)));
+}
+
+async function ensurePushSubscription(publicKey: string): Promise<PushSubscription> {
+  const registration = await navigator.serviceWorker.ready;
+  const desiredKey = urlBase64ToUint8Array(publicKey);
+  let subscription = await registration.pushManager.getSubscription();
+
+  if (subscription?.options.applicationServerKey && !keysMatch(subscription.options.applicationServerKey, desiredKey)) {
+    await subscription.unsubscribe();
+    subscription = null;
+  }
+
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: desiredKey as BufferSource,
+    });
+  }
+  return subscription;
+}
+
+function keysMatch(existing: ArrayBuffer, desired: Uint8Array): boolean {
+  const current = new Uint8Array(existing);
+  return current.length === desired.length && current.every((value, index) => value === desired[index]);
 }
