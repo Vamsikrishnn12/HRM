@@ -1,4 +1,4 @@
-const CACHE_NAME = "connect-hr-shell-v2";
+const CACHE_NAME = "connect-hr-shell-v3";
 const APP_SHELL = ["/", "/login", "/logobg.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {

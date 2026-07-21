@@ -1,13 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Avatar, Badge, Box, Button, Center, Flex, HStack, IconButton, Input, InputGroup,
   InputLeftElement, Menu, MenuButton, MenuDivider, MenuItem, MenuList,
   Popover, PopoverBody, PopoverContent, PopoverTrigger, Spinner, Text, VStack,
   useToast,
 } from "@chakra-ui/react";
-import { Bell, BellRing, ChevronDown, LogOut, Search, Settings, User } from "lucide-react";
+import {
+  Bell, BellRing, CalendarDays, CheckCircle2, ChevronDown, Clock3, FileText,
+  LogOut, Search, Settings, User, WalletCards, XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { notificationApi, type NotificationItem } from "@/api";
@@ -24,6 +27,16 @@ function relativeTime(value: string): string {
   return new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function notificationVisual(type: string) {
+  const normalized = type.toUpperCase();
+  if (normalized.includes("APPROVED")) return { icon: CheckCircle2, color: "#16845B", bg: "#E8F8F1" };
+  if (normalized.includes("REJECTED") || normalized.includes("CANCELLED")) return { icon: XCircle, color: "#C53030", bg: "#FFF0F0" };
+  if (normalized.includes("LEAVE") || normalized.includes("ATTENDANCE")) return { icon: CalendarDays, color: "#0B72E7", bg: "#EAF4FF" };
+  if (normalized.includes("PAY") || normalized.includes("SALARY")) return { icon: WalletCards, color: "#7251B5", bg: "#F1ECFF" };
+  if (normalized.includes("DOCUMENT")) return { icon: FileText, color: "#087F8C", bg: "#E7F8FA" };
+  return { icon: Bell, color: "#0B72E7", bg: "#EAF4FF" };
+}
+
 export default function Topbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -36,31 +49,11 @@ export default function Topbar() {
   const [pushSubscriptionActive, setPushSubscriptionActive] = useState(false);
   const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
   const [testingPush, setTestingPush] = useState(false);
-  const knownNotificationIds = useRef<Set<string> | null>(null);
-
   const loadNotifications = useCallback(async () => {
     if (!user) return;
     setLoadingNotifications(true);
     try {
       const result = await notificationApi.list();
-      if (knownNotificationIds.current && "Notification" in window && Notification.permission === "granted") {
-        result.items
-          .filter((item) => !item.isRead && !knownNotificationIds.current?.has(item.id))
-          .forEach((item) => {
-            const deviceNotice = new Notification(item.title, {
-              body: item.message,
-              icon: "/icon-192.png",
-              badge: "/icon-192.png",
-              tag: `connect-hr-${item.id}`,
-            });
-            deviceNotice.onclick = () => {
-              window.focus();
-              if (item.actionUrl) router.push(item.actionUrl);
-              deviceNotice.close();
-            };
-          });
-      }
-      knownNotificationIds.current = new Set(result.items.map((item) => item.id));
       setNotifications(result.items);
       setUnreadCount(result.unreadCount);
     } catch {
@@ -69,7 +62,7 @@ export default function Topbar() {
     } finally {
       setLoadingNotifications(false);
     }
-  }, [router, user]);
+  }, [user]);
 
   useEffect(() => {
     setDeviceNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
@@ -199,17 +192,35 @@ export default function Topbar() {
                 )}
               </Box>
             </PopoverTrigger>
-            <PopoverContent w={{ base: "calc(100vw - 24px)", sm: "380px" }} maxH="480px" borderRadius="2xl" shadow="elevated" border="1px solid" borderColor="surface.border" overflow="hidden">
+            <PopoverContent
+              w={{ base: "calc(100vw - 24px)", sm: "400px" }}
+              maxW="400px"
+              maxH={{ base: "min(68vh, 440px)", md: "520px" }}
+              borderRadius={{ base: "22px", md: "2xl" }}
+              shadow="0 24px 65px -24px rgba(8,43,76,0.45)"
+              border="1px solid"
+              borderColor="surface.border"
+              overflow="hidden"
+              bg="white"
+            >
               <PopoverBody p={0}>
-                <Flex px={4} py={3} borderBottom="1px solid" borderColor="surface.border" align="center" justify="space-between">
-                  <Box>
-                    <Text fontWeight="700" fontSize="sm" color="text.heading">Notifications</Text>
-                    <Text fontSize="xs" color="text.muted">{unreadCount} unread</Text>
-                  </Box>
-                  {unreadCount > 0 && <Button size="xs" variant="ghost" colorScheme="blue" onClick={markAllRead}>Mark all read</Button>}
+                <Flex px={{ base: 4, md: 4.5 }} py={3.5} borderBottom="1px solid" borderColor="surface.border" align="center" justify="space-between" gap={3}>
+                  <HStack spacing={3} minW={0}>
+                    <Center w="36px" h="36px" borderRadius="12px" bg="brand.50" color="brand.500" flexShrink={0}>
+                      <Bell size={18} />
+                    </Center>
+                    <Box minW={0}>
+                      <HStack spacing={2}>
+                        <Text fontWeight="800" fontSize="md" color="text.heading">Notifications</Text>
+                        {unreadCount > 0 && <Badge px={2} py={0.5} borderRadius="full" colorScheme="blue" fontSize="10px">{unreadCount} new</Badge>}
+                      </HStack>
+                      <Text fontSize="11px" color="text.muted">Your latest Connect HR updates</Text>
+                    </Box>
+                  </HStack>
+                  {unreadCount > 0 && <Button size="xs" variant="ghost" colorScheme="blue" onClick={markAllRead} flexShrink={0}>Mark read</Button>}
                 </Flex>
                 {(deviceNotificationPermission === "default" || (deviceNotificationPermission === "granted" && !pushSubscriptionActive)) && (
-                  <Flex px={4} py={3} bg="linear-gradient(90deg, #EAF5FF 0%, #E9FBF6 100%)" align="center" justify="space-between" gap={3} borderBottom="1px solid" borderColor="surface.border">
+                  <Flex px={4} py={2.5} bg="linear-gradient(90deg, #EAF5FF 0%, #E9FBF6 100%)" align="center" justify="space-between" gap={3} borderBottom="1px solid" borderColor="surface.border">
                     <Flex align="center" gap={2} minW={0}>
                       <BellRing size={16} color="#075FC7" />
                       <Text fontSize="xs" color="text.body" fontWeight="600">Get alerts on this device</Text>
@@ -223,12 +234,12 @@ export default function Topbar() {
                   </Box>
                 )}
                 {pushSubscriptionActive && (
-                  <Flex px={4} py={2.5} align="center" justify="space-between" bg="green.50" borderBottom="1px solid" borderColor="green.100">
+                  <Flex px={4} py={2} align="center" justify="space-between" bg="#F0FBF6" borderBottom="1px solid" borderColor="green.100">
                     <HStack spacing={2} color="green.700">
                       <BellRing size={14} />
-                      <Text fontSize="xs" fontWeight="700">Mobile alerts active</Text>
+                      <Text fontSize="11px" fontWeight="700">Mobile alerts active</Text>
                     </HStack>
-                    <Button size="xs" variant="ghost" colorScheme="green" onClick={sendTestPush} isLoading={testingPush}>Send test</Button>
+                    <Button h="26px" px={2.5} fontSize="11px" borderRadius="full" variant="ghost" colorScheme="green" onClick={sendTestPush} isLoading={testingPush}>Test alert</Button>
                   </Flex>
                 )}
                 {loadingNotifications && notifications.length === 0 ? (
@@ -240,15 +251,44 @@ export default function Topbar() {
                     <Text mt={1} fontSize="xs" color="text.muted">New leave requests and account updates will appear here.</Text>
                   </Center>
                 ) : (
-                  <VStack spacing={0} align="stretch" maxH="390px" overflowY="auto">
-                    {notifications.map((notification) => (
-                      <Box key={notification.id} px={4} py={3.5} bg={notification.isRead ? "white" : "brand.50"} _hover={{ bg: "surface.bg" }} cursor={notification.actionUrl ? "pointer" : "default"} borderBottom="1px solid" borderColor="surface.border" transition="all 0.2s" onClick={() => openNotification(notification)} position="relative">
-                        {!notification.isRead && <Box position="absolute" left="8px" top="19px" w="6px" h="6px" borderRadius="full" bg="brand.500" />}
-                        <Text fontSize="sm" color="text.heading" fontWeight={notification.isRead ? "600" : "700"}>{notification.title}</Text>
-                        <Text fontSize="xs" color="text.body" mt={1}>{notification.message}</Text>
-                        <Text fontSize="xs" color="text.muted" mt={1}>{relativeTime(notification.createdAt)}</Text>
-                      </Box>
-                    ))}
+                  <VStack spacing={0} align="stretch" maxH={{ base: "300px", md: "360px" }} overflowY="auto" overscrollBehavior="contain">
+                    {notifications.map((notification) => {
+                      const visual = notificationVisual(notification.type);
+                      const NoticeIcon = visual.icon;
+                      return (
+                        <Flex
+                          key={notification.id}
+                          px={4}
+                          py={3}
+                          gap={3}
+                          bg={notification.isRead ? "white" : "#F8FBFF"}
+                          _hover={{ bg: "surface.bg" }}
+                          cursor={notification.actionUrl ? "pointer" : "default"}
+                          borderBottom="1px solid"
+                          borderColor="surface.border"
+                          transition="background 0.18s ease"
+                          onClick={() => openNotification(notification)}
+                          position="relative"
+                          align="flex-start"
+                        >
+                          {!notification.isRead && <Box position="absolute" left={0} top={3} bottom={3} w="3px" borderRightRadius="full" bg="brand.500" />}
+                          <Center w="36px" h="36px" borderRadius="12px" bg={visual.bg} color={visual.color} flexShrink={0}>
+                            <NoticeIcon size={17} />
+                          </Center>
+                          <Box minW={0} flex={1}>
+                            <Flex align="flex-start" justify="space-between" gap={2}>
+                              <Text fontSize="sm" lineHeight="1.35" color="text.heading" fontWeight={notification.isRead ? "650" : "750"}>{notification.title}</Text>
+                              {!notification.isRead && <Box mt={1.5} w="7px" h="7px" borderRadius="full" bg="brand.500" flexShrink={0} />}
+                            </Flex>
+                            <Text fontSize="12px" lineHeight="1.45" color="text.body" mt={0.5} noOfLines={2}>{notification.message}</Text>
+                            <HStack spacing={1} mt={1.5} color="text.muted">
+                              <Clock3 size={11} />
+                              <Text fontSize="10px" fontWeight="600">{relativeTime(notification.createdAt)}</Text>
+                            </HStack>
+                          </Box>
+                        </Flex>
+                      );
+                    })}
                   </VStack>
                 )}
               </PopoverBody>
