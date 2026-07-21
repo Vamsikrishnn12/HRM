@@ -4,6 +4,10 @@ import { ApiError } from '../utils/apiError';
 interface UpdateSettingsInput {
   companyName?: string;
   companyAddress?: string | null;
+  companyLogoUrl?: string | null;
+  cinNumber?: string | null;
+  gstNumber?: string | null;
+  payslipAdditionalFields?: Array<{ label: string; value: string }>;
   workStartTime?: string;
   workEndTime?: string;
   lateGraceMinutes?: number;
@@ -139,6 +143,10 @@ export class SettingsService {
       id: s.id,
       companyName: s.companyName || 'Connect HR',
       companyAddress: s.companyAddress || '',
+      companyLogoUrl: s.companyLogoUrl || null,
+      cinNumber: s.cinNumber || '',
+      gstNumber: s.gstNumber || '',
+      payslipAdditionalFields: Array.isArray(s.payslipAdditionalFields) ? s.payslipAdditionalFields : [],
       workStartTime: s.workStartTime,
       workEndTime: s.workEndTime,
       lateGraceMinutes: s.lateGraceMinutes,

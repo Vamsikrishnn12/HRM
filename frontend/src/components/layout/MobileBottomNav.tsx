@@ -41,10 +41,10 @@ export default function MobileBottomNav() {
       borderTop="1px solid"
       borderColor="surface.border"
       backdropFilter="blur(16px)"
-      boxShadow="0 -8px 24px rgba(8,43,76,0.08)"
+      boxShadow="0 -12px 32px rgba(8,43,76,0.10)"
       pb="env(safe-area-inset-bottom)"
     >
-      <Flex h="64px" align="stretch" justify="space-around">
+      <Flex h="68px" align="stretch" justify="space-around" px={1}>
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -58,9 +58,12 @@ export default function MobileBottomNav() {
                 gap={1}
                 color={active ? "brand.500" : "text.muted"}
                 position="relative"
+                _active={{ transform: "scale(0.96)" }}
               >
                 {active && <Box position="absolute" top={0} w="30px" h="3px" borderRadius="full" bgGradient="linear(to-r, #0B72E7, #20C997)" />}
-                <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                <Flex w="34px" h="28px" align="center" justify="center" borderRadius="full" bg={active ? "brand.50" : "transparent"}>
+                  <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                </Flex>
                 <Text fontSize="10px" fontWeight={active ? "700" : "600"} noOfLines={1}>
                   {item.label}
                 </Text>

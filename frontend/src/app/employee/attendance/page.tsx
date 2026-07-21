@@ -26,7 +26,7 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
-import { Calendar, ChevronLeft, ChevronRight, LogIn, LogOut, MapPin, Timer } from "lucide-react";
+import { Calendar, CalendarPlus, ChevronLeft, ChevronRight, FilePenLine, LogIn, LogOut, MapPin, RefreshCw, Sparkles, Timer } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import PunchCameraModal from "@/components/attendance/PunchCameraModal";
@@ -663,15 +663,16 @@ export default function EmployeeAttendancePage() {
         onConfirm={submitPunch}
         isSubmitting={submitting}
       />
-      <PageHeader title="Attendance" subtitle="Monthly attendance grid, dynamic punch flow, and smart day-level actions" />
+      <PageHeader title="Attendance" subtitle="Punch in, review your month, and manage attendance requests." />
 
       <SectionCard
         title="Monthly Attendance"
         actions={
-          <HStack spacing={2}>
+          <HStack spacing={{ base: 0, sm: 2 }}>
             <Button
               size="xs"
               variant="ghost"
+              aria-label="Previous month"
               onClick={() =>
                 setActiveMonth((prev) =>
                   prev.month === 1 ? { year: prev.year - 1, month: 12 } : { year: prev.year, month: prev.month - 1 },
@@ -680,12 +681,13 @@ export default function EmployeeAttendancePage() {
             >
               <ChevronLeft size={14} />
             </Button>
-            <Text fontSize="sm" fontWeight="700" minW="170px" textAlign="center">
+            <Text fontSize={{ base: "xs", sm: "sm" }} fontWeight="700" minW={{ base: "105px", sm: "150px" }} textAlign="center">
               {MONTH_NAMES[activeMonth.month - 1]} {activeMonth.year}
             </Text>
             <Button
               size="xs"
               variant="ghost"
+              aria-label="Next month"
               onClick={() =>
                 setActiveMonth((prev) =>
                   prev.month === 12 ? { year: prev.year + 1, month: 1 } : { year: prev.year, month: prev.month + 1 },
@@ -719,12 +721,12 @@ export default function EmployeeAttendancePage() {
 
         <Grid
           templateColumns="repeat(7, minmax(0, 1fr))"
-          gap={1.5}
+          gap={{ base: 1, md: 1.5 }}
           bg="linear-gradient(180deg, #F7F6FD 0%, #F0EDF9 100%)"
           border="1px solid"
           borderColor="#E4DEEF"
           borderRadius="2xl"
-          p={2}
+          p={{ base: 1.5, md: 2 }}
           boxShadow="0 18px 32px -24px rgba(77, 59, 113, 0.45)"
         >
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
@@ -732,17 +734,20 @@ export default function EmployeeAttendancePage() {
               key={d}
               bg="whiteAlpha.900"
               borderRadius="lg"
-              py={2}
+              py={{ base: 1.5, md: 2 }}
               justify="center"
               border="1px solid"
               borderColor="#EBE7F4"
             >
-              <Text textAlign="center" fontSize="xs" color="#5F6281" fontWeight="700" letterSpacing="0.4px">{d}</Text>
+              <Text textAlign="center" fontSize={{ base: "10px", md: "xs" }} color="#5F6281" fontWeight="700" letterSpacing="0.2px">
+                <Text as="span" display={{ base: "inline", sm: "none" }}>{d.slice(0, 1)}</Text>
+                <Text as="span" display={{ base: "none", sm: "inline" }}>{d}</Text>
+              </Text>
             </Flex>
           ))}
 
           {calendarCells.map((cell, index) => {
-            if (!cell.date) return <Box key={`blank-${index}`} minH="88px" borderRadius="lg" bg="transparent" />;
+            if (!cell.date) return <Box key={`blank-${index}`} minH={{ base: "54px", md: "88px" }} borderRadius="lg" bg="transparent" />;
 
             const rec = cell.record;
             const isSelected = selectedDate === cell.date;
@@ -751,13 +756,13 @@ export default function EmployeeAttendancePage() {
             return (
               <Box
                 key={cell.date}
-                minH="88px"
+                minH={{ base: "54px", md: "88px" }}
                 border="1px solid"
                 borderColor={isSelected ? "brand.500" : "#EBE6F5"}
                 bg={display.cellVisual.bg}
                 borderRadius="lg"
-                px={2.5}
-                py={2}
+                px={{ base: 1, md: 2.5 }}
+                py={{ base: 1, md: 2 }}
                 position="relative"
                 role="button"
                 onClick={async () => {
@@ -781,9 +786,9 @@ export default function EmployeeAttendancePage() {
               >
                 <Text
                   position="absolute"
-                  top="7px"
-                  left="9px"
-                  fontSize="xs"
+                  top={{ base: "4px", md: "7px" }}
+                  left={{ base: "6px", md: "9px" }}
+                  fontSize={{ base: "9px", md: "xs" }}
                   fontWeight="800"
                   letterSpacing="0.2px"
                   color={display.cellVisual.dateColor}
@@ -791,9 +796,9 @@ export default function EmployeeAttendancePage() {
                   {new Date(`${cell.date}T00:00:00`).getDate()}
                 </Text>
 
-                <Flex align="center" justify="center" h="100%" minH="66px">
+                <Flex align="center" justify="center" h="100%" minH={{ base: "42px", md: "66px" }}>
                   <Text
-                    fontSize={display.code.length >= 3 ? "sm" : "md"}
+                    fontSize={{ base: display.code.length >= 3 ? "10px" : "xs", md: display.code.length >= 3 ? "sm" : "md" }}
                     fontWeight="800"
                     letterSpacing="0.45px"
                     color={display.code ? display.cellVisual.codeColor : "transparent"}
@@ -827,19 +832,19 @@ export default function EmployeeAttendancePage() {
       </SectionCard>
 
       <SimpleGrid columns={{ base: 1, xl: 3 }} spacing={4} mt={4}>
-        <GridItem colSpan={{ base: 1, xl: 2 }}>
-          <SectionCard title="Selected Day Details">
+        <GridItem colSpan={{ base: 1, xl: 2 }} order={{ base: 2, xl: 1 }}>
+          <SectionCard title="Selected Day Details" position="relative" _before={{ content: '""', position: "absolute", top: 0, left: 5, right: 5, h: "3px", bgGradient: "linear(to-r, brand.400, accent.400)", borderRadius: "full" }}>
             {!selectedRecord ? (
               <Text fontSize="sm" color="text.muted">Select a day in the calendar to view details.</Text>
             ) : (
               <Flex direction="column" gap={3}>
-                <HStack spacing={2}>
+                <Flex gap={2} align="center" flexWrap="wrap">
                   <Text fontSize="sm" fontWeight="700">{selectedRecord.date}</Text>
                   <Badge bg={selectedStyle.bg} color={selectedStyle.color}>{selectedStyle.label}</Badge>
                   {selectedDay?.dayContext && (
                     <Badge variant="outline" borderColor="surface.border">{selectedDay.dayContext.label}</Badge>
                   )}
-                </HStack>
+                </Flex>
 
                 {selectedDay?.dayContext?.description && (
                   <Text fontSize="xs" color="text.muted">{selectedDay.dayContext.description}</Text>
@@ -861,23 +866,25 @@ export default function EmployeeAttendancePage() {
                   {selectedDay?.punches.length ? (
                     <Flex direction="column" gap={1.5}>
                       {selectedDay?.punches.map((p, idx) => (
-                        <Flex
+                        <Grid
                           key={`${p.id}-${idx}`}
-                          justify="space-between"
+                          templateColumns={{ base: "1fr auto", sm: "1fr auto auto" }}
+                          gap={{ base: 1, sm: 4 }}
+                          alignItems="center"
                           border="1px solid"
                           borderColor="surface.border"
                           bg="surface.bg"
                           borderRadius="md"
-                          px={2.5}
-                          py={1.5}
+                          px={3}
+                          py={2.5}
                           fontSize="xs"
                         >
                           <Text fontWeight="700">{p.type === "CHECK_IN" ? "Punch In" : "Punch Out"}</Text>
-                          <Text>{formatTime(p.time)}</Text>
-                          <Text color={p.isInsideOffice ? "green.600" : "orange.600"}>
+                          <Text fontWeight="600">{formatTime(p.time)}</Text>
+                          <Text gridColumn={{ base: "1 / -1", sm: "auto" }} color={p.isInsideOffice ? "green.600" : "orange.600"}>
                             {p.isInsideOffice ? "Inside" : "Remote/Outside"}
                           </Text>
-                        </Flex>
+                        </Grid>
                       ))}
                     </Flex>
                   ) : (
@@ -886,23 +893,25 @@ export default function EmployeeAttendancePage() {
                 </Box>
 
                 {!isPreJoining && !actionEligibility?.hideActions ? (
-                  <HStack spacing={2} pt={1}>
+                  <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={2} pt={2}>
                     {canApplyLeaveFromAttendance && (
                       <Button
                         size="sm"
                         variant="outline"
+                        leftIcon={<CalendarPlus size={15} />}
+                        w="100%"
                         onClick={() => router.push(`/employee/leave?applyLeave=1&date=${selectedRecord?.date}&mode=FULL_DAY`)}
                       >
                         Apply Leave
                       </Button>
                     )}
                     {actionEligibility?.canRequestRegularization && (
-                      <Button size="sm" variant="outline" onClick={regularizationModal.onOpen}>
+                      <Button size="sm" variant="outline" leftIcon={<FilePenLine size={15} />} w="100%" onClick={regularizationModal.onOpen}>
                         Request Regularization
                       </Button>
                     )}
                     {actionEligibility?.canRequestPermission && (
-                      <Button size="sm" variant="outline" onClick={permissionModal.onOpen}>
+                      <Button size="sm" variant="outline" leftIcon={<Timer size={15} />} w="100%" onClick={permissionModal.onOpen}>
                         Request Permission
                       </Button>
                     )}
@@ -916,7 +925,7 @@ export default function EmployeeAttendancePage() {
                         Permission {actionEligibility.existingPermission.status}
                       </Badge>
                     )}
-                  </HStack>
+                  </SimpleGrid>
                 ) : (
                   <Text fontSize="xs" color="text.muted">
                     {isPreJoining ? "No actions available before joining date." : "No action required for this day."}
@@ -927,13 +936,22 @@ export default function EmployeeAttendancePage() {
           </SectionCard>
         </GridItem>
 
-        <GridItem>
-          <SectionCard title="Today Punch Action">
+        <GridItem order={{ base: 1, xl: 2 }}>
+          <SectionCard
+            title="Today’s Punch"
+            bg="linear-gradient(180deg, #FFFFFF 0%, #F7FBFF 100%)"
+            borderColor="brand.100"
+            shadow="0 18px 42px -28px rgba(11,114,231,0.55)"
+            actions={<Flex w={8} h={8} borderRadius="xl" align="center" justify="center" bg="brand.50" color="brand.500"><Sparkles size={16} /></Flex>}
+          >
             <Flex direction="column" gap={3}>
-              <HStack spacing={2}>
-                <Calendar size={15} />
-                <Text fontSize="sm" color="text.muted">{todayState?.reasonMessage}</Text>
-              </HStack>
+              <Flex gap={2.5} align="flex-start" bg="white" border="1px solid" borderColor="surface.border" borderRadius="xl" p={3}>
+                <Flex w={8} h={8} flexShrink={0} borderRadius="lg" align="center" justify="center" bg="accent.50" color="accent.600"><Calendar size={16} /></Flex>
+                <Box>
+                  <Text fontSize="10px" textTransform="uppercase" letterSpacing="0.6px" color="text.muted" fontWeight="700">Status</Text>
+                  <Text fontSize="sm" color="text.body" fontWeight="600">{todayState?.reasonMessage}</Text>
+                </Box>
+              </Flex>
 
               <SimpleGrid columns={2} spacing={2}>
                 <Stat label="First In" value={formatTime(todayState?.attendance?.firstCheckInAt ?? null)} />
@@ -949,7 +967,10 @@ export default function EmployeeAttendancePage() {
                 leftIcon={todayState?.nextPunchType === "CHECK_IN" ? <LogIn size={15} /> : <LogOut size={15} />}
                 bg={todayState?.nextPunchType === "CHECK_IN" ? "brand.500" : "#1D4ED8"}
                 color="white"
-                _hover={{ opacity: 0.92 }}
+                h="48px"
+                borderRadius="xl"
+                boxShadow="0 12px 24px -14px rgba(11,114,231,0.8)"
+                _hover={{ opacity: 0.94, transform: "translateY(-1px)" }}
                 onClick={handlePunch}
                 isLoading={submitting}
                 isDisabled={!todayState?.canPunchToday}
@@ -957,7 +978,7 @@ export default function EmployeeAttendancePage() {
                 {!todayState ? "Attendance unavailable" : todayState.nextPunchType === "CHECK_IN" ? "Punch In" : "Punch Out"}
               </Button>
 
-              <Button variant="outline" onClick={loadAll}>Refresh</Button>
+              <Button variant="ghost" leftIcon={<RefreshCw size={15} />} onClick={loadAll}>Refresh attendance</Button>
             </Flex>
           </SectionCard>
         </GridItem>
@@ -1020,10 +1041,20 @@ export default function EmployeeAttendancePage() {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
+  const hasValue = value !== "-";
   return (
-    <Box border="1px solid" borderColor="surface.border" borderRadius="md" px={2.5} py={2}>
-      <Text fontSize="10px" textTransform="uppercase" color="text.muted">{label}</Text>
-      <Text fontSize="sm" fontWeight="700">{value}</Text>
+    <Box
+      border="1px solid"
+      borderColor={hasValue ? "#D7E6F4" : "surface.border"}
+      borderRadius="xl"
+      px={{ base: 3, md: 3.5 }}
+      py={{ base: 2.5, md: 3 }}
+      bg={hasValue ? "linear-gradient(145deg, #FFFFFF 0%, #F8FBFF 100%)" : "white"}
+      minH={{ base: "72px", md: "78px" }}
+      boxShadow={hasValue ? "0 8px 20px -18px rgba(8,43,76,0.5)" : "none"}
+    >
+      <Text fontSize="10px" textTransform="uppercase" letterSpacing="0.45px" color="text.muted" fontWeight="600">{label}</Text>
+      <Text fontSize={{ base: "md", md: "sm" }} mt={1} fontWeight="800" color={hasValue ? "text.heading" : "text.muted"} lineHeight="1.25" wordBreak="break-word">{value}</Text>
     </Box>
   );
 }

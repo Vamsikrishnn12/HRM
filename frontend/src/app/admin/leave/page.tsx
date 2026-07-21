@@ -300,18 +300,18 @@ export default function AdminLeavePage() {
                           </Text>
                         )}
                       </Td>
-                      <Td borderColor="surface.border">
+                      <Td borderColor="surface.border" minW="230px">
                         {req.status === "PENDING" && (
-                          <HStack spacing={1}>
-                            <Button size="xs" colorScheme="green" variant="ghost" onClick={() => openAction(req, "approve")}>
+                          <HStack spacing={2} mb={2}>
+                            <Button size="xs" colorScheme="green" variant="solid" leftIcon={<CheckCircle size={13} />} onClick={() => openAction(req, "approve")}>
                               Approve
                             </Button>
-                            <Button size="xs" colorScheme="red" variant="ghost" onClick={() => openAction(req, "reject")}>
+                            <Button size="xs" colorScheme="red" variant="outline" leftIcon={<XCircle size={13} />} onClick={() => openAction(req, "reject")}>
                               Reject
                             </Button>
                           </HStack>
                         )}
-                        <Button size="xs" variant="ghost" colorScheme="brand" onClick={() => openAction(req, "override")} mt={req.status === "PENDING" ? 0.5 : 0}>
+                        <Button size="xs" variant="outline" colorScheme="blue" leftIcon={<AlertTriangle size={13} />} onClick={() => openAction(req, "override")}>
                           Override
                         </Button>
                       </Td>

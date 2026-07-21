@@ -24,6 +24,18 @@ export class OrgSettings {
   @Column({ type: 'text', nullable: true })
   companyAddress: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  companyLogoUrl: string | null;
+
+  @Column({ type: 'varchar', length: 21, nullable: true })
+  cinNumber: string | null;
+
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  gstNumber: string | null;
+
+  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
+  payslipAdditionalFields: Array<{ label: string; value: string }>;
+
   // ── Office Timings ──
   @Column({ type: 'time', default: '09:00' })
   workStartTime: string;

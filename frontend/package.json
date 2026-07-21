@@ -6,7 +6,7 @@
     "clean:next": "node -e \"const fs=require('fs');try{fs.rmSync('.next',{recursive:true,force:true});}catch(_){}\"",
     "predev": "npm run clean:next",
     "dev": "next dev",
-    "prebuild": "npm run clean:next",
+    "prebuild": "node scripts/generate-app-version.js && npm run clean:next",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

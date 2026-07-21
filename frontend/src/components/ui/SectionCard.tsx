@@ -20,7 +20,7 @@ export default function SectionCard({
   return (
     <Box
       bg="white"
-      borderRadius="xl"
+      borderRadius={{ base: "2xl", md: "xl" }}
       border="1px solid"
       borderColor="surface.border"
       shadow="card"
@@ -33,8 +33,10 @@ export default function SectionCard({
         <Flex
           justify="space-between"
           align="center"
-          px={6}
-          py={4}
+          px={{ base: 4, md: 6 }}
+          py={{ base: 3.5, md: 4 }}
+          gap={3}
+          flexWrap="wrap"
           borderBottom="1px solid"
           borderColor="surface.border"
         >
@@ -44,7 +46,7 @@ export default function SectionCard({
           {actions}
         </Flex>
       )}
-      <Box p={noPadding ? 0 : 6}>{children}</Box>
+      <Box p={noPadding ? 0 : { base: 4, md: 6 }}>{children}</Box>
     </Box>
   );
 }

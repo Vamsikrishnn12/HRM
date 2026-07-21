@@ -16,12 +16,12 @@ export default function PageHeader({ title, subtitle, actions, ...rest }: PageHe
       align={{ base: "flex-start", md: "center" }}
       direction={{ base: "column", md: "row" }}
       gap={4}
-      mb={8}
+      mb={{ base: 5, md: 8 }}
       {...rest}
     >
       <Box>
         <Heading
-          size="lg"
+          fontSize={{ base: "2xl", md: "3xl" }}
           color="text.heading"
           fontWeight="800"
           letterSpacing="-0.02em"
@@ -30,7 +30,7 @@ export default function PageHeader({ title, subtitle, actions, ...rest }: PageHe
           {title}
         </Heading>
         {subtitle && (
-          <Text fontSize="sm" color="text.muted" mt={1.5} fontWeight="500">
+          <Text fontSize={{ base: "xs", md: "sm" }} color="text.muted" mt={1.5} fontWeight="500" maxW="680px">
             {subtitle}
           </Text>
         )}

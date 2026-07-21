@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Avatar, Badge, Box, Button, Center, Flex, IconButton, Input, InputGroup,
   InputLeftElement, Menu, MenuButton, MenuDivider, MenuItem, MenuList,
   Popover, PopoverBody, PopoverContent, PopoverTrigger, Spinner, Text, VStack,
 } from "@chakra-ui/react";
-import { Bell, ChevronDown, LogOut, Search, Settings, User } from "lucide-react";
+import { Bell, BellRing, ChevronDown, LogOut, Search, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { notificationApi, type NotificationItem } from "@/api";
@@ -29,12 +29,32 @@ export default function Topbar() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [deviceNotificationPermission, setDeviceNotificationPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+  const knownNotificationIds = useRef<Set<string> | null>(null);
 
   const loadNotifications = useCallback(async () => {
     if (!user) return;
     setLoadingNotifications(true);
     try {
       const result = await notificationApi.list();
+      if (knownNotificationIds.current && "Notification" in window && Notification.permission === "granted") {
+        result.items
+          .filter((item) => !item.isRead && !knownNotificationIds.current?.has(item.id))
+          .forEach((item) => {
+            const deviceNotice = new Notification(item.title, {
+              body: item.message,
+              icon: "/icon-192.png",
+              badge: "/icon-192.png",
+              tag: `connect-hr-${item.id}`,
+            });
+            deviceNotice.onclick = () => {
+              window.focus();
+              if (item.actionUrl) router.push(item.actionUrl);
+              deviceNotice.close();
+            };
+          });
+      }
+      knownNotificationIds.current = new Set(result.items.map((item) => item.id));
       setNotifications(result.items);
       setUnreadCount(result.unreadCount);
     } catch {
@@ -43,13 +63,27 @@ export default function Topbar() {
     } finally {
       setLoadingNotifications(false);
     }
-  }, [user]);
+  }, [router, user]);
 
   useEffect(() => {
+    setDeviceNotificationPermission("Notification" in window ? Notification.permission : "unsupported");
     loadNotifications();
     const timer = window.setInterval(loadNotifications, 30_000);
     return () => window.clearInterval(timer);
   }, [loadNotifications]);
+
+  const enableDeviceNotifications = async () => {
+    if (!("Notification" in window)) return;
+    const permission = await Notification.requestPermission();
+    setDeviceNotificationPermission(permission);
+    if (permission === "granted") {
+      new Notification("Connect HR notifications enabled", {
+        body: "You will now receive important HR and app update alerts on this device.",
+        icon: "/icon-192.png",
+        tag: "connect-hr-notifications-enabled",
+      });
+    }
+  };
 
   const openNotification = async (notification: NotificationItem) => {
     if (!notification.isRead) {
@@ -71,7 +105,7 @@ export default function Topbar() {
   const profilePath = isEmployee ? "/employee/profile" : "/admin/settings";
 
   return (
-    <Box as="header" h="72px" bg="white" borderBottom="1px solid" borderColor="surface.border" position="sticky" top={0} zIndex={10} px={{ base: 4, md: 6 }} backdropFilter="blur(12px)" bgColor="rgba(255,255,255,0.86)" boxShadow="0 1px 0 rgba(8,43,76,0.03)">
+    <Box as="header" h={{ base: "64px", md: "72px" }} bg="white" borderBottom="1px solid" borderColor="surface.border" position="sticky" top={0} zIndex={10} px={{ base: 3, md: 6 }} backdropFilter="blur(16px)" bgColor="rgba(255,255,255,0.9)" boxShadow="0 8px 28px -24px rgba(8,43,76,0.45)">
       <Flex h="100%" align="center" justify="space-between">
         <InputGroup maxW={{ base: "200px", md: "360px" }} size="sm" display={{ base: "none", sm: "block" }}>
           <InputLeftElement pointerEvents="none"><Search size={16} color="#708399" /></InputLeftElement>
@@ -99,6 +133,15 @@ export default function Topbar() {
                   </Box>
                   {unreadCount > 0 && <Button size="xs" variant="ghost" colorScheme="blue" onClick={markAllRead}>Mark all read</Button>}
                 </Flex>
+                {deviceNotificationPermission === "default" && (
+                  <Flex px={4} py={3} bg="linear-gradient(90deg, #EAF5FF 0%, #E9FBF6 100%)" align="center" justify="space-between" gap={3} borderBottom="1px solid" borderColor="surface.border">
+                    <Flex align="center" gap={2} minW={0}>
+                      <BellRing size={16} color="#075FC7" />
+                      <Text fontSize="xs" color="text.body" fontWeight="600">Get alerts on this device</Text>
+                    </Flex>
+                    <Button size="xs" colorScheme="blue" onClick={enableDeviceNotifications} flexShrink={0}>Enable</Button>
+                  </Flex>
+                )}
                 {loadingNotifications && notifications.length === 0 ? (
                   <Center py={10}><Spinner size="sm" color="brand.500" /></Center>
                 ) : notifications.length === 0 ? (

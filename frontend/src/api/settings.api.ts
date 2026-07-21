@@ -10,6 +10,10 @@ export interface OrgSettings {
   id: string;
   companyName: string;
   companyAddress: string;
+  companyLogoUrl: string | null;
+  cinNumber: string;
+  gstNumber: string;
+  payslipAdditionalFields: Array<{ label: string; value: string }>;
   workStartTime: string;
   workEndTime: string;
   lateGraceMinutes: number;
@@ -38,6 +42,14 @@ export const settingsApi = {
 
   update: (data: Partial<OrgSettings>) =>
     api.put<OrgSettings>("/settings", data),
+
+  uploadCompanyLogo: (logo: File) => {
+    const formData = new FormData();
+    formData.append("logo", logo);
+    return api.postFormData<OrgSettings>("/settings/company-logo", formData);
+  },
+
+  deleteCompanyLogo: () => api.delete<OrgSettings>("/settings/company-logo"),
 
   listHolidays: () =>
     api.get<{ data: Holiday[]; total: number }>("/settings/holidays"),

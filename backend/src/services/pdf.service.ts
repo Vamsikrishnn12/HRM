@@ -2,11 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
 import type { PayrollComponent } from '../entities/PayrollRecord.entity';
+import { getUploadPath } from '../utils/uploadPath';
 
 export interface PayslipData {
   companyName: string;
   companyAddress: string;
   companyLogo?: string;
+  cinNumber?: string;
+  gstNumber?: string;
+  additionalCompanyFields?: Array<{ label: string; value: string }>;
   employeeName: string;
   employeeCode: string;
   designation: string;
@@ -92,9 +96,22 @@ function numberToWords(value: number): string {
   return words.filter(Boolean).join(' ');
 }
 
-function resolveLogo(custom?: string): string | undefined {
+async function resolveLogo(custom?: string): Promise<string | Buffer | undefined> {
+  if (custom?.startsWith('/uploads/company-logos/')) {
+    const localPath = getUploadPath('company-logos', path.basename(custom));
+    try {
+      await fs.promises.access(localPath);
+      return localPath;
+    } catch { /* fall through to bundled logo */ }
+  }
+  if (custom && /^https?:\/\//i.test(custom)) {
+    try {
+      const response = await fetch(custom);
+      if (response.ok) return Buffer.from(await response.arrayBuffer());
+    } catch { /* fall through to bundled logo */ }
+  }
   const candidates = [
-    custom,
+    custom && !custom.startsWith('/') ? custom : undefined,
     path.resolve(__dirname, '../templates/logobg.png'),
     path.resolve(process.cwd(), 'dist/templates/logobg.png'),
     path.resolve(process.cwd(), 'src/templates/logobg.png'),
@@ -111,6 +128,7 @@ export async function generatePayslipPdf(
   data: PayslipData,
   fileName: string,
 ): Promise<{ buffer: Buffer; fileName: string }> {
+  const logo = await resolveLogo(data.companyLogo);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 36, info: { Title: fileName, Author: data.companyName } });
     const chunks: Buffer[] = [];
@@ -121,15 +139,19 @@ export async function generatePayslipPdf(
     const left = 36;
     const width = doc.page.width - 72;
     const right = left + width;
-    const logo = resolveLogo(data.companyLogo);
-
     doc.roundedRect(left, 30, width, 92, 12).fill(COLORS.navy);
     if (logo) doc.image(logo, left + 18, 46, { fit: [60, 60] });
     const brandX = logo ? left + 90 : left + 20;
     doc.fillColor(COLORS.white).font('Helvetica-Bold').fontSize(20)
       .text(safe(data.companyName), brandX, 48, { width: right - brandX - 18 });
-    doc.fillColor('#D7E9FA').font('Helvetica').fontSize(8.5)
-      .text(safe(data.companyAddress), brandX, 76, { width: right - brandX - 18, height: 34 });
+    const legalDetails = [
+      data.cinNumber ? `CIN: ${data.cinNumber}` : '',
+      data.gstNumber ? `GSTIN: ${data.gstNumber}` : '',
+      ...(data.additionalCompanyFields || []).map((field) => `${field.label}: ${field.value}`),
+    ].filter(Boolean);
+    const companyDetails = [data.companyAddress, legalDetails.join('  |  ')].filter(Boolean).join('\n');
+    doc.fillColor('#D7E9FA').font('Helvetica').fontSize(7.5)
+      .text(safe(companyDetails), brandX, 75, { width: right - brandX - 18, height: 38, lineGap: 2 });
 
     doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(18)
       .text('PAYSLIP', left, 143, { width, align: 'center' });

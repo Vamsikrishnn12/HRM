@@ -436,12 +436,20 @@ export class PayrollService {
     // Get company details from OrgSettings
     let companyName = 'Connect HR';
     let companyAddress = '';
+    let companyLogo: string | undefined;
+    let cinNumber = '';
+    let gstNumber = '';
+    let additionalCompanyFields: Array<{ label: string; value: string }> = [];
     try {
       const orgRepo = AppDataSource.getRepository(OrgSettings);
       const org = await orgRepo.findOne({ where: {} });
       if (org) {
         companyName = org.companyName || 'Connect HR';
         companyAddress = org.companyAddress || '';
+        companyLogo = org.companyLogoUrl || undefined;
+        cinNumber = org.cinNumber || '';
+        gstNumber = org.gstNumber || '';
+        additionalCompanyFields = org.payslipAdditionalFields || [];
       }
     } catch {
       // use defaults
@@ -450,6 +458,10 @@ export class PayrollService {
     const data: PayslipData = {
       companyName,
       companyAddress,
+      companyLogo,
+      cinNumber,
+      gstNumber,
+      additionalCompanyFields,
       employeeName: String(snapshot.employeeName || ''),
       employeeCode: String(snapshot.employeeCode || ''),
       designation: String(snapshot.designation || ''),
@@ -509,17 +521,29 @@ export class PayrollService {
     const snapshot = (record.employeeSnapshot || {}) as Record<string, unknown>;
     let companyName = 'Connect HR';
     let companyAddress = '';
+    let companyLogo: string | undefined;
+    let cinNumber = '';
+    let gstNumber = '';
+    let additionalCompanyFields: Array<{ label: string; value: string }> = [];
     try {
       const org = await AppDataSource.getRepository(OrgSettings).findOne({ where: {} });
       if (org) {
         companyName = org.companyName || 'Connect HR';
         companyAddress = org.companyAddress || '';
+        companyLogo = org.companyLogoUrl || undefined;
+        cinNumber = org.cinNumber || '';
+        gstNumber = org.gstNumber || '';
+        additionalCompanyFields = org.payslipAdditionalFields || [];
       }
     } catch { /* use defaults */ }
 
     const data: PayslipData = {
       companyName,
       companyAddress,
+      companyLogo,
+      cinNumber,
+      gstNumber,
+      additionalCompanyFields,
       employeeName: String(snapshot.employeeName || ''),
       employeeCode: String(snapshot.employeeCode || ''),
       designation: String(snapshot.designation || ''),

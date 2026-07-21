@@ -4,8 +4,18 @@ import { OrganizationSalaryConfigController } from '../controllers/organizationS
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { roleMiddleware } from '../middlewares/role.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
+import multer from 'multer';
 
 const router = Router();
+
+const logoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Logo must be a JPG, PNG, or WEBP image'));
+  },
+});
 
 // All settings routes require ADMIN role
 router.use(authMiddleware, roleMiddleware('ADMIN'));
@@ -83,6 +93,8 @@ router.get('/', asyncHandler(SettingsController.getSettings));
  *         description: Validation error
  */
 router.put('/', asyncHandler(SettingsController.updateSettings));
+router.post('/company-logo', logoUpload.single('logo'), asyncHandler(SettingsController.uploadCompanyLogo));
+router.delete('/company-logo', asyncHandler(SettingsController.deleteCompanyLogo));
 
 // Salary configuration
 router.get(

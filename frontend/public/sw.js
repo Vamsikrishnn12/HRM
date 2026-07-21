@@ -1,9 +1,12 @@
-const CACHE_NAME = "connect-hr-shell-v1";
+const CACHE_NAME = "connect-hr-shell-v2";
 const APP_SHELL = ["/", "/login", "/logobg.png", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
-  self.skipWaiting();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {

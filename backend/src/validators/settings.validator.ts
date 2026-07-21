@@ -3,6 +3,13 @@ import { z } from 'zod';
 export const updateSettingsSchema = z.object({
   companyName: z.string().trim().min(1).max(200).optional(),
   companyAddress: z.string().trim().max(1000).nullable().optional(),
+  companyLogoUrl: z.string().trim().max(2000).nullable().optional(),
+  cinNumber: z.string().trim().max(21).nullable().optional(),
+  gstNumber: z.string().trim().max(15).nullable().optional(),
+  payslipAdditionalFields: z.array(z.object({
+    label: z.string().trim().min(1).max(60),
+    value: z.string().trim().min(1).max(250),
+  })).max(10).optional(),
   workStartTime: z
     .string()
     .regex(/^\d{2}:\d{2}$/, 'Must be HH:mm format')

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Box,
   Flex,
@@ -18,8 +18,9 @@ import {
   ModalFooter,
   ModalCloseButton,
   useDisclosure,
+  Image as ChakraImage,
 } from "@chakra-ui/react";
-import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield } from "lucide-react";
+import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield, Upload, X } from "lucide-react";
 import { settingsApi } from "@/api";
 import { leaveApi, type LeaveSlabData } from "@/api/leave.api";
 import type { Holiday } from "@/api";
@@ -29,6 +30,7 @@ import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import SalaryConfigurationSection from "@/components/settings/SalaryConfigurationSection";
 import BrandMark from "@/components/ui/BrandMark";
+import { getAssetUrl } from "@/lib/api";
 
 const WEEK_DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 
@@ -84,7 +86,12 @@ export default function SettingsPage() {
   const [companyForm, setCompanyForm] = useState({
     companyName: "Connect HR",
     companyAddress: "",
+    companyLogoUrl: null as string | null,
+    cinNumber: "",
+    gstNumber: "",
+    payslipAdditionalFields: [] as Array<{ label: string; value: string }>,
   });
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // ── Settings state ──
 
@@ -157,6 +164,10 @@ export default function SettingsPage() {
       setCompanyForm({
         companyName: s.companyName || "Connect HR",
         companyAddress: s.companyAddress || "",
+        companyLogoUrl: s.companyLogoUrl || null,
+        cinNumber: s.cinNumber || "",
+        gstNumber: s.gstNumber || "",
+        payslipAdditionalFields: s.payslipAdditionalFields || [],
       });
       setWeekOffForm({
         weekOffDays: s.weekOffDays || "SUNDAY",
@@ -231,6 +242,52 @@ export default function SettingsPage() {
     };
     saveSection("location", data);
   };
+
+  const handleLogoChange = async (file?: File) => {
+    if (!file) return;
+    try {
+      setSaving("logo");
+      const updated = await settingsApi.uploadCompanyLogo(file);
+      setCompanyForm((form) => ({ ...form, companyLogoUrl: updated.companyLogoUrl }));
+      toast({ title: "Company logo updated", status: "success", duration: 2000, isClosable: true, position: "top-right" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Failed to upload logo", status: "error", duration: 3000, isClosable: true, position: "top-right" });
+    } finally {
+      setSaving(null);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    try {
+      setSaving("logo");
+      await settingsApi.deleteCompanyLogo();
+      setCompanyForm((form) => ({ ...form, companyLogoUrl: null }));
+      toast({ title: "Custom logo removed", status: "success", duration: 2000, isClosable: true, position: "top-right" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Failed to remove logo", status: "error", duration: 3000, isClosable: true, position: "top-right" });
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const addPayslipField = () => setCompanyForm((form) => ({
+    ...form,
+    payslipAdditionalFields: [...form.payslipAdditionalFields, { label: "", value: "" }],
+  }));
+
+  const updatePayslipField = (index: number, key: "label" | "value", value: string) =>
+    setCompanyForm((form) => ({
+      ...form,
+      payslipAdditionalFields: form.payslipAdditionalFields.map((field, i) =>
+        i === index ? { ...field, [key]: value } : field
+      ),
+    }));
+
+  const removePayslipField = (index: number) => setCompanyForm((form) => ({
+    ...form,
+    payslipAdditionalFields: form.payslipAdditionalFields.filter((_, i) => i !== index),
+  }));
 
   // ── Holiday CRUD ──
   const openAddHoliday = () => {
@@ -388,29 +445,116 @@ export default function SettingsPage() {
       <PageHeader title="Settings" subtitle="Manage organisation preferences" />
 
       <SectionCard title="Company & Payslip Branding" mb={4}>
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={5} alignItems="end">
-          <Box p={4} bg="surface.bg" borderRadius="lg">
+        <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={5} alignItems="start">
+          <Box p={4} bg="surface.bg" borderRadius="lg" minH="150px">
             <Text fontSize="xs" color="text.muted" mb={3}>Logo used on generated payslips</Text>
-            <BrandMark logoSize="52px" />
+            {companyForm.companyLogoUrl ? (
+              <ChakraImage
+                src={getAssetUrl(companyForm.companyLogoUrl)}
+                alt="Company logo"
+                boxSize="72px"
+                objectFit="contain"
+                bg="white"
+                border="1px solid"
+                borderColor="surface.border"
+                borderRadius="lg"
+                p={1}
+              />
+            ) : <BrandMark logoSize="52px" />}
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              onChange={(e) => handleLogoChange(e.target.files?.[0])}
+            />
+            <HStack mt={3} spacing={2}>
+              <SecondaryButton
+                size="xs"
+                leftIcon={<Upload size={13} />}
+                onClick={() => logoInputRef.current?.click()}
+                isLoading={saving === "logo"}
+              >
+                {companyForm.companyLogoUrl ? "Change logo" : "Upload logo"}
+              </SecondaryButton>
+              {companyForm.companyLogoUrl && (
+                <IconButton
+                  aria-label="Remove custom logo"
+                  icon={<X size={14} />}
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="red"
+                  onClick={handleRemoveLogo}
+                  isDisabled={saving === "logo"}
+                />
+              )}
+            </HStack>
+            <Text fontSize="10px" color="text.muted" mt={2}>PNG, JPG or WEBP · maximum 2 MB</Text>
           </Box>
-          <Field label="Company Name" required>
-            <StyledInput
-              value={companyForm.companyName}
-              onChange={(e) => setCompanyForm((form) => ({ ...form, companyName: e.target.value }))}
-              placeholder="Company name"
-            />
-          </Field>
-          <Field label="Company Address">
-            <StyledInput
-              value={companyForm.companyAddress}
-              onChange={(e) => setCompanyForm((form) => ({ ...form, companyAddress: e.target.value }))}
-              placeholder="Address shown on payslips"
-            />
-          </Field>
+          <Flex direction="column" gap={4}>
+            <Field label="Company Name" required>
+              <StyledInput
+                value={companyForm.companyName}
+                onChange={(e) => setCompanyForm((form) => ({ ...form, companyName: e.target.value }))}
+                placeholder="Company name"
+              />
+            </Field>
+            <Field label="Company Address">
+              <StyledInput
+                value={companyForm.companyAddress}
+                onChange={(e) => setCompanyForm((form) => ({ ...form, companyAddress: e.target.value }))}
+                placeholder="Address shown on payslips"
+              />
+            </Field>
+          </Flex>
+          <Flex direction="column" gap={4}>
+            <Field label="CIN Number">
+              <StyledInput
+                value={companyForm.cinNumber}
+                onChange={(e) => setCompanyForm((form) => ({ ...form, cinNumber: e.target.value.toUpperCase() }))}
+                placeholder="e.g. U72900KA2020PTC123456"
+                maxLength={21}
+              />
+            </Field>
+            <Field label="GSTIN">
+              <StyledInput
+                value={companyForm.gstNumber}
+                onChange={(e) => setCompanyForm((form) => ({ ...form, gstNumber: e.target.value.toUpperCase() }))}
+                placeholder="e.g. 29ABCDE1234F1Z5"
+                maxLength={15}
+              />
+            </Field>
+          </Flex>
         </SimpleGrid>
+        <Box mt={5} pt={4} borderTop="1px solid" borderColor="surface.border">
+          <Flex justify="space-between" align="center" mb={3}>
+            <Box>
+              <Text fontSize="sm" fontWeight="700" color="text.heading">Additional Payslip Information</Text>
+              <Text fontSize="xs" color="text.muted">Add optional items such as PAN, website, registration number, or contact details.</Text>
+            </Box>
+            <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addPayslipField} isDisabled={companyForm.payslipAdditionalFields.length >= 10}>
+              Add Information
+            </SecondaryButton>
+          </Flex>
+          <Flex direction="column" gap={2}>
+            {companyForm.payslipAdditionalFields.map((field, index) => (
+              <SimpleGrid key={index} columns={{ base: 1, md: 2 }} spacing={2} position="relative" pr={{ md: 10 }}>
+                <StyledInput value={field.label} onChange={(e) => updatePayslipField(index, "label", e.target.value)} placeholder="Label (e.g. Company PAN)" maxLength={60} />
+                <StyledInput value={field.value} onChange={(e) => updatePayslipField(index, "value", e.target.value)} placeholder="Value shown on payslip" maxLength={250} />
+                <IconButton aria-label="Remove information" icon={<Trash2 size={14} />} size="sm" variant="ghost" colorScheme="red" position={{ md: "absolute" }} right={0} top={0} onClick={() => removePayslipField(index)} />
+              </SimpleGrid>
+            ))}
+          </Flex>
+        </Box>
         <Flex justify="flex-end" mt={4}>
           <PrimaryButton
-            onClick={() => saveSection("company", companyForm)}
+            onClick={() => saveSection("company", {
+              companyName: companyForm.companyName,
+              companyAddress: companyForm.companyAddress || null,
+              cinNumber: companyForm.cinNumber || null,
+              gstNumber: companyForm.gstNumber || null,
+              payslipAdditionalFields: companyForm.payslipAdditionalFields.filter((field) => field.label.trim() && field.value.trim()),
+            })}
             isLoading={saving === "company"}
             isDisabled={!companyForm.companyName.trim()}
           >

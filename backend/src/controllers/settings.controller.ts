@@ -7,6 +7,7 @@ import {
 } from '../validators/settings.validator';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
+import { deleteCompanyLogo, storeCompanyLogo } from '../utils/companyLogo';
 
 const settingsService = new SettingsService();
 
@@ -26,6 +27,27 @@ export class SettingsController {
     }
     const result = await settingsService.updateSettings(parsed.data);
     ApiResponse.success(res, 'Settings updated successfully', result);
+  }
+
+  static async uploadCompanyLogo(req: Request, res: Response): Promise<void> {
+    if (!req.file) throw ApiError.badRequest('Please select a logo', 'LOGO_REQUIRED');
+    const current = await settingsService.getSettings();
+    const companyLogoUrl = await storeCompanyLogo(req.file);
+    try {
+      const result = await settingsService.updateSettings({ companyLogoUrl });
+      await deleteCompanyLogo(current.companyLogoUrl);
+      ApiResponse.success(res, 'Company logo updated successfully', result);
+    } catch (error) {
+      await deleteCompanyLogo(companyLogoUrl);
+      throw error;
+    }
+  }
+
+  static async deleteCompanyLogo(_req: Request, res: Response): Promise<void> {
+    const current = await settingsService.getSettings();
+    const result = await settingsService.updateSettings({ companyLogoUrl: null });
+    await deleteCompanyLogo(current.companyLogoUrl);
+    ApiResponse.success(res, 'Company logo removed successfully', result);
   }
 
   static async listHolidays(_req: Request, res: Response): Promise<void> {
