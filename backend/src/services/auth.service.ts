@@ -1,8 +1,10 @@
 import { UserRepository } from '../repositories/user.repository';
 import { TokenService } from './token.service';
 import { LocationService } from './location.service';
-import { comparePassword } from '../utils/password';
+import { comparePassword, hashPassword } from '../utils/password';
 import { ApiError } from '../utils/apiError';
+import { env } from '../config/env';
+import { User, UserRole } from '../entities/User.entity';
 
 interface LoginInput {
   email: string;
@@ -24,14 +26,44 @@ export class AuthService {
     const { email, password, latitude, longitude } = input;
 
     // 1. Find user
-    const user = await this.userRepo.findByEmail(email);
-  
+    let user = await this.userRepo.findByEmail(email);
+    const matchesConfiguredAdmin =
+      email === env.ADMIN_EMAIL.trim().toLowerCase() && password === env.ADMIN_PASSWORD;
+
+    // Recover the single configured bootstrap admin if a database switch or
+    // incorrectly formatted environment value left its stored hash stale.
+    // This path still requires the exact server-side admin credentials.
+    if (!user && matchesConfiguredAdmin) {
+      user = await this.userRepo.create({
+        email: env.ADMIN_EMAIL.trim().toLowerCase(),
+        password: await hashPassword(env.ADMIN_PASSWORD),
+        firstName: env.ADMIN_FIRST_NAME,
+        lastName: env.ADMIN_LAST_NAME,
+        role: UserRole.ADMIN,
+        isActive: true,
+        officeLocationRequired: false,
+      });
+    }
+
     if (!user) {
       throw ApiError.unauthorized('Invalid credentials', 'AUTH_INVALID_CREDENTIALS');
     }
 
     // 2. Compare password
-    const isPasswordValid = await comparePassword(password, user.password);
+    let isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid && matchesConfiguredAdmin) {
+      const repairedAdmin: Partial<User> = {
+        password: await hashPassword(env.ADMIN_PASSWORD),
+        firstName: env.ADMIN_FIRST_NAME,
+        lastName: env.ADMIN_LAST_NAME,
+        role: UserRole.ADMIN,
+        isActive: true,
+        officeLocationRequired: false,
+      };
+      await this.userRepo.update(user.id, repairedAdmin);
+      Object.assign(user, repairedAdmin);
+      isPasswordValid = true;
+    }
     if (!isPasswordValid) {
       throw ApiError.unauthorized('Invalid credentials', 'AUTH_INVALID_CREDENTIALS');
     }
