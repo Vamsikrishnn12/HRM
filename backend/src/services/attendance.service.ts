@@ -1084,6 +1084,27 @@ export class AttendanceService {
         } as Attendance;
       }
 
+      // Older rows and synthetic rows may still contain NOT_STARTED/LOP while a
+      // working day is already due or an employee is actively checked in. Keep
+      // the daily admin view aligned with the live attendance rules.
+      if (day.dayType === AttendanceDayType.WORKING && date <= this.toDateKey(new Date())) {
+        const hasActiveCheckIn = Boolean(day.firstCheckInAt && day.missingPunch);
+        if (hasActiveCheckIn && date === this.toDateKey(new Date())) {
+          const checkedInLate = day.lateMinutes > 0;
+          day = {
+            ...day,
+            status: checkedInLate ? AttendanceStatus.LOP : AttendanceStatus.PRESENT,
+            statusReason: checkedInLate ? 'LATE_CHECK_IN' : 'WORK_IN_PROGRESS',
+          } as Attendance;
+        } else if (day.status === AttendanceStatus.NOT_STARTED && !day.firstCheckInAt) {
+          day = {
+            ...day,
+            status: AttendanceStatus.LOP,
+            statusReason: 'NO_PUNCH',
+          } as Attendance;
+        }
+      }
+
       const normalized = this.mapAdminAttendanceRecord(day, employee, profile, {
         pendingRegularizationCount: pendingRegularizationMap.get(employee.id) ?? 0,
         pendingPermissionCount: pendingPermissionMap.get(employee.id) ?? 0,
@@ -1960,6 +1981,7 @@ export class AttendanceService {
       permissionMinutesApplied,
       effectiveWorked,
       missingPunch,
+      hasOpenSession: sessions.some((session) => session.outTime == null),
     };
   }
 
@@ -1973,6 +1995,7 @@ export class AttendanceService {
       overtimeMinutes: number;
       permissionMinutesApplied: number;
       missingPunch: boolean;
+      hasOpenSession: boolean;
     };
     policy: AttendancePolicy;
     hasPunches: boolean;
@@ -1997,10 +2020,21 @@ export class AttendanceService {
       if (params.date > today) {
         return { status: AttendanceStatus.NOT_STARTED, reason: 'FUTURE_DATE' };
       }
-      if (params.date === this.toDateKey(new Date())) {
-        return { status: AttendanceStatus.NOT_STARTED, reason: 'NO_PUNCH_TODAY' };
-      }
       return { status: AttendanceStatus.LOP, reason: 'NO_PUNCH' };
+    }
+
+    // A check-in beyond the configured grace period is LOP. Approved
+    // regularization can move the effective first-in time back within the
+    // allowed window and will naturally clear lateByMinutes.
+    if (params.stats.lateByMinutes > 0) {
+      return { status: AttendanceStatus.LOP, reason: 'LATE_CHECK_IN' };
+    }
+
+    // Do not classify an active shift as LOP simply because the employee has
+    // not yet accumulated the full-day threshold. Final hours are evaluated
+    // after checkout/end-of-day.
+    if (params.date === this.toDateKey(new Date()) && params.stats.hasOpenSession) {
+      return { status: AttendanceStatus.PRESENT, reason: 'WORK_IN_PROGRESS' };
     }
 
     let status: AttendanceStatus;

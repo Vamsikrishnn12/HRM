@@ -278,6 +278,16 @@ function resolveFinalDisplayStatus(
 
   if (date > todayDate) return "NOT_STARTED";
 
+  // Late means beyond the policy grace period. It remains LOP whether the
+  // employee is still working or has completed the shift.
+  if (Number(record.lateMinutes || 0) > 0) return "LOP";
+
+  // While today's shift is still open, the final worked-hour threshold has not
+  // been reached yet. Show the employee as present instead of prematurely LOP.
+  if (date === todayDate && record.firstCheckInAt && record.missingPunch) {
+    return "PRESENT";
+  }
+
   const effectiveWorked = Math.max(
     0,
     Number(record.totalWorkMinutes || 0) + Number(record.permissionMinutesApplied || 0),
@@ -285,15 +295,6 @@ function resolveFinalDisplayStatus(
 
   if (effectiveWorked >= policy.fullDayMinMinutes) return "PRESENT";
   if (effectiveWorked >= policy.halfDayMinMinutes) return "HALF_DAY";
-
-  if (
-    date === todayDate &&
-    effectiveWorked === 0 &&
-    !record.firstCheckInAt &&
-    !record.lastCheckOutAt
-  ) {
-    return "NOT_STARTED";
-  }
 
   return "LOP";
 }
