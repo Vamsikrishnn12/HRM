@@ -165,4 +165,6 @@ router.post('/:id/offboard', asyncHandler(EmployeeController.offboard));
  */
 router.patch('/:id', asyncHandler(EmployeeController.update));
 
+router.delete('/:id', asyncHandler(EmployeeController.delete));
+
 export default router;

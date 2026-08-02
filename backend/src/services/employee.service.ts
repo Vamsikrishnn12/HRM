@@ -168,7 +168,7 @@ export class EmployeeService {
 
   async listEmployees() {
     const profiles = await this.employeeRepo.findAll();
-    const data = profiles.map((p) => ({
+    const data = profiles.filter((p) => !p.user.deletedAt).map((p) => ({
       id: p.id,
       department: p.department,
       designation: p.designation,
@@ -202,7 +202,7 @@ export class EmployeeService {
   async dropdownEmployees() {
     const profiles = await this.employeeRepo.findAll();
     return profiles
-      .filter((p) => p.user?.isActive)
+      .filter((p) => p.user?.isActive && !p.user.deletedAt)
       .map((p) => ({
         userId: p.user.id,
         empId: p.user.empId,
@@ -213,7 +213,7 @@ export class EmployeeService {
 
   async getEmployee(id: string) {
     const profile = await this.employeeRepo.findById(id);
-    if (!profile) {
+    if (!profile || profile.user.deletedAt) {
       throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
     }
     return {
@@ -248,7 +248,7 @@ export class EmployeeService {
 
   async updateEmployee(id: string, input: UpdateEmployeeInput) {
     const profile = await this.employeeRepo.findById(id);
-    if (!profile) {
+    if (!profile || profile.user.deletedAt) {
       throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
     }
     if (profile.employmentStatus === 'OFFBOARDED' && input.isActive === true) {
@@ -323,7 +323,7 @@ export class EmployeeService {
 
   async offboardEmployee(id: string, input: OffboardEmployeeInput) {
     const profile = await this.employeeRepo.findById(id);
-    if (!profile) {
+    if (!profile || profile.user.deletedAt) {
       throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
     }
     if (profile.employmentStatus === 'OFFBOARDED') {
@@ -356,9 +356,29 @@ export class EmployeeService {
     return this.getEmployee(id);
   }
 
+  async deleteEmployee(id: string) {
+    const profile = await this.employeeRepo.findById(id);
+    if (!profile || profile.user.deletedAt) {
+      throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
+    }
+
+    const previousPhoto = profile.user.profilePhotoUrl;
+    await this.tokenService.revokeAllUserTokens(profile.userId);
+    await this.userRepo.archiveEmployee(profile.userId);
+
+    if (previousPhoto?.includes('.blob.vercel-storage.com/') && process.env.BLOB_READ_WRITE_TOKEN) {
+      await del(previousPhoto).catch(() => undefined);
+    } else if (previousPhoto?.startsWith('/uploads/profile-photos/')) {
+      const previousPath = getUploadPath('profile-photos', path.basename(previousPhoto));
+      fs.unlink(previousPath, () => undefined);
+    }
+
+    return { id, emailReleased: true };
+  }
+
   async updateProfilePhoto(id: string, file: Express.Multer.File) {
     const profile = await this.employeeRepo.findById(id);
-    if (!profile) {
+    if (!profile || profile.user.deletedAt) {
       if (file.path) fs.unlink(file.path, () => undefined);
       throw ApiError.notFound('Employee not found', 'EMPLOYEE_NOT_FOUND');
     }

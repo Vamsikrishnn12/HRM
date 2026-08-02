@@ -67,6 +67,12 @@ export class EmployeeController {
     ApiResponse.success(res, 'Employee offboarded successfully', result);
   }
 
+  static async delete(req: Request, res: Response): Promise<void> {
+    const id = req.params.id as string;
+    const result = await employeeService.deleteEmployee(id);
+    ApiResponse.success(res, 'Employee deleted successfully', result);
+  }
+
   static async uploadPhoto(req: Request, res: Response): Promise<void> {
     const id = req.params.id as string;
     if (!req.file) {

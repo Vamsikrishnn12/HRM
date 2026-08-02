@@ -49,6 +49,23 @@ export class UserRepository {
     await this.repo.update(id, data);
   }
 
+  async archiveEmployee(id: string): Promise<void> {
+    // Keep the internal user row so attendance/payroll history remains linked,
+    // while releasing all identifiers that must be unique for future hires.
+    await this.repo.update(id, {
+      email: `deleted-${id}@deleted.invalid`,
+      empId: null,
+      password: `deleted-${id}`,
+      isActive: false,
+      profilePhotoUrl: null,
+      officeLocationRequired: false,
+      officeLatitude: null,
+      officeLongitude: null,
+      officeRadiusMeters: null,
+      deletedAt: new Date(),
+    });
+  }
+
   async count(): Promise<number> {
     return this.repo.count();
   }

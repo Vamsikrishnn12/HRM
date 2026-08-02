@@ -54,6 +54,7 @@ import {
   UserRound,
   UserMinus,
   AlertTriangle,
+  Trash2,
   X,
 } from "lucide-react";
 import { documentsApi, employeeApi } from "@/api";
@@ -626,7 +627,7 @@ function EmployeeForm({
   );
 }
 
-function EmployeeCard({ row, onView, onEdit }: { row: EmployeeRow; onView: () => void; onEdit: () => void }) {
+function EmployeeCard({ row, onView, onEdit, onDelete }: { row: EmployeeRow; onView: () => void; onEdit: () => void; onDelete: () => void }) {
   const employee = row.raw;
   return (
     <Box bg="white" border="1px solid" borderColor="surface.border" borderRadius="xl" overflow="hidden" boxShadow="card" transition="all .22s ease" _hover={{ transform: "translateY(-3px)", boxShadow: "card-hover", borderColor: "brand.200" }}>
@@ -653,9 +654,10 @@ function EmployeeCard({ row, onView, onEdit }: { row: EmployeeRow; onView: () =>
           <HStack><Mail size={15} color="#708399" /><Text fontSize="sm" noOfLines={1}>{row.email}</Text></HStack>
           <HStack><CalendarDays size={15} color="#708399" /><Text fontSize="sm"><Text as="span" color="text.muted">Joined: </Text>{row.joinDate}</Text></HStack>
         </VStack>
-        <SimpleGrid columns={2} spacing={2.5} mt={5}>
+        <SimpleGrid columns={3} spacing={2.5} mt={5}>
           <PrimaryButton size="sm" leftIcon={<Eye size={15} />} onClick={onView}>View</PrimaryButton>
           <SecondaryButton size="sm" leftIcon={<Edit2 size={15} />} onClick={onEdit}>Edit</SecondaryButton>
+          <SecondaryButton size="sm" color="red.600" borderColor="red.200" leftIcon={<Trash2 size={15} />} onClick={onDelete}>Delete</SecondaryButton>
         </SimpleGrid>
       </Box>
     </Box>
@@ -671,8 +673,11 @@ export default function EmployeeDirectory() {
   const [screen, setScreen] = useState<"list" | "add" | "edit" | "created">("list");
   const [editRow, setEditRow] = useState<EmployeeRow | null>(null);
   const [selected, setSelected] = useState<EmployeeFromAPI | null>(null);
+  const [deleteRow, setDeleteRow] = useState<EmployeeRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [created, setCreated] = useState<{ empId: string; generatedPassword: string; emailSent: boolean; emailError?: string } | null>(null);
   const modal = useDisclosure();
+  const deleteModal = useDisclosure();
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -698,6 +703,26 @@ export default function EmployeeDirectory() {
   }, [toast]);
 
   useEffect(() => { load(); }, [load]);
+
+  const deleteEmployee = async () => {
+    if (!deleteRow) return;
+    try {
+      setDeleting(true);
+      await employeeApi.remove(deleteRow.profileId);
+      deleteModal.onClose();
+      setDeleteRow(null);
+      toast({
+        title: "Employee deleted",
+        description: `${deleteRow.email} can now be used for another employee.`,
+        status: "success",
+      });
+      await load();
+    } catch (error: any) {
+      toast({ title: "Could not delete employee", description: error?.message, status: "error" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const departments = useMemo(() => Array.from(new Set(employees.map((item) => item.department))).sort(), [employees]);
   const visible = useMemo(() => employees
@@ -739,10 +764,34 @@ export default function EmployeeDirectory() {
         </Flex>
         <Flex justify="space-between" mb={4}><Text fontWeight="800" color="text.heading">Team members</Text><Text fontSize="sm" color="text.muted">{visible.length} employee{visible.length === 1 ? "" : "s"}</Text></Flex>
         {loading ? <Center py={16}><Spinner color="brand.500" size="lg" /></Center> : visible.length === 0 ? <Center py={16} flexDirection="column"><UserRound size={32} color="#708399" /><Text mt={3} color="text.muted">No employees match your search.</Text></Center> : (
-          <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={4}>{visible.map((row) => <EmployeeCard key={row.profileId} row={row} onView={() => { setSelected(row.raw); modal.onOpen(); }} onEdit={() => { setEditRow(row); setScreen("edit"); }} />)}</SimpleGrid>
+          <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={4}>{visible.map((row) => <EmployeeCard key={row.profileId} row={row} onView={() => { setSelected(row.raw); modal.onOpen(); }} onEdit={() => { setEditRow(row); setScreen("edit"); }} onDelete={() => { setDeleteRow(row); deleteModal.onOpen(); }} />)}</SimpleGrid>
         )}
       </SectionCard>
       <EmployeeDetailsModal isOpen={modal.isOpen} onClose={modal.onClose} employee={selected} />
+      <Modal isOpen={deleteModal.isOpen} onClose={() => { if (!deleting) { deleteModal.onClose(); setDeleteRow(null); } }} isCentered>
+        <ModalOverlay bg="rgba(6,31,58,.58)" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl">
+          <ModalHeader>
+            <HStack color="red.600"><Trash2 size={20} /><Text>Delete employee</Text></HStack>
+          </ModalHeader>
+          <ModalCloseButton isDisabled={deleting} />
+          <ModalBody>
+            <Alert status="error" borderRadius="lg">
+              <AlertIcon />
+              <AlertDescription>
+                Delete <strong>{deleteRow?.name}</strong> from the employee directory? Their login will stop immediately, and <strong>{deleteRow?.email}</strong> and employee ID <strong>{deleteRow?.empId}</strong> can be used again. Historical HR and payroll records will remain available.
+              </AlertDescription>
+            </Alert>
+            <Text mt={4} fontSize="sm" color="text.muted">This action cannot be undone.</Text>
+          </ModalBody>
+          <ModalFooter gap={3}>
+            <SecondaryButton onClick={() => { deleteModal.onClose(); setDeleteRow(null); }} isDisabled={deleting}>Cancel</SecondaryButton>
+            <PrimaryButton bg="red.600" _hover={{ bg: "red.700" }} leftIcon={<Trash2 size={16} />} onClick={deleteEmployee} isLoading={deleting}>
+              Delete employee
+            </PrimaryButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

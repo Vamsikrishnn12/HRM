@@ -35,6 +35,9 @@ export const employeeApi = {
     notes?: string;
   }) => api.post<EmployeeFromAPI>(`/employees/${id}/offboard`, payload),
 
+  remove: (id: string) =>
+    api.delete<{ id: string; emailReleased: boolean }>(`/employees/${id}`),
+
   uploadPhoto: (id: string, photo: File) => {
     const formData = new FormData();
     formData.append("photo", photo);
