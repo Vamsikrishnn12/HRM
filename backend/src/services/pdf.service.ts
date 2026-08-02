@@ -136,102 +136,128 @@ export async function generatePayslipPdf(
     doc.on('error', reject);
     doc.on('end', () => resolve({ buffer: Buffer.concat(chunks), fileName }));
 
-    const left = 36;
-    const width = doc.page.width - 72;
+    const left = 32;
+    const width = doc.page.width - 64;
     const right = left + width;
-    doc.roundedRect(left, 30, width, 92, 12).fill(COLORS.navy);
-    if (logo) doc.image(logo, left + 18, 46, { fit: [60, 60] });
-    const brandX = logo ? left + 90 : left + 20;
-    doc.fillColor(COLORS.white).font('Helvetica-Bold').fontSize(20)
-      .text(safe(data.companyName), brandX, 48, { width: right - brandX - 18 });
+
+    // Formal enterprise letterhead: restrained colour, generous logo area,
+    // and company/legal information kept separate from payroll figures.
+    doc.rect(left, 24, width, 4).fill(COLORS.navy);
+    if (logo) {
+      doc.roundedRect(left, 40, 142, 62, 4).lineWidth(0.7).strokeColor(COLORS.border).stroke();
+      doc.image(logo, left + 8, 45, {
+        fit: [126, 52],
+        align: 'center',
+        valign: 'center',
+      });
+    }
+    const brandX = logo ? left + 158 : left;
+    const companyFontSize = data.companyName.length > 42 ? 14 : data.companyName.length > 30 ? 16 : 20;
+    doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(companyFontSize)
+      .text(safe(data.companyName).toUpperCase(), brandX, 41, { width: right - brandX, align: 'right' });
     const legalDetails = [
       data.cinNumber ? `CIN: ${data.cinNumber}` : '',
       data.gstNumber ? `GSTIN: ${data.gstNumber}` : '',
       ...(data.additionalCompanyFields || []).map((field) => `${field.label}: ${field.value}`),
     ].filter(Boolean);
     const companyDetails = [data.companyAddress, legalDetails.join('  |  ')].filter(Boolean).join('\n');
-    doc.fillColor('#D7E9FA').font('Helvetica').fontSize(7.5)
-      .text(safe(companyDetails), brandX, 75, { width: right - brandX - 18, height: 38, lineGap: 2 });
+    doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7.5)
+      .text(companyDetails || ' ', brandX, 68, { width: right - brandX, height: 35, lineGap: 2, align: 'right' });
 
-    doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(18)
-      .text('PAYSLIP', left, 143, { width, align: 'center' });
-    doc.fillColor(COLORS.muted).font('Helvetica').fontSize(9)
-      .text(`Salary statement for ${MONTH_NAMES[data.month - 1]} ${data.year}`, left, 167, { width, align: 'center' });
-    doc.moveTo(left, 188).lineTo(right, 188).strokeColor(COLORS.teal).lineWidth(2).stroke();
+    const titleY = 118;
+    doc.rect(left, titleY, width, 36).fill(COLORS.navy);
+    doc.fillColor(COLORS.white).font('Helvetica-Bold').fontSize(13)
+      .text(`PAYSLIP FOR ${MONTH_NAMES[data.month - 1].toUpperCase()} ${data.year}`, left, titleY + 11, { width, align: 'center' });
 
-    const detailY = 203;
-    doc.roundedRect(left, detailY, width, 110, 8).fillAndStroke(COLORS.pale, COLORS.border);
+    const detailY = 170;
+    const detailHeight = 124;
+    doc.rect(left, detailY, width, detailHeight).lineWidth(0.8).strokeColor(COLORS.border).stroke();
     const info = [
       ['Employee Name', safe(data.employeeName), 'Employee ID', safe(data.employeeCode)],
       ['Designation', safe(data.designation), 'Department', safe(data.department)],
       ['Date of Joining', safe(data.dateOfJoining), 'Bank Account', safe(data.bankAccount)],
       ['UAN / PF No.', safe(data.uan || data.pfNo), 'ESI No.', safe(data.esiNo)],
     ];
+    const half = width / 2;
+    const labelWidth = 84;
     info.forEach((row, index) => {
-      const y = detailY + 14 + index * 24;
-      doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7.5).text(row[0], left + 14, y, { width: 82 });
-      doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(8.5).text(row[1], left + 97, y, { width: 150 });
-      doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7.5).text(row[2], left + 278, y, { width: 82 });
-      doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(8.5).text(row[3], left + 361, y, { width: 150 });
+      const y = detailY + index * 31;
+      if (index % 2 === 0) doc.rect(left, y, width, 31).fill(COLORS.pale);
+      if (index > 0) doc.moveTo(left, y).lineTo(right, y).strokeColor(COLORS.border).lineWidth(0.5).stroke();
+      doc.moveTo(left + half, y).lineTo(left + half, y + 31).strokeColor(COLORS.border).lineWidth(0.5).stroke();
+      doc.fillColor(COLORS.muted).font('Helvetica-Bold').fontSize(7.2).text(row[0].toUpperCase(), left + 10, y + 11, { width: labelWidth });
+      doc.fillColor(COLORS.ink).font('Helvetica').fontSize(8.5).text(row[1], left + 98, y + 10, { width: half - 108 });
+      doc.fillColor(COLORS.muted).font('Helvetica-Bold').fontSize(7.2).text(row[2].toUpperCase(), left + half + 10, y + 11, { width: labelWidth });
+      doc.fillColor(COLORS.ink).font('Helvetica').fontSize(8.5).text(row[3], left + half + 98, y + 10, { width: half - 108 });
     });
 
-    const attendanceY = 330;
+    const attendanceY = 310;
     const attendance = [
-      ['Working', data.workingDays], ['Eligible', data.eligibleWorkingDays],
-      ['Present', data.presentDays], ['Leave', data.leaveDays],
-      ['LOP', data.lopDays], ['Payable', data.payableDays],
+      ['Working Days', data.workingDays], ['Eligible Days', data.eligibleWorkingDays],
+      ['Present Days', data.presentDays], ['Leave Days', data.leaveDays],
+      ['LOP Days', data.lopDays], ['Paid Days', data.payableDays],
     ];
     const cellWidth = width / attendance.length;
     attendance.forEach(([label, value], index) => {
       const x = left + index * cellWidth;
-      doc.roundedRect(x + 2, attendanceY, cellWidth - 4, 46, 6).fillAndStroke(COLORS.white, COLORS.border);
-      doc.fillColor(COLORS.blue).font('Helvetica-Bold').fontSize(12).text(String(value), x, attendanceY + 9, { width: cellWidth, align: 'center' });
-      doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7).text(String(label), x, attendanceY + 28, { width: cellWidth, align: 'center' });
+      doc.rect(x, attendanceY, cellWidth, 44).fillAndStroke(index % 2 === 0 ? COLORS.pale : COLORS.white, COLORS.border);
+      doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(11).text(String(value), x, attendanceY + 8, { width: cellWidth, align: 'center' });
+      doc.fillColor(COLORS.muted).font('Helvetica').fontSize(6.8).text(String(label).toUpperCase(), x, attendanceY + 26, { width: cellWidth, align: 'center' });
     });
 
-    const tableY = 394;
-    const gap = 12;
-    const tableWidth = (width - gap) / 2;
-    const drawComponents = (title: string, rows: PayrollComponent[], x: number, accent: string) => {
-      doc.roundedRect(x, tableY, tableWidth, 28, 6).fill(accent);
-      doc.fillColor(COLORS.white).font('Helvetica-Bold').fontSize(9).text(title, x + 10, tableY + 9, { width: tableWidth - 20 });
-      const normalized = rows.length ? rows : [{ name: 'None', amount: 0 }];
-      normalized.forEach((row, index) => {
-        const y = tableY + 28 + index * 25;
-        if (index % 2 === 0) doc.rect(x, y, tableWidth, 25).fill(COLORS.pale);
-        doc.fillColor(COLORS.ink).font('Helvetica').fontSize(8).text(safe(row.name), x + 10, y + 8, { width: tableWidth - 105 });
-        doc.font('Helvetica-Bold').text(money(row.amount), x + tableWidth - 100, y + 8, { width: 90, align: 'right' });
-      });
-      return normalized.length;
-    };
-    const earningRows = drawComponents('EARNINGS', data.earnings, left, COLORS.blue);
-    const deductionRows = drawComponents('DEDUCTIONS', data.deductions, left + tableWidth + gap, COLORS.navy);
-    const rows = Math.max(earningRows, deductionRows);
-    const summaryY = tableY + 28 + rows * 25 + 18;
+    const tableY = 372;
+    const halfTable = width / 2;
+    const amountWidth = 88;
+    const earnings = data.earnings.length ? data.earnings : [{ name: 'None', amount: 0 }];
+    const deductions = data.deductions.length ? data.deductions : [{ name: 'None', amount: 0 }];
+    const rows = Math.max(earnings.length, deductions.length);
+    const rowHeight = Math.max(12, Math.min(22, 225 / rows));
+    const tableHeight = 30 + rows * rowHeight + 30;
+    doc.rect(left, tableY, width, tableHeight).lineWidth(0.8).strokeColor(COLORS.border).stroke();
+    doc.rect(left, tableY, width, 30).fill(COLORS.navy);
+    doc.moveTo(left + halfTable, tableY).lineTo(left + halfTable, tableY + tableHeight).strokeColor(COLORS.border).lineWidth(0.7).stroke();
+    doc.fillColor(COLORS.white).font('Helvetica-Bold').fontSize(8.5).text('EARNINGS', left + 10, tableY + 10, { width: halfTable - amountWidth - 16 });
+    doc.text('AMOUNT (Rs.)', left + halfTable - amountWidth, tableY + 10, { width: amountWidth - 10, align: 'right' });
+    doc.text('DEDUCTIONS', left + halfTable + 10, tableY + 10, { width: halfTable - amountWidth - 16 });
+    doc.text('AMOUNT (Rs.)', right - amountWidth, tableY + 10, { width: amountWidth - 10, align: 'right' });
+    for (let index = 0; index < rows; index += 1) {
+      const y = tableY + 30 + index * rowHeight;
+      if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(COLORS.pale);
+      doc.moveTo(left, y + rowHeight).lineTo(right, y + rowHeight).strokeColor(COLORS.border).lineWidth(0.35).stroke();
+      const earning = earnings[index];
+      const deduction = deductions[index];
+      const textY = y + Math.max(4, (rowHeight - 8) / 2);
+      doc.fillColor(COLORS.ink).font('Helvetica').fontSize(rowHeight < 16 ? 6.5 : rowHeight < 19 ? 7 : 8);
+      if (earning) {
+        doc.text(safe(earning.name), left + 10, textY, { width: halfTable - amountWidth - 16 });
+        doc.font('Helvetica-Bold').text(money(earning.amount), left + halfTable - amountWidth, textY, { width: amountWidth - 10, align: 'right' });
+      }
+      if (deduction) {
+        doc.font('Helvetica').text(safe(deduction.name), left + halfTable + 10, textY, { width: halfTable - amountWidth - 16 });
+        doc.font('Helvetica-Bold').text(money(deduction.amount), right - amountWidth, textY, { width: amountWidth - 10, align: 'right' });
+      }
+    }
+    const totalY = tableY + 30 + rows * rowHeight;
+    doc.rect(left, totalY, width, 30).fill('#E8F0F8');
+    doc.fillColor(COLORS.navy).font('Helvetica-Bold').fontSize(8.5)
+      .text('TOTAL EARNINGS', left + 10, totalY + 10, { width: halfTable - amountWidth - 16 })
+      .text(money(data.grossEarnings), left + halfTable - amountWidth, totalY + 10, { width: amountWidth - 10, align: 'right' })
+      .text('TOTAL DEDUCTIONS', left + halfTable + 10, totalY + 10, { width: halfTable - amountWidth - 16 })
+      .text(money(data.totalDeductions), right - amountWidth, totalY + 10, { width: amountWidth - 10, align: 'right' });
 
-    doc.roundedRect(left, summaryY, width, 62, 8).fillAndStroke(COLORS.pale, COLORS.border);
-    const summary = [
-      ['Gross Earnings', money(data.grossEarnings), COLORS.green],
-      ['Total Deductions', money(data.totalDeductions), COLORS.red],
-      ['NET PAY', money(data.netPay), COLORS.blue],
-    ];
-    summary.forEach(([label, value, color], index) => {
-      const x = left + index * (width / 3);
-      doc.fillColor(COLORS.muted).font('Helvetica').fontSize(8).text(label, x + 12, summaryY + 13, { width: width / 3 - 24 });
-      doc.fillColor(color).font('Helvetica-Bold').fontSize(index === 2 ? 15 : 12)
-        .text(value, x + 12, summaryY + 31, { width: width / 3 - 24 });
-    });
-
-    doc.fillColor(COLORS.muted).font('Helvetica').fontSize(8)
-      .text('Amount in words', left, summaryY + 78);
-    doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(9)
-      .text(`${numberToWords(data.netPay)} Rupees Only`, left, summaryY + 91, { width });
+    const summaryY = totalY + 44;
+    doc.roundedRect(left, summaryY, width, 48, 5).fillAndStroke('#EAF7F2', '#A9D8C5');
+    doc.fillColor(COLORS.green).font('Helvetica-Bold').fontSize(10).text('NET PAY', left + 14, summaryY + 18, { width: 100 });
+    doc.fontSize(17).text(money(data.netPay), right - 190, summaryY + 14, { width: 176, align: 'right' });
+    doc.fillColor(COLORS.muted).font('Helvetica-Bold').fontSize(7).text('NET PAY IN WORDS', left, summaryY + 62, { width });
+    doc.fillColor(COLORS.ink).font('Helvetica').fontSize(8.5)
+      .text(`${numberToWords(data.netPay)} Rupees Only`, left, summaryY + 76, { width });
     if (data.pfEmployerContribution && data.pfEmployerContribution > 0) {
       doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7.5)
-        .text(`Employer PF contribution: ${money(data.pfEmployerContribution)} (informational)`, left, summaryY + 110);
+        .text(`Employer PF contribution: ${money(data.pfEmployerContribution)} (informational only)`, left, summaryY + 94);
     }
 
-    const footerY = Math.max(summaryY + 136, doc.page.height - 62);
+    const footerY = Math.max(summaryY + 118, doc.page.height - 54);
     doc.moveTo(left, footerY).lineTo(right, footerY).strokeColor(COLORS.border).lineWidth(1).stroke();
     doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7.5)
       .text(`Generated by ${safe(data.companyName)} through Connect HR. This is a computer-generated payslip and does not require a signature.`, left, footerY + 12, { width, align: 'center' });

@@ -45,6 +45,7 @@ router.use(authMiddleware);
 
 // ═══════ Admin routes ═══════
 router.get('/template', roleMiddleware('ADMIN'), asyncHandler(PayrollController.downloadTemplate));
+router.get('/sample-payslip', roleMiddleware('ADMIN'), asyncHandler(PayrollController.downloadSamplePayslip));
 router.get('/reports/attendance', roleMiddleware('ADMIN'), asyncHandler(PayrollController.attendanceReport));
 router.get('/reports/salary', roleMiddleware('ADMIN'), asyncHandler(PayrollController.salaryReport));
 router.get('/summary', roleMiddleware('ADMIN'), asyncHandler(PayrollController.summary));

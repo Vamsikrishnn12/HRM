@@ -574,6 +574,52 @@ export class PayrollService {
     return generatePayslipPdf(data, `payslip_${employeeCode}_${record.month}_${record.year}.pdf`);
   }
 
+  async getSamplePayslipPdf(): Promise<{ buffer: Buffer; fileName: string }> {
+    const org = await AppDataSource.getRepository(OrgSettings).findOne({ where: {} }).catch(() => null);
+    const now = new Date();
+    const data: PayslipData = {
+      companyName: org?.companyName || 'Connect HR',
+      companyAddress: org?.companyAddress || 'Your registered company address',
+      companyLogo: org?.companyLogoUrl || undefined,
+      cinNumber: org?.cinNumber || '',
+      gstNumber: org?.gstNumber || '',
+      additionalCompanyFields: org?.payslipAdditionalFields || [],
+      employeeName: 'Sample Employee',
+      employeeCode: 'EMP-SAMPLE-001',
+      designation: 'Software Engineer',
+      department: 'Technology',
+      dateOfJoining: '01-01-2025',
+      bankAccount: 'XXXX XXXX 1234',
+      uan: 'XXXXXXXX1234',
+      pfNo: 'PF-SAMPLE-001',
+      esiNo: 'ESI-SAMPLE-001',
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+      workingDays: 22,
+      eligibleWorkingDays: 22,
+      payableDays: 22,
+      presentDays: 20,
+      leaveDays: 2,
+      lopDays: 0,
+      weekOffDays: 8,
+      holidayDays: 1,
+      earnings: [
+        { name: 'Basic Salary', amount: 30000 },
+        { name: 'House Rent Allowance', amount: 12000 },
+        { name: 'Special Allowance', amount: 8000 },
+      ],
+      deductions: [
+        { name: 'Provident Fund', amount: 1800 },
+        { name: 'Professional Tax', amount: 200 },
+      ],
+      grossEarnings: 50000,
+      totalDeductions: 2000,
+      netPay: 48000,
+      pfEmployerContribution: 1800,
+    };
+    return generatePayslipPdf(data, `sample_payslip_${now.getFullYear()}.pdf`);
+  }
+
   async emailPayslip(recordId: string) {
     const record = await this.repo.findRecordById(recordId);
     if (!record) throw ApiError.notFound('Payroll record not found');

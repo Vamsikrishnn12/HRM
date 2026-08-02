@@ -366,7 +366,7 @@ function EmployeeForm({
   };
 
   const save = async () => {
-    if ((mode === "add" && !form.empId.trim()) || !form.firstName || !form.lastName || !form.email || !form.department || !form.designation || !form.dateOfJoining || !form.reportingManager || !form.shiftSchedule) {
+    if (!form.empId.trim() || !form.firstName || !form.lastName || !form.email || !form.department || !form.designation || !form.dateOfJoining || !form.reportingManager || !form.shiftSchedule) {
       toast({ title: "Please complete all required fields", status: "warning" });
       return;
     }
@@ -385,6 +385,7 @@ function EmployeeForm({
 
       if (mode === "edit" && emp) {
         await employeeApi.update(emp.id, {
+          empId: form.empId.trim().toUpperCase(),
           firstName: form.firstName,
           lastName: form.lastName,
           department: form.department,
@@ -485,14 +486,13 @@ function EmployeeForm({
             <StyledInput
               value={form.empId}
               placeholder="e.g. EMP001 or LUX-1024"
-              isReadOnly={mode === "edit"}
-              bg={mode === "edit" ? "surface.bg" : "white"}
+              bg="white"
               textTransform="uppercase"
               maxLength={20}
               onChange={(e) => updateForm("empId", e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ""))}
             />
             <Text mt={1.5} fontSize="xs" color="text.muted">
-              {mode === "edit" ? "Employee ID cannot be changed after account creation." : "Enter a unique ID using letters, numbers, hyphens, or underscores."}
+              Enter a unique ID using letters, numbers, hyphens, or underscores.
             </Text>
           </Field>
           <Field label="First name" required><StyledInput value={form.firstName} onChange={(e) => updateForm("firstName", e.target.value)} /></Field>

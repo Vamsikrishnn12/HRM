@@ -9,10 +9,10 @@ import type {
 export interface OrgSettings {
   id: string;
   companyName: string;
-  companyAddress: string;
+  companyAddress: string | null;
   companyLogoUrl: string | null;
-  cinNumber: string;
-  gstNumber: string;
+  cinNumber: string | null;
+  gstNumber: string | null;
   payslipAdditionalFields: Array<{ label: string; value: string }>;
   workStartTime: string;
   workEndTime: string;

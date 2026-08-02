@@ -23,8 +23,8 @@ import {
   AlertIcon,
   AlertDescription,
 } from "@chakra-ui/react";
-import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield, Upload, X } from "lucide-react";
-import { settingsApi } from "@/api";
+import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield, Upload, X, FileDown } from "lucide-react";
+import { payrollApi, settingsApi } from "@/api";
 import { leaveApi, type LeaveSlabData } from "@/api/leave.api";
 import type { Holiday } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
@@ -292,6 +292,26 @@ export default function SettingsPage() {
     payslipAdditionalFields: form.payslipAdditionalFields.filter((_, i) => i !== index),
   }));
 
+  const downloadSamplePayslip = async () => {
+    if (!companyForm.companyName.trim()) return;
+    try {
+      setSaving("sample-payslip");
+      await settingsApi.update({
+        companyName: companyForm.companyName,
+        companyAddress: companyForm.companyAddress || null,
+        cinNumber: companyForm.cinNumber || null,
+        gstNumber: companyForm.gstNumber || null,
+        payslipAdditionalFields: companyForm.payslipAdditionalFields.filter((field) => field.label.trim() && field.value.trim()),
+      });
+      await payrollApi.downloadSamplePayslip();
+      toast({ title: "Sample payslip generated", description: "The PDF uses your latest saved logo and branding.", status: "success", duration: 3000, isClosable: true, position: "top-right" });
+    } catch (err: any) {
+      toast({ title: "Could not generate sample payslip", description: err?.message, status: "error", duration: 4000, isClosable: true, position: "top-right" });
+    } finally {
+      setSaving(null);
+    }
+  };
+
   // ── Holiday CRUD ──
   const openAddHoliday = () => {
     setEditingHoliday(null);
@@ -455,7 +475,8 @@ export default function SettingsPage() {
               <ChakraImage
                 src={getAssetUrl(companyForm.companyLogoUrl)}
                 alt="Company logo"
-                boxSize="72px"
+                w="180px"
+                h="72px"
                 objectFit="contain"
                 bg="white"
                 border="1px solid"
@@ -549,7 +570,15 @@ export default function SettingsPage() {
             ))}
           </Flex>
         </Box>
-        <Flex justify="flex-end" mt={4}>
+        <Flex justify="flex-end" mt={4} gap={3} flexWrap="wrap">
+          <SecondaryButton
+            leftIcon={<FileDown size={15} />}
+            onClick={downloadSamplePayslip}
+            isLoading={saving === "sample-payslip"}
+            isDisabled={!companyForm.companyName.trim() || Boolean(saving && saving !== "sample-payslip")}
+          >
+            Generate Sample Payslip
+          </SecondaryButton>
           <PrimaryButton
             onClick={() => saveSection("company", {
               companyName: companyForm.companyName,

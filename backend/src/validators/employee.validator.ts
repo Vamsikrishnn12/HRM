@@ -32,6 +32,14 @@ export const createEmployeeSchema = z.object({
 });
 
 export const updateEmployeeSchema = z.object({
+  empId: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .min(2, 'Employee ID must contain at least 2 characters')
+    .max(20, 'Employee ID cannot exceed 20 characters')
+    .regex(/^[A-Z0-9][A-Z0-9_-]*$/, 'Employee ID can contain only letters, numbers, hyphens, and underscores')
+    .optional(),
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   department: z.string().min(1).max(100).optional(),

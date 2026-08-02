@@ -19,6 +19,13 @@ import { ApiError } from '../utils/apiError';
 const payrollService = new PayrollService();
 
 export class PayrollController {
+  static async downloadSamplePayslip(_req: Request, res: Response): Promise<void> {
+    const pdf = await payrollService.getSamplePayslipPdf();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${pdf.fileName}"`);
+    res.send(pdf.buffer);
+  }
+
   // ─── Admin: Preview payroll ───
   static async preview(req: Request, res: Response): Promise<void> {
     const parsed = previewPayrollSchema.safeParse(req.body);

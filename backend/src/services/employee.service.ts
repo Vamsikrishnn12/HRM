@@ -31,6 +31,7 @@ interface CreateEmployeeInput {
 }
 
 interface UpdateEmployeeInput {
+  empId?: string;
   firstName?: string;
   lastName?: string;
   department?: string;
@@ -260,6 +261,19 @@ export class EmployeeService {
 
     // Build user updates
     const userUpdates: Record<string, unknown> = {};
+    if (input.empId !== undefined) {
+      const empId = input.empId.trim().toUpperCase();
+      if (empId !== profile.user.empId) {
+        const existingEmpId = await this.userRepo.findByEmpId(empId);
+        if (existingEmpId && existingEmpId.id !== profile.userId) {
+          throw ApiError.conflict(
+            `Employee ID ${empId} is already in use`,
+            'EMPLOYEE_DUPLICATE_ID',
+          );
+        }
+        userUpdates.empId = empId;
+      }
+    }
     if (input.firstName !== undefined) userUpdates.firstName = input.firstName;
     if (input.lastName !== undefined) userUpdates.lastName = input.lastName;
     if (input.isActive !== undefined) userUpdates.isActive = input.isActive;

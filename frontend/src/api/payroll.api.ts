@@ -219,6 +219,9 @@ export const payrollApi = {
   downloadTemplateFile: () =>
     api.downloadBlob(`${BASE}/template`, 'payroll_template.xlsx'),
 
+  downloadSamplePayslip: () =>
+    api.downloadBlob(`${BASE}/sample-payslip`, 'sample_payslip.pdf'),
+
   downloadAttendanceReport: (params: { employeeId: string; month: number; year: number }) =>
     api.downloadBlob(
       `${BASE}/reports/attendance?employeeId=${params.employeeId}&month=${params.month}&year=${params.year}`,
