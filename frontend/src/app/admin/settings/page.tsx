@@ -19,6 +19,9 @@ import {
   ModalCloseButton,
   useDisclosure,
   Image as ChakraImage,
+  Alert,
+  AlertIcon,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { Plus, Edit2, Trash2, CalendarDays, Clock, MapPin, CalendarOff, Shield, Upload, X } from "lucide-react";
 import { settingsApi } from "@/api";
@@ -575,6 +578,12 @@ export default function SettingsPage() {
           }
         >
           <Flex direction="column" gap={4}>
+            <Alert status="info" borderRadius="lg" alignItems="flex-start">
+              <AlertIcon mt={0.5} />
+              <AlertDescription fontSize="sm">
+                Full Day requires arrival by Work Start plus Late Grace, checkout at or after Work End, and at least the configured Full Day Work minutes. If an employee punches in but misses any requirement, salary attendance is Half Day. No punch is full LOP.
+              </AlertDescription>
+            </Alert>
             <SimpleGrid columns={2} spacing={4}>
               <Field label="Work Start Time" required>
                 <StyledInput
@@ -600,14 +609,14 @@ export default function SettingsPage() {
               />
             </Field>
             <SimpleGrid columns={2} spacing={4}>
-              <Field label="Half Day Min (minutes)">
+              <Field label="Half Day Reference (minutes)">
                 <StyledInput
                   type="number"
                   value={timingsForm.halfDayMinMinutes}
                   onChange={(e) => setTimingsForm((f) => ({ ...f, halfDayMinMinutes: parseInt(e.target.value) || 0 }))}
                 />
               </Field>
-              <Field label="Full Day Min (minutes)">
+              <Field label="Full Day Work Min (480 = 8 hours)">
                 <StyledInput
                   type="number"
                   value={timingsForm.fullDayMinMinutes}

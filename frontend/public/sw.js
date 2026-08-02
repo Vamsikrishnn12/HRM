@@ -1,8 +1,20 @@
-const CACHE_NAME = "connect-hr-shell-v3";
-const APP_SHELL = ["/", "/login", "/logobg.png", "/icon-192.png", "/icon-512.png"];
+const CACHE_NAME = "connect-hr-shell-v4";
+const APP_SHELL = [
+  "/",
+  "/login",
+  "/manifest.webmanifest",
+  "/apple-touch-icon.png",
+  "/logobg.png",
+  "/icon-192.png",
+  "/icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(APP_SHELL.map((path) => cache.add(path))),
+    ),
+  );
 });
 
 self.addEventListener("message", (event) => {

@@ -31,6 +31,13 @@ export const ensureBackendReady = async (): Promise<void> => {
         `ALTER TABLE "attendance_punches"
          ADD COLUMN IF NOT EXISTS "photoUrl" character varying(1000)`,
       );
+      // The Vercel serverless entry does not execute package.json migration
+      // scripts. Apply additive employee-archive schema before any auth query
+      // selects User.deletedAt.
+      await AppDataSource.query(
+        `ALTER TABLE "users"
+         ADD COLUMN IF NOT EXISTS "deletedAt" timestamp`,
+      );
       // OrgSettings is loaded by attendance, payroll, dashboard, and settings.
       // Keep these additive payslip-branding columns available before TypeORM
       // performs any entity SELECT in a Vercel serverless function.

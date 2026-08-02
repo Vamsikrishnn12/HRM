@@ -85,7 +85,7 @@ function resolveStatus(record: AttendanceRecord, today: string): AttendanceStatu
   if (record.dayType === "LEAVE") {
     return String(record.derivedSummary?.leaveType ?? "").toUpperCase() === "LOP" ? "LOP" : "LEAVE";
   }
-  if (Number(record.lateMinutes || 0) > 0) return "LOP";
+  if (Number(record.lateMinutes || 0) > 0) return "HALF_DAY";
   if (record.status === "NOT_STARTED" && record.date <= today) return "LOP";
   return record.status;
 }

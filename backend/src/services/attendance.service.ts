@@ -21,6 +21,7 @@ import {
   type AttendanceRegularizationConfig,
 } from '../attendance/attendance.enums';
 import { buildDefaultAttendancePolicy } from '../attendance/defaultAttendancePolicy';
+import { env } from '../config/env';
 
 interface GeoInput {
   latitude?: number;
@@ -1093,8 +1094,8 @@ export class AttendanceService {
           const checkedInLate = day.lateMinutes > 0;
           day = {
             ...day,
-            status: checkedInLate ? AttendanceStatus.LOP : AttendanceStatus.PRESENT,
-            statusReason: checkedInLate ? 'LATE_CHECK_IN' : 'WORK_IN_PROGRESS',
+            status: checkedInLate ? AttendanceStatus.HALF_DAY : AttendanceStatus.PRESENT,
+            statusReason: checkedInLate ? 'LATE_CHECK_IN_HALF_DAY' : 'WORK_IN_PROGRESS',
           } as Attendance;
         } else if (day.status === AttendanceStatus.NOT_STARTED && !day.firstCheckInAt) {
           day = {
@@ -1946,8 +1947,11 @@ export class AttendanceService {
       ? Math.max(0, this.minutesBetween(this.addMinutes(shiftStart, policy.lateGraceMinutes), firstPunchIn))
       : 0;
 
-    const earlyOutRaw = lastPunchOut ? Math.max(0, this.minutesBetween(lastPunchOut, shiftEnd)) : 0;
-    const earlyOutMinutes = Math.max(0, earlyOutRaw - Math.max(0, policy.maxEarlyOutToleranceMinutes));
+    // There is no checkout grace: leaving before the configured office end
+    // time is an early-out and therefore receives half-day treatment.
+    const earlyOutMinutes = lastPunchOut
+      ? Math.max(0, this.minutesBetween(lastPunchOut, shiftEnd))
+      : 0;
 
     const permissionMinutesAvailable = permissionRequests.reduce((sum, request) => {
       return sum + (request.appliedMinutes > 0 ? request.appliedMinutes : request.totalMinutes);
@@ -1962,7 +1966,15 @@ export class AttendanceService {
     const effectiveWorked = totalWorkedMinutes + permissionMinutesApplied;
     const overtimeMinutes = Math.max(0, effectiveWorked - policy.fullDayMinMinutes);
 
-    if (sessions.some((session) => session.outTime == null)) {
+    if (
+      sessions.some(
+        (session) =>
+          session.outTime == null ||
+          session.isAutoClosed ||
+          Boolean(session.metadata?.missingOutPunch) ||
+          Boolean(session.metadata?.unmatchedOutPunch),
+      )
+    ) {
       missingPunch = true;
     }
 
@@ -2023,11 +2035,11 @@ export class AttendanceService {
       return { status: AttendanceStatus.LOP, reason: 'NO_PUNCH' };
     }
 
-    // A check-in beyond the configured grace period is LOP. Approved
+    // A check-in beyond the configured grace period is a half day. Approved
     // regularization can move the effective first-in time back within the
     // allowed window and will naturally clear lateByMinutes.
     if (params.stats.lateByMinutes > 0) {
-      return { status: AttendanceStatus.LOP, reason: 'LATE_CHECK_IN' };
+      return { status: AttendanceStatus.HALF_DAY, reason: 'LATE_CHECK_IN_HALF_DAY' };
     }
 
     // Do not classify an active shift as LOP simply because the employee has
@@ -2037,21 +2049,31 @@ export class AttendanceService {
       return { status: AttendanceStatus.PRESENT, reason: 'WORK_IN_PROGRESS' };
     }
 
-    let status: AttendanceStatus;
-    if (params.stats.effectiveWorked >= params.policy.fullDayMinMinutes) {
-      status = AttendanceStatus.PRESENT;
-    } else if (params.stats.effectiveWorked >= params.policy.halfDayMinMinutes) {
+    // Once an employee has punched in, every failed full-day condition is a
+    // half day: early checkout, missing checkout, or fewer required work
+    // minutes. A complete no-punch day remains full LOP above.
+    let status = AttendanceStatus.PRESENT;
+    let reason = 'FULL_DAY_REQUIREMENTS_MET';
+    if (params.stats.missingPunch) {
       status = AttendanceStatus.HALF_DAY;
-    } else {
-      status = AttendanceStatus.LOP;
+      reason = 'MISSING_CHECK_OUT_HALF_DAY';
+    } else if (params.stats.earlyOutMinutes > 0) {
+      status = AttendanceStatus.HALF_DAY;
+      reason = 'EARLY_CHECK_OUT_HALF_DAY';
+    } else if (params.stats.effectiveWorked < params.policy.fullDayMinMinutes) {
+      status = AttendanceStatus.HALF_DAY;
+      reason = 'INSUFFICIENT_WORK_HOURS_HALF_DAY';
     }
 
-    let reason = 'WORK_HOURS_EVALUATION';
     if (params.hasPermission && params.stats.permissionMinutesApplied > 0) {
-      reason = 'WORK_HOURS_PERMISSION_ADJUSTED';
+      reason = status === AttendanceStatus.PRESENT
+        ? 'FULL_DAY_PERMISSION_ADJUSTED'
+        : `${reason}_PERMISSION_ADJUSTED`;
     }
     if (params.hasRegularization) {
-      reason = 'WORK_HOURS_REGULARIZED';
+      reason = status === AttendanceStatus.PRESENT
+        ? 'FULL_DAY_REGULARIZED'
+        : `${reason}_REGULARIZED`;
     }
 
     return { status, reason };
@@ -2589,28 +2611,69 @@ export class AttendanceService {
   }
 
   private toDateKey(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const parts = this.getTimeZoneParts(date);
+    return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
   }
 
   private startOfDay(date: string) {
-    return new Date(`${date}T00:00:00`);
+    return this.combineDateTime(date, '00:00:00');
   }
 
   private endOfDay(date: string) {
-    return new Date(`${date}T23:59:59.999`);
+    const end = this.combineDateTime(date, '23:59:59');
+    end.setMilliseconds(999);
+    return end;
   }
 
   private endOfToday() {
-    const now = new Date();
-    return new Date(`${this.toDateKey(now)}T23:59:59.999`);
+    return this.endOfDay(this.toDateKey(new Date()));
   }
 
   private combineDateTime(date: string, time: string) {
-    const normalizedTime = time.length === 5 ? `${time}:00` : time;
-    return new Date(`${date}T${normalizedTime}`);
+    const [year, month, day] = date.split('-').map((value) => Number(value));
+    const [hour, minute, second = 0] = time.split(':').map((value) => Number(value));
+    const desiredUtcWallTime = Date.UTC(year, month - 1, day, hour, minute, second);
+
+    // Convert the configured organization wall-clock time into an absolute
+    // instant without changing how PostgreSQL timestamp columns are parsed.
+    let result = new Date(desiredUtcWallTime);
+    for (let pass = 0; pass < 2; pass += 1) {
+      const zoned = this.getTimeZoneParts(result);
+      const representedAsUtc = Date.UTC(
+        zoned.year,
+        zoned.month - 1,
+        zoned.day,
+        zoned.hour,
+        zoned.minute,
+        zoned.second,
+      );
+      const offset = representedAsUtc - result.getTime();
+      result = new Date(desiredUtcWallTime - offset);
+    }
+    return result;
+  }
+
+  private getTimeZoneParts(date: Date) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: env.APP_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(date);
+    const value = (type: Intl.DateTimeFormatPartTypes) =>
+      Number(parts.find((part) => part.type === type)?.value ?? 0);
+    return {
+      year: value('year'),
+      month: value('month'),
+      day: value('day'),
+      hour: value('hour'),
+      minute: value('minute'),
+      second: value('second'),
+    };
   }
 
   private addMinutes(date: Date, minutes: number) {

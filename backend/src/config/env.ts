@@ -59,6 +59,15 @@ const optionalSmtpPassword = z.preprocess(
   z.string().optional(),
 );
 
+const timeZone = z.string().default('Asia/Kolkata').refine((value) => {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}, 'APP_TIMEZONE must be a valid IANA timezone');
+
 const envSchema = z.object({
   // One canonical connection string for the active database.
   DATABASE_URL: z.preprocess(normalizeNamedEnvValue('DATABASE_URL'), z.string().url()),
@@ -70,6 +79,7 @@ const envSchema = z.object({
 
   PORT: z.string().default('5000').transform(Number).pipe(z.number().positive()),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  APP_TIMEZONE: timeZone,
 
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   APP_URL: z.string().url().default('http://localhost:3000'),

@@ -1,15 +1,11 @@
-const configuredApiUrl = (
-  process.env.NEXT_PUBLIC_API_URL || "https://hrm-lilac-one.vercel.app/api"
-).replace(/\/+$/, "");
-
-export const API_BASE = /\/api$/i.test(configuredApiUrl)
-  ? configuredApiUrl
-  : `${configuredApiUrl}/api`;
+// Always call the API through the app's own origin. Next.js proxies /api to
+// the backend, keeping refresh cookies first-party for iOS Home Screen apps.
+export const API_BASE = "/api";
 
 export const getAssetUrl = (assetPath?: string | null): string | undefined => {
   if (!assetPath) return undefined;
   if (/^https?:\/\//i.test(assetPath)) return assetPath;
-  return `${API_BASE.replace(/\/api\/?$/, "")}${assetPath.startsWith("/") ? assetPath : `/${assetPath}`}`;
+  return assetPath.startsWith("/") ? assetPath : `/${assetPath}`;
 };
 
 /**

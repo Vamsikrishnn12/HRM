@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 import logoImage from "@/assets/logobg.png";
 import PWARegister from "@/components/pwa/PWARegister";
+import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <PWARegister />
+          <PWAInstallPrompt />
           {children}
         </Providers>
       </body>

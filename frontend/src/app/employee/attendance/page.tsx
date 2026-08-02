@@ -278,9 +278,8 @@ function resolveFinalDisplayStatus(
 
   if (date > todayDate) return "NOT_STARTED";
 
-  // Late means beyond the policy grace period. It remains LOP whether the
-  // employee is still working or has completed the shift.
-  if (Number(record.lateMinutes || 0) > 0) return "LOP";
+  // Arrival beyond the configured grace period receives half-day treatment.
+  if (Number(record.lateMinutes || 0) > 0) return "HALF_DAY";
 
   // While today's shift is still open, the final worked-hour threshold has not
   // been reached yet. Show the employee as present instead of prematurely LOP.
@@ -293,9 +292,15 @@ function resolveFinalDisplayStatus(
     Number(record.totalWorkMinutes || 0) + Number(record.permissionMinutesApplied || 0),
   );
 
-  if (effectiveWorked >= policy.fullDayMinMinutes) return "PRESENT";
-  if (effectiveWorked >= policy.halfDayMinMinutes) return "HALF_DAY";
+  if (
+    effectiveWorked >= policy.fullDayMinMinutes &&
+    Number(record.earlyOutMinutes || 0) === 0 &&
+    !record.missingPunch
+  ) return "PRESENT";
 
+  // Any employee who punched in but failed a full-day condition receives
+  // half-day salary treatment. Only a complete no-punch day is LOP.
+  if (record.firstCheckInAt || effectiveWorked > 0) return "HALF_DAY";
   return "LOP";
 }
 

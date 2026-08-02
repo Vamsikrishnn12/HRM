@@ -56,6 +56,24 @@ export class SettingsService {
       Object.prototype.hasOwnProperty.call(input, 'geoFenceRequired') ||
       Object.prototype.hasOwnProperty.call(input, 'allowRemoteAttendance');
 
+    if (
+      merged.halfDayMinMinutes != null &&
+      merged.fullDayMinMinutes != null &&
+      Number(merged.halfDayMinMinutes) > Number(merged.fullDayMinMinutes)
+    ) {
+      throw ApiError.badRequest(
+        'Half-day reference minutes cannot exceed full-day work minutes',
+        'INVALID_ATTENDANCE_MINUTES',
+      );
+    }
+
+    if (merged.workStartTime && merged.workEndTime && merged.workStartTime === merged.workEndTime) {
+      throw ApiError.badRequest(
+        'Work start time and work end time must be different',
+        'INVALID_OFFICE_TIMINGS',
+      );
+    }
+
     if (isAccessUpdate) {
       const geoFenceRequired = Boolean(merged.geoFenceRequired);
       const allowRemoteAttendance = Boolean(merged.allowRemoteAttendance);
