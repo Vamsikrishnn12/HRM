@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { Alert, AlertIcon, Badge, Box, Checkbox, Divider, Flex, SimpleGrid, Spinner, Text, useToast } from "@chakra-ui/react";
 import { CheckCircle2, ContactRound, GraduationCap, HeartHandshake, Home, Save, ShieldCheck } from "lucide-react";
-import { personalDetailsApi } from "@/api";
+import { personalDetailsApi, profileApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton } from "@/components/ui/Buttons";
 import { Field, StyledInput, StyledSelect } from "@/components/ui/FormHelpers";
 import type { PersonalForm } from "@/types";
+import OnboardingDocuments from "@/components/employees/OnboardingDocuments";
 
 const emptyForm: PersonalForm = {
   aadhaarNumber: "", panNumber: "", mobileNumber: "", whatsappNumber: "",
@@ -34,11 +35,15 @@ export default function EmployeePersonalDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [employmentType, setEmploymentType] = useState("");
   const toast = useToast();
 
   useEffect(() => {
-    personalDetailsApi.getMe()
-      .then((record) => { if (record) { setForm(record); setCompleted(true); } })
+    Promise.all([personalDetailsApi.getMe(), profileApi.getMe()])
+      .then(([record, profile]) => {
+        if (record) { setForm(record); setCompleted(true); }
+        setEmploymentType(profile.employmentType || "");
+      })
       .catch((error) => toast({ title: "Could not load your details", description: error?.message, status: "error" }))
       .finally(() => setLoading(false));
   }, [toast]);
@@ -133,6 +138,10 @@ export default function EmployeePersonalDetailsPage() {
           <Field label="Reason for leaving"><StyledSelect placeholder="Select" value={form.reasonForLeaving} onChange={(e) => set("reasonForLeaving", e.target.value)}>{["Career Growth","Better Opportunity","Higher Education","Relocation","Personal","Health Issues","Contract Ended","Other"].map((item) => <option key={item}>{item}</option>)}</StyledSelect></Field>
         </SimpleGrid>
       </SectionCard>
+
+      <OnboardingDocuments
+        experienced={employmentType.toLowerCase() === "experienced" || Number.parseFloat(form.totalExperienceYears || "0") > 0 || Boolean(form.lastCompany.trim())}
+      />
 
       <SectionCard>
         <Flex align={{ base: "stretch", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap={4}>

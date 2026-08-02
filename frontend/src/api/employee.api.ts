@@ -38,6 +38,9 @@ export const employeeApi = {
   remove: (id: string) =>
     api.delete<{ id: string; emailReleased: boolean }>(`/employees/${id}`),
 
+  sendOnboardingLink: (id: string) =>
+    api.post<{ email: string; sent: boolean }>(`/employees/${id}/send-onboarding-link`),
+
   uploadPhoto: (id: string, photo: File) => {
     const formData = new FormData();
     formData.append("photo", photo);
@@ -117,6 +120,18 @@ export const documentsApi = {
 
   getByUserId: (userId: string) =>
     api.get<{ data: DocumentRow[]; total: number }>(`/documents/user/${userId}`),
+
+  listMine: () =>
+    api.get<{ data: DocumentRow[]; total: number }>("/documents/me"),
+
+  uploadMine: (formData: FormData) =>
+    api.postFormData<DocumentRow[]>("/documents/me", formData),
+
+  removeMine: (id: string) =>
+    api.delete(`/documents/me/${id}`),
+
+  downloadMine: (id: string, fileName: string) =>
+    api.downloadBlob(`/documents/me/${id}/download`, fileName),
 
   upload: (userId: string, formData: FormData) =>
     api.postFormData<DocumentRow[]>(`/documents/user/${userId}`, formData),

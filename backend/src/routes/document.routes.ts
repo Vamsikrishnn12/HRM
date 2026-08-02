@@ -49,7 +49,19 @@ const upload = multer({
 });
 
 // ── Routes ───────────────────────────────────────────────────────
-router.use(authMiddleware, roleMiddleware('ADMIN'));
+router.use(authMiddleware);
+
+router.get('/me', roleMiddleware('EMPLOYEE'), asyncHandler(DocumentController.getMine));
+router.post(
+  '/me',
+  roleMiddleware('EMPLOYEE'),
+  upload.array('files', 20),
+  asyncHandler(DocumentController.uploadMine),
+);
+router.get('/me/:id/download', roleMiddleware('EMPLOYEE'), asyncHandler(DocumentController.downloadMine));
+router.delete('/me/:id', roleMiddleware('EMPLOYEE'), asyncHandler(DocumentController.removeMine));
+
+router.use(roleMiddleware('ADMIN'));
 
 router.get('/', asyncHandler(DocumentController.list));
 

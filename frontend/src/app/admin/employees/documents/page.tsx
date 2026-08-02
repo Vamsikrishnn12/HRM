@@ -28,8 +28,8 @@ import {
   AlertDialogFooter,
   Button,
 } from "@chakra-ui/react";
-import { Eye, Search, Plus, Trash2, Download, FileText } from "lucide-react";
-import { documentsApi } from "@/api";
+import { Eye, Search, Plus, Trash2, Download, FileText, Mail } from "lucide-react";
+import { documentsApi, employeeApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";
@@ -41,19 +41,25 @@ import type { DocumentRow } from "@/types";
 
 /** Server origin (no /api suffix) — used for static file URLs */
 const DOCUMENT_TYPES = [
-  "Aadhaar",
+  "Aadhaar Card",
   "PAN Card",
   "Passport",
   "Driving License",
   "Voter ID",
   "Resume",
-  "Offer Letter",
+  "Signed Offer Letter",
+  "Signed Appointment Letter",
+  "12th or Diploma Certificate",
+  "Consolidated Marksheet",
+  "Degree or Course Completion Certificate",
+  "Previous 3 Months Payslips",
+  "Previous 3 Months Bank Statements",
   "Relieving Letter",
   "Experience Letter",
   "Salary Certificate",
   "Bank Statement",
   "Educational Certificate",
-  "Photo",
+  "Passport Photo",
   "Other",
 ];
 
@@ -243,8 +249,11 @@ export default function DocumentsPage() {
   const [viewRecord, setViewRecord] = useState<DocumentRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [sendUserId, setSendUserId] = useState("");
+  const [sendingLink, setSendingLink] = useState(false);
   const viewModal = useDisclosure();
   const deleteDisclosure = useDisclosure();
+  const sendDisclosure = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
   const toast = useToast();
 
@@ -311,6 +320,24 @@ export default function DocumentsPage() {
       await documentsApi.download(row.id, row.originalName);
     } catch (error: any) {
       toast({ title: "Download failed", description: error?.message, status: "error", duration: 4000, isClosable: true });
+    }
+  };
+
+  const sendOnboardingLink = async () => {
+    if (!sendUserId) {
+      toast({ title: "Select an employee", status: "warning" });
+      return;
+    }
+    try {
+      setSendingLink(true);
+      const result = await employeeApi.sendOnboardingLink(sendUserId);
+      toast({ title: "Onboarding link sent", description: `Email sent to ${result.email}`, status: "success" });
+      setSendUserId("");
+      sendDisclosure.onClose();
+    } catch (error: any) {
+      toast({ title: "Could not send onboarding link", description: error?.message, status: "error" });
+    } finally {
+      setSendingLink(false);
     }
   };
 
@@ -414,11 +441,10 @@ export default function DocumentsPage() {
       <PageHeader
         title="Documents"
         subtitle="Upload and manage employee documents."
-        actions={
-          <PrimaryButton size="sm" leftIcon={<Plus size={16} />} onClick={() => setView("upload")}>
-            Upload New
-          </PrimaryButton>
-        }
+        actions={<HStack>
+          <SecondaryButton size="sm" leftIcon={<Mail size={16} />} onClick={sendDisclosure.onOpen}>Send upload link</SecondaryButton>
+          <PrimaryButton size="sm" leftIcon={<Plus size={16} />} onClick={() => setView("upload")}>Upload New</PrimaryButton>
+        </HStack>}
       />
 
       <SectionCard>
@@ -456,6 +482,22 @@ export default function DocumentsPage() {
       </SectionCard>
 
       <ViewModal isOpen={viewModal.isOpen} onClose={viewModal.onClose} record={viewRecord} />
+
+      <Modal isOpen={sendDisclosure.isOpen} onClose={sendDisclosure.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader>Send onboarding upload link</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text fontSize="sm" color="text.muted" mb={4}>Select an employee. They will receive an email with the personal-details link, complete document checklist, and upload instructions.</Text>
+            <EmployeeSelector value={sendUserId} onChange={setSendUserId} />
+          </ModalBody>
+          <Flex justify="flex-end" gap={3} p={6} pt={4}>
+            <SecondaryButton onClick={sendDisclosure.onClose}>Cancel</SecondaryButton>
+            <PrimaryButton leftIcon={<Mail size={15} />} onClick={sendOnboardingLink} isLoading={sendingLink}>Send email</PrimaryButton>
+          </Flex>
+        </ModalContent>
+      </Modal>
 
       <AlertDialog
         isOpen={deleteDisclosure.isOpen}

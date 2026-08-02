@@ -170,4 +170,29 @@ export class EmailService {
       });
     }
   }
+
+  async sendOnboardingLink(
+    email: string,
+    firstName: string,
+    empId: string,
+    employmentType: string,
+  ): Promise<void> {
+    const branding = await this.getBranding();
+    const html = this.loadTemplate('onboardingReminder', {
+      ...branding.variables,
+      firstName,
+      empId,
+      employmentType,
+      onboardingUrl: `${env.APP_URL}/employee/personal-details#documents`,
+      loginUrl: `${env.APP_URL}/login`,
+      year: new Date().getFullYear().toString(),
+    });
+
+    await this.sendMail({
+      to: email,
+      subject: 'Action required - Complete your Connect HR onboarding',
+      html,
+      attachments: [branding.attachment],
+    });
+  }
 }

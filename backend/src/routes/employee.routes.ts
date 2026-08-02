@@ -129,6 +129,7 @@ router.post(
 router.get('/:id', asyncHandler(EmployeeController.getById));
 
 router.post('/:id/offboard', asyncHandler(EmployeeController.offboard));
+router.post('/:id/send-onboarding-link', asyncHandler(EmployeeController.sendOnboardingLink));
 
 /**
  * @swagger

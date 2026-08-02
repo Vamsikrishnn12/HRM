@@ -8,6 +8,33 @@ const documentService = new DocumentService();
 const notificationService = new NotificationService();
 
 export class DocumentController {
+  static async getMine(req: Request, res: Response): Promise<void> {
+    const result = await documentService.getByUserId(req.user!.userId);
+    ApiResponse.success(res, 'Documents retrieved', result);
+  }
+
+  static async uploadMine(req: Request, res: Response): Promise<void> {
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      throw ApiError.badRequest('No files uploaded', 'NO_FILES');
+    }
+    const documentType = (req.body.documentType as string) || 'Other';
+    const result = await documentService.upload(req.user!.userId, files, documentType);
+    ApiResponse.success(res, 'Documents uploaded', result);
+  }
+
+  static async downloadMine(req: Request, res: Response): Promise<void> {
+    const file = await documentService.getFileForUser(req.params.id as string, req.user!.userId);
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalName)}"`);
+    res.send(file.buffer);
+  }
+
+  static async removeMine(req: Request, res: Response): Promise<void> {
+    await documentService.deleteOwnDocument(req.params.id as string, req.user!.userId);
+    ApiResponse.success(res, 'Document deleted', null);
+  }
+
   static async list(_req: Request, res: Response): Promise<void> {
     const result = await documentService.listAll();
     ApiResponse.success(res, 'Documents retrieved', result);

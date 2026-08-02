@@ -121,6 +121,22 @@ export class DocumentService {
     return { buffer: fs.readFileSync(fullPath), mimeType: record.mimeType, originalName: record.originalName };
   }
 
+  async getFileForUser(id: string, userId: string) {
+    const record = await this.docRepo.findById(id);
+    if (!record || record.userId !== userId) {
+      throw ApiError.notFound('Document not found', 'DOCUMENT_NOT_FOUND');
+    }
+    return this.getFile(id);
+  }
+
+  async deleteOwnDocument(id: string, userId: string) {
+    const record = await this.docRepo.findById(id);
+    if (!record || record.userId !== userId) {
+      throw ApiError.notFound('Document not found', 'DOCUMENT_NOT_FOUND');
+    }
+    await this.deleteDocument(id);
+  }
+
   private formatRecord(r: any) {
     return {
       id: r.id,
