@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   empId?: string | null;
   officeLocationRequired?: boolean;
+  employeeTourCompleted?: boolean;
 }
 
 export interface LoginPayload {
@@ -30,6 +31,7 @@ export interface LoginResponseData {
     lastName: string;
     empId?: string | null;
     officeLocationRequired?: boolean;
+    employeeTourCompleted?: boolean;
   };
 }
 

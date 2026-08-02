@@ -7,6 +7,15 @@ import { ApiError } from '../utils/apiError';
 const profileService = new ProfileService();
 
 export class ProfileController {
+  static async setTourCompleted(req: Request, res: Response): Promise<void> {
+    const completed = req.body?.completed;
+    if (typeof completed !== 'boolean') {
+      throw ApiError.badRequest('completed must be true or false', 'VALIDATION_ERROR');
+    }
+    const result = await profileService.setEmployeeTourCompleted(req.user!.userId, completed);
+    ApiResponse.success(res, completed ? 'Product tour completed' : 'Product tour reset', result);
+  }
+
   static async getMe(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
     const result = await profileService.getMyProfile(userId);

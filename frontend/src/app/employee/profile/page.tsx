@@ -26,6 +26,7 @@ import {
   Eye,
   EyeOff,
   Heart,
+  Compass,
 } from "lucide-react";
 import SectionCard from "@/components/ui/SectionCard";
 import PageHeader from "@/components/ui/PageHeader";
@@ -289,6 +290,35 @@ export default function EmployeeProfilePage() {
           <InfoItem label="Contact Number" value={profile.emergencyContactNumber} />
           <InfoItem label="Relationship" value={profile.emergencyContactRelationship} />
         </SimpleGrid>
+      </SectionCard>
+
+      {/* Change Password */}
+      <SectionCard
+        title="Help & Product Tour"
+        mb={6}
+        actions={
+          <Flex align="center" gap={1.5} color="brand.400">
+            <Compass size={15} />
+          </Flex>
+        }
+      >
+        <Flex direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "flex-start", md: "center" }} gap={4}>
+          <Box>
+            <Text fontSize="sm" fontWeight="700" color="text.heading">Need help using Connect HR?</Text>
+            <Text fontSize="xs" color="text.muted" mt={1} maxW="650px">
+              Restart the guided tour to review Personal Details, attendance punching, holidays, leave and permission requests, payslips, and profile settings.
+            </Text>
+          </Box>
+          <Button
+            leftIcon={<Compass size={16} />}
+            colorScheme="blue"
+            variant="outline"
+            flexShrink={0}
+            onClick={() => window.dispatchEvent(new Event("employee-tour:start"))}
+          >
+            Restart Product Tour
+          </Button>
+        </Flex>
       </SectionCard>
 
       {/* Change Password */}

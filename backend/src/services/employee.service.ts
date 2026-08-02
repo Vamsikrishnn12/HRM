@@ -121,6 +121,7 @@ export class EmployeeService {
       empId,
       role: UserRole.EMPLOYEE,
       isActive: true,
+      employeeTourCompleted: false,
       officeLocationRequired: input.allowLoginOnlyInsideOffice,
       officeLatitude: input.allowLoginOnlyInsideOffice ? input.officeLatitude! : null,
       officeLongitude: input.allowLoginOnlyInsideOffice ? input.officeLongitude! : null,

@@ -62,6 +62,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date | null;
 
+  @Column({ type: 'boolean', default: false })
+  employeeTourCompleted: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

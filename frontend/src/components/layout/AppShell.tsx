@@ -6,6 +6,7 @@ import Topbar from "./Topbar";
 import MobileBottomNav from "./MobileBottomNav";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import type { ReactNode } from "react";
+import EmployeeProductTour from "@/components/tour/EmployeeProductTour";
 
 interface AppShellProps {
   children: ReactNode;
@@ -40,6 +41,7 @@ function AppContent({ children }: { children: ReactNode }) {
         </Box>
       </Box>
       <MobileBottomNav />
+      <EmployeeProductTour />
     </Flex>
   );
 }

@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role,
           empId: data.user.empId,
           officeLocationRequired: data.user.officeLocationRequired,
+          employeeTourCompleted: data.user.employeeTourCompleted,
         };
 
         setUser(loggedInUser);

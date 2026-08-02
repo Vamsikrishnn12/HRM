@@ -11,5 +11,6 @@ router.use(authMiddleware);
 router.get('/me', asyncHandler(ProfileController.getMe));
 router.patch('/me', asyncHandler(ProfileController.updateMe));
 router.post('/change-password', asyncHandler(ProfileController.changePassword));
+router.put('/tour-status', asyncHandler(ProfileController.setTourCompleted));
 
 export default router;

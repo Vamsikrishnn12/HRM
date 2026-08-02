@@ -35,6 +35,7 @@ export class ProfileService {
       role: user.role,
       isActive: user.isActive,
       lastLoginAt: user.lastLoginAt,
+      employeeTourCompleted: user.employeeTourCompleted,
 
       // Employee profile
       department: profile?.department ?? '',
@@ -98,5 +99,12 @@ export class ProfileService {
 
     const hashed = await hashPassword(newPassword);
     await this.userRepo.update(userId, { password: hashed } as any);
+  }
+
+  async setEmployeeTourCompleted(userId: string, completed: boolean) {
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw ApiError.notFound('User not found', 'USER_NOT_FOUND');
+    await this.userRepo.update(userId, { employeeTourCompleted: completed });
+    return { employeeTourCompleted: completed };
   }
 }

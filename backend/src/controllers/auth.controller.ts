@@ -115,6 +115,7 @@ export class AuthController {
       lastName: user.lastName,
       empId: user.empId,
       officeLocationRequired: user.officeLocationRequired,
+      employeeTourCompleted: user.employeeTourCompleted,
     });
   }
 }

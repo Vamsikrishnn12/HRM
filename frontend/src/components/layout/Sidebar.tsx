@@ -39,6 +39,7 @@ function NavItem({
   return (
     <Link href={route.href} onClick={onNavigate}>
       <Flex
+        data-tour={route.href.replace(/^\//, "").replace(/\//g, "-")}
         align="center"
         gap={3}
         px={3}
@@ -124,6 +125,7 @@ function NavGroup({
   return (
     <Box>
       <Flex
+        data-tour={route.href.replace(/^\//, "").replace(/\//g, "-")}
         as="button"
         w="100%"
         align="center"

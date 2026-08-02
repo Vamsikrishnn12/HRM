@@ -10,6 +10,7 @@ export interface ProfileData {
   role: string;
   isActive: boolean;
   lastLoginAt: string | null;
+  employeeTourCompleted: boolean;
 
   department: string;
   designation: string;
@@ -74,6 +75,9 @@ export const profileApi = {
     newPassword: string;
     confirmPassword: string;
   }) => api.post("/profile/change-password", data),
+
+  setTourCompleted: (completed: boolean) =>
+    api.put<{ employeeTourCompleted: boolean }>("/profile/tour-status", { completed }),
 };
 
 export const sharedDashboardApi = {

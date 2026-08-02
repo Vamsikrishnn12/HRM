@@ -52,6 +52,7 @@ export default function MobileBottomNav() {
           return (
             <Link key={item.href} href={item.href} style={{ flex: 1, minWidth: 0 }}>
               <Flex
+                data-tour={item.href.replace(/^\//, "").replace(/\//g, "-")}
                 h="100%"
                 direction="column"
                 align="center"

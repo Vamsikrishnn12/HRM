@@ -57,6 +57,7 @@ export class AuthService {
           lastName: grant.employee.lastName,
           empId: grant.employee.empId,
           officeLocationRequired: false,
+          employeeTourCompleted: grant.employee.employeeTourCompleted,
         },
       };
     }
@@ -166,6 +167,7 @@ export class AuthService {
         lastName: user.lastName,
         empId: user.empId,
         officeLocationRequired: user.officeLocationRequired,
+        employeeTourCompleted: user.employeeTourCompleted,
       },
     };
   }
