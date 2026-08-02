@@ -1,40 +1,62 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Flex, Text, VStack, Spinner } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+  SimpleGrid,
+  Spinner,
+  Text,
+  useDisclosure,
+  VStack,
+} from "@chakra-ui/react";
 import { CalendarDays } from "lucide-react";
 import SectionCard from "./SectionCard";
-import { sharedDashboardApi, type UpcomingHoliday } from "@/api/profile.api";
+import {
+  sharedDashboardApi,
+  type HolidayCalendarEntry,
+  type UpcomingHoliday,
+} from "@/api/profile.api";
 
 export default function UpcomingHolidaysWidget(props: Record<string, any>) {
   const [holidays, setHolidays] = useState<UpcomingHoliday[]>([]);
+  const [calendar, setCalendar] = useState<HolidayCalendarEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const calendarYear = new Date().getFullYear();
 
   useEffect(() => {
-    sharedDashboardApi
-      .getUpcomingHolidays(5)
-      .then(setHolidays)
+    Promise.all([
+      sharedDashboardApi.getUpcomingHolidays(5),
+      sharedDashboardApi.getHolidayCalendar(calendarYear),
+    ])
+      .then(([upcoming, fullCalendar]) => {
+        setHolidays(upcoming);
+        setCalendar(fullCalendar);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [calendarYear]);
 
   return (
-    <SectionCard
-      title="Upcoming Holidays"
-      actions={
-        <Flex
-          align="center"
-          justify="center"
-          w={7}
-          h={7}
-          borderRadius="lg"
-          bgGradient="linear(135deg, #0B72E7, #20C997)"
-        >
-          <CalendarDays size={14} color="white" />
-        </Flex>
-      }
-      {...props}
-    >
+    <>
+      <SectionCard
+        title="Upcoming Holidays"
+        actions={
+          <Button size="xs" variant="outline" colorScheme="blue" leftIcon={<CalendarDays size={13} />} onClick={onOpen}>
+            {calendarYear} Calendar
+          </Button>
+        }
+        {...props}
+      >
       {loading ? (
         <Flex justify="center" py={8}>
           <Spinner size="sm" color="brand.400" />
@@ -116,7 +138,49 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
             );
           })}
         </VStack>
-      )}
-    </SectionCard>
+        )}
+        <Text mt={4} fontSize="xs" color="text.muted" lineHeight="tall">
+          This holiday calendar may be modified by the organization according to business requirements. Employees should follow the latest calendar displayed here.
+        </Text>
+      </SectionCard>
+
+      <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
+        <ModalOverlay />
+        <ModalContent borderRadius="2xl">
+          <ModalHeader>{calendarYear} Organization Holiday Calendar</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Box bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl" p={3} mb={4}>
+              <Text fontSize="sm" color="blue.800">
+                Based on the Tamil Nadu Government holiday list for {calendarYear}. The organization may add, remove, or change holidays according to business requirements. Please follow this displayed calendar for your official holidays.
+              </Text>
+            </Box>
+            {calendar.length === 0 ? (
+              <Text textAlign="center" color="text.muted" py={8}>No holidays are configured for {calendarYear}.</Text>
+            ) : (
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                {calendar.map((holiday) => {
+                  const date = new Date(`${holiday.date}T00:00:00`);
+                  const isPast = holiday.date < new Date().toISOString().slice(0, 10);
+                  return (
+                    <Flex key={holiday.id} align="center" gap={3} border="1px solid" borderColor="surface.border" borderRadius="xl" p={3}>
+                      <Flex direction="column" align="center" justify="center" w={12} h={12} bg="brand.50" borderRadius="lg" flexShrink={0}>
+                        <Text fontSize="lg" fontWeight="800" color="brand.500" lineHeight="1">{date.getDate()}</Text>
+                        <Text fontSize="10px" fontWeight="700" color="text.muted">{date.toLocaleString("en-IN", { month: "short" })}</Text>
+                      </Flex>
+                      <Box flex={1} minW={0}>
+                        <Text fontSize="sm" fontWeight="700" color="text.heading">{holiday.name}</Text>
+                        <Text fontSize="xs" color="text.muted">{holiday.dayName}</Text>
+                      </Box>
+                      {isPast && <Badge colorScheme="gray" fontSize="10px">Past</Badge>}
+                    </Flex>
+                  );
+                })}
+              </SimpleGrid>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }

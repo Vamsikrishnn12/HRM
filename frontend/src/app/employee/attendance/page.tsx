@@ -206,7 +206,7 @@ const LEGEND_ITEMS: Array<{ code: string; label: string; status: AttendanceStatu
   { code: "H", label: "Holiday", status: "HOLIDAY" },
   { code: "CL", label: "Casual Leave", status: "LEAVE" },
   { code: "SL", label: "Sick Leave", status: "LEAVE" },
-  { code: "EL", label: "Earned Leave", status: "LEAVE" },
+  { code: "EL", label: "Emergency Leave", status: "LEAVE" },
   { code: "L", label: "Leave", status: "LEAVE" },
   { code: "LT", label: "Late (Insight)", status: "LATE" },
 ];

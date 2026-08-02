@@ -18,15 +18,28 @@ export interface LeaveSummary {
   monthsOfService: number;
   inProbation: boolean;
   probationEndsOn: string | null;
+  leaveEligibilityDate: string | null;
+  leaveCycleStart: string | null;
+  leaveCycleEnd: string | null;
+  leaveMonthStart: string | null;
+  leaveMonthEnd: string | null;
+  currentAccrualMonth: number;
   probationLeaveAllowed: boolean;
   allowHalfDayLeave: boolean;
   allowPermissionHours: boolean;
   maxPermissionHoursPerMonth: number;
   maxPermissionRequestsPerMonth: number;
   maxRegularizationsPerMonth: number;
+  annualEntitlement: { cl: number; sl: number; el: number };
+  monthlyEntitlement: { cl: number; sl: number; el: number };
   entitlement: { cl: number; sl: number; el: number };
   used: { cl: number; sl: number; el: number; lop: number };
   balance: { cl: number; sl: number; el: number };
+  carryForward: {
+    cl: "WITHIN_LEAVE_YEAR";
+    sl: "NONE_MONTHLY_RESET";
+    el: "NONE_MONTHLY_RESET";
+  };
   permissionHoursUsedThisMonth: number;
   currentSlab: {
     minYears: number;

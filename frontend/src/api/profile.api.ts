@@ -56,6 +56,13 @@ export interface UpcomingHoliday {
   daysLeft: number;
 }
 
+export interface HolidayCalendarEntry {
+  id: string;
+  name: string;
+  date: string;
+  dayName: string;
+}
+
 export const profileApi = {
   getMe: () => api.get<ProfileData>("/profile/me"),
 
@@ -75,4 +82,7 @@ export const sharedDashboardApi = {
 
   getUpcomingHolidays: (limit = 4) =>
     api.get<UpcomingHoliday[]>(`/dashboard/upcoming-holidays?limit=${limit}`),
+
+  getHolidayCalendar: (year = new Date().getFullYear()) =>
+    api.get<HolidayCalendarEntry[]>(`/dashboard/holidays?year=${year}`),
 };

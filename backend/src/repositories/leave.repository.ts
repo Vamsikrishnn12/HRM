@@ -76,20 +76,22 @@ export class LeaveRepository {
     });
   }
 
-  async findApprovedByEmployeeAndYear(
+  async findApprovedByEmployeeAndRange(
     employeeId: string,
-    year: number,
+    startDate: string,
+    endDate: string,
   ): Promise<LeaveRequest[]> {
-    const startOfYear = `${year}-01-01`;
-    const endOfYear = `${year}-12-31`;
-
     return this.requestRepo
       .createQueryBuilder('lr')
       .where('lr.employeeId = :employeeId', { employeeId })
       .andWhere('lr.status = :status', { status: LeaveStatus.APPROVED })
       .andWhere(
-        '(lr.startDate BETWEEN :start AND :end OR lr.date BETWEEN :start AND :end)',
-        { start: startOfYear, end: endOfYear },
+        `(
+          (lr.requestMode = 'FULL_DAY' AND lr.startDate <= :endDate AND lr.endDate >= :startDate)
+          OR
+          (lr.requestMode != 'FULL_DAY' AND lr.date BETWEEN :startDate AND :endDate)
+        )`,
+        { startDate, endDate },
       )
       .orderBy('lr.createdAt', 'DESC')
       .getMany();

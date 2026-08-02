@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, Box, Button, Flex, HStack, IconButton, SimpleGrid, Spinner, Text, useToast, VStack } from "@chakra-ui/react";
 import { CheckCircle2, Download, FileCheck2, FileUp, Trash2 } from "lucide-react";
 import { documentsApi } from "@/api";
@@ -12,7 +12,7 @@ type Requirement = {
   type: string;
   title: string;
   description: string;
-  experiencedOnly?: boolean;
+  ifApplicable?: boolean;
   maxFiles?: number;
 };
 
@@ -26,10 +26,10 @@ export const ONBOARDING_DOCUMENTS: Requirement[] = [
   { type: "Degree or Course Completion Certificate", title: "Degree / course completion", description: "Final degree or completion certificate" },
   { type: "Resume", title: "Latest resume", description: "Current resume in PDF or DOCX" },
   { type: "Passport Photo", title: "Passport-size photo", description: "Recent clear photograph" },
-  { type: "Previous 3 Months Payslips", title: "Previous three months' payslips", description: "Upload three separate files or one combined PDF", experiencedOnly: true, maxFiles: 3 },
-  { type: "Previous 3 Months Bank Statements", title: "Previous salary bank statements", description: "Previous salary-account statements for three months", experiencedOnly: true, maxFiles: 3 },
-  { type: "Experience Letter", title: "Experience letter", description: "From the previous employer", experiencedOnly: true },
-  { type: "Relieving Letter", title: "Relieving letter", description: "From the previous employer", experiencedOnly: true },
+  { type: "Previous 3 Months Payslips", title: "Previous three months' payslips", description: "Upload three separate files or one combined PDF", ifApplicable: true, maxFiles: 3 },
+  { type: "Previous 3 Months Bank Statements", title: "Previous salary bank statements", description: "Previous salary-account statements for three months", ifApplicable: true, maxFiles: 3 },
+  { type: "Experience Letter", title: "Experience letter", description: "From the previous employer", ifApplicable: true },
+  { type: "Relieving Letter", title: "Relieving letter", description: "From the previous employer", ifApplicable: true },
 ];
 
 const ACCEPTED_TYPES = [
@@ -41,17 +41,14 @@ const ACCEPTED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-export default function OnboardingDocuments({ experienced }: { experienced: boolean }) {
+export default function OnboardingDocuments() {
   const [records, setRecords] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyType, setBusyType] = useState("");
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const toast = useToast();
 
-  const requirements = useMemo(
-    () => ONBOARDING_DOCUMENTS.filter((item) => !item.experiencedOnly || experienced),
-    [experienced],
-  );
+  const requirements = ONBOARDING_DOCUMENTS;
 
   const load = useCallback(async () => {
     try {
@@ -114,7 +111,8 @@ export default function OnboardingDocuments({ experienced }: { experienced: bool
     }
   };
 
-  const completed = requirements.filter((item) => records.some((record) => record.documentType === item.type)).length;
+  const requiredDocuments = requirements.filter((item) => !item.ifApplicable);
+  const completed = requiredDocuments.filter((item) => records.some((record) => record.documentType === item.type)).length;
 
   return (
     <Box id="documents" scrollMarginTop="90px">
@@ -124,11 +122,11 @@ export default function OnboardingDocuments({ experienced }: { experienced: bool
             <Text fontWeight="800" color="text.heading">Onboarding documents</Text>
             <Text fontSize="sm" color="text.muted" mt={1}>Upload clear, readable documents. PDF or image is recommended; maximum 5 MB per file.</Text>
           </Box>
-          <Badge colorScheme={completed === requirements.length ? "green" : "blue"} px={3} py={1.5} borderRadius="full">
-            {completed}/{requirements.length} completed
+          <Badge colorScheme={completed === requiredDocuments.length ? "green" : "blue"} px={3} py={1.5} borderRadius="full">
+            {completed}/{requiredDocuments.length} required completed
           </Badge>
         </Flex>
-        {experienced && <Text fontSize="sm" color="orange.700" bg="orange.50" p={3} borderRadius="lg" mt={3}>Previous-employment documents are required because your profile is marked as experienced.</Text>}
+        <Text fontSize="sm" color="orange.700" bg="orange.50" p={3} borderRadius="lg" mt={3}>Previous-employment documents are always available below. Upload them only if applicable to your work history.</Text>
 
         {loading ? <Flex py={12} justify="center"><Spinner color="brand.500" /></Flex> : (
           <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={3} mt={5}>
@@ -143,7 +141,7 @@ export default function OnboardingDocuments({ experienced }: { experienced: bool
                       {complete ? <FileCheck2 size={18} /> : <FileUp size={18} />}
                     </Flex>
                     <Box flex={1} minW={0}>
-                      <HStack><Text fontWeight="800" fontSize="sm" color="text.heading">{requirement.title}</Text>{complete && <CheckCircle2 size={15} color="#17865c" />}</HStack>
+                      <HStack flexWrap="wrap"><Text fontWeight="800" fontSize="sm" color="text.heading">{requirement.title}</Text>{requirement.ifApplicable && <Badge colorScheme="orange" fontSize="9px">If applicable</Badge>}{complete && <CheckCircle2 size={15} color="#17865c" />}</HStack>
                       <Text fontSize="xs" color="text.muted" mt={0.5}>{requirement.description}</Text>
                     </Box>
                     {!atLimit && <Button size="xs" colorScheme="blue" variant={complete ? "outline" : "solid"} isLoading={busyType === requirement.type} onClick={() => inputRefs.current[requirement.type]?.click()}>{complete ? "Add" : "Upload"}</Button>}

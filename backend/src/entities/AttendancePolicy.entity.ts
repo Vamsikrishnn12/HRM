@@ -46,7 +46,7 @@ export class AttendancePolicy {
   @Column({ type: 'int', default: 240 })
   halfDayMinMinutes: number;
 
-  @Column({ type: 'int', default: 480 })
+  @Column({ type: 'int', default: 540 })
   fullDayMinMinutes: number;
 
   @Column({ type: 'int', default: 30 })

@@ -371,4 +371,21 @@ export class DashboardService {
         };
       });
   }
+
+  async getHolidayCalendar(year = new Date().getFullYear()) {
+    const holidays = await settingsRepo.findAllHolidays();
+    const yearPrefix = `${year}-`;
+
+    return holidays
+      .filter((holiday) => holiday.date.startsWith(yearPrefix))
+      .map((holiday) => {
+        const date = new Date(`${holiday.date}T00:00:00`);
+        return {
+          id: holiday.id,
+          name: holiday.name,
+          date: holiday.date,
+          dayName: date.toLocaleDateString('en', { weekday: 'long' }),
+        };
+      });
+  }
 }

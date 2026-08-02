@@ -50,9 +50,9 @@ export class LeaveService {
   //  Utility: Probation & Service Year Calculations
   // ══════════════════════════════════════════════════════
 
-  private getYearsOfService(dateOfJoining: string): number {
+  private getYearsOfService(dateOfJoining: string, referenceDate = new Date()): number {
     const doj = new Date(dateOfJoining);
-    const now = new Date();
+    const now = referenceDate;
     let years = now.getFullYear() - doj.getFullYear();
     const monthDiff = now.getMonth() - doj.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < doj.getDate())) {
@@ -61,16 +61,20 @@ export class LeaveService {
     return Math.max(0, years);
   }
 
-  private getMonthsOfService(dateOfJoining: string): number {
+  private getMonthsOfService(dateOfJoining: string, referenceDate = new Date()): number {
     const doj = new Date(dateOfJoining);
-    const now = new Date();
+    const now = referenceDate;
     let months = (now.getFullYear() - doj.getFullYear()) * 12 + (now.getMonth() - doj.getMonth());
     if (now.getDate() < doj.getDate()) months--;
     return Math.max(0, months);
   }
 
-  private isInProbation(dateOfJoining: string, probationMonths: number): boolean {
-    return this.getMonthsOfService(dateOfJoining) < probationMonths;
+  private isInProbation(
+    dateOfJoining: string,
+    probationMonths: number,
+    referenceDate = new Date(),
+  ): boolean {
+    return this.getMonthsOfService(dateOfJoining, referenceDate) < probationMonths;
   }
 
   private getApplicableSlab(slabs: LeavePolicySlab[], yearsOfService: number): LeavePolicySlab | null {
@@ -115,6 +119,81 @@ export class LeaveService {
       cursor.setDate(cursor.getDate() + 1);
     }
     return result;
+  }
+
+  private toDateKey(date: Date): string {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+  }
+
+  private addMonthsToDateKey(dateStr: string, months: number): string {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const targetMonthIndex = month - 1 + months;
+    const targetYear = year + Math.floor(targetMonthIndex / 12);
+    const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+    const lastDay = new Date(targetYear, normalizedMonth + 1, 0).getDate();
+    return this.toDateKey(new Date(targetYear, normalizedMonth, Math.min(day, lastDay)));
+  }
+
+  private addDaysToDateKey(dateStr: string, days: number): string {
+    const date = new Date(`${dateStr}T00:00:00`);
+    date.setDate(date.getDate() + days);
+    return this.toDateKey(date);
+  }
+
+  private getWholeMonthsBetween(anchorDate: string, referenceDate: string): number {
+    const [anchorYear, anchorMonth] = anchorDate.split('-').map(Number);
+    const [referenceYear, referenceMonth] = referenceDate.split('-').map(Number);
+    let months = (referenceYear - anchorYear) * 12 + (referenceMonth - anchorMonth);
+    if (referenceDate < this.addMonthsToDateKey(anchorDate, months)) months -= 1;
+    return months;
+  }
+
+  private getLeaveCycle(dateOfJoining: string, probationMonths: number, referenceDate: string) {
+    const eligibilityDate = this.addMonthsToDateKey(dateOfJoining, probationMonths);
+    if (referenceDate < eligibilityDate) {
+      return { eligibilityDate, cycle: null };
+    }
+
+    const monthsSinceEligibility = this.getWholeMonthsBetween(eligibilityDate, referenceDate);
+    const cycleIndex = Math.floor(monthsSinceEligibility / 12);
+    const monthIndex = monthsSinceEligibility % 12;
+    const cycleStart = this.addMonthsToDateKey(eligibilityDate, cycleIndex * 12);
+    const cycleEnd = this.addDaysToDateKey(this.addMonthsToDateKey(cycleStart, 12), -1);
+    const monthStart = this.addMonthsToDateKey(cycleStart, monthIndex);
+    const monthEnd = this.addDaysToDateKey(this.addMonthsToDateKey(monthStart, 1), -1);
+
+    return {
+      eligibilityDate,
+      cycle: {
+        cycleStart,
+        cycleEnd,
+        monthStart,
+        monthEnd,
+        accrualMonth: monthIndex + 1,
+      },
+    };
+  }
+
+  private getRequestDaysWithinRange(request: LeaveRequest, startDate: string, endDate: string): number {
+    if (request.requestMode === RequestMode.PERMISSION) return 0;
+    if (request.requestMode === RequestMode.HALF_DAY) {
+      return request.date && request.date >= startDate && request.date <= endDate
+        ? Number(request.totalDays ?? 0.5)
+        : 0;
+    }
+
+    if (!request.startDate || !request.endDate) return 0;
+    const overlapStart = request.startDate > startDate ? request.startDate : startDate;
+    const overlapEnd = request.endDate < endDate ? request.endDate : endDate;
+    return overlapStart <= overlapEnd ? this.countBusinessDays(overlapStart, overlapEnd) : 0;
+  }
+
+  private roundLeaveDays(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
   private isWeeklyOffDate(
@@ -166,7 +245,7 @@ export class LeaveService {
   //  Employee: Get Summary
   // ══════════════════════════════════════════════════════
 
-  async getEmployeeSummary(userId: string) {
+  async getEmployeeSummary(userId: string, referenceDate = this.toDateKey(new Date())) {
     const profile = await this.employeeRepo.findByUserId(userId);
     if (!profile) throw ApiError.notFound('Employee profile not found', 'PROFILE_NOT_FOUND');
 
@@ -175,28 +254,40 @@ export class LeaveService {
       return this.buildEmptySummary(profile.dateOfJoining, profile.user);
     }
 
-    const yearsOfService = this.getYearsOfService(profile.dateOfJoining);
-    const monthsOfService = this.getMonthsOfService(profile.dateOfJoining);
-    const inProbation = this.isInProbation(profile.dateOfJoining, policy.probationPeriodMonths);
+    const reference = new Date(`${referenceDate}T00:00:00`);
+    const yearsOfService = this.getYearsOfService(profile.dateOfJoining, reference);
+    const monthsOfService = this.getMonthsOfService(profile.dateOfJoining, reference);
+    const { eligibilityDate, cycle } = this.getLeaveCycle(
+      profile.dateOfJoining,
+      policy.probationPeriodMonths,
+      referenceDate,
+    );
+    const inProbation = !cycle;
     const slab = this.getApplicableSlab(policy.slabs ?? [], yearsOfService);
 
-    const year = new Date().getFullYear();
-    const approved = await this.leaveRepo.findApprovedByEmployeeAndYear(userId, year);
+    const approved = cycle
+      ? await this.leaveRepo.findApprovedByEmployeeAndRange(userId, cycle.cycleStart, cycle.cycleEnd)
+      : [];
 
-    // Count used leaves per type
-    let usedCL = 0, usedSL = 0, usedEL = 0, usedLOP = 0;
-    for (const req of approved) {
-      const days = Number(req.totalDays ?? 0);
-      switch (this.getEffectiveLeaveType(req)) {
-        case LeaveType.CL: usedCL += days; break;
-        case LeaveType.SL: usedSL += days; break;
-        case LeaveType.EL: usedEL += days; break;
-        case LeaveType.LOP: usedLOP += days; break;
+    let usedCL = 0;
+    let usedSL = 0;
+    let usedEL = 0;
+    let usedLOP = 0;
+    for (const request of approved) {
+      const effectiveType = this.getEffectiveLeaveType(request);
+      if (effectiveType === LeaveType.CL) {
+        usedCL += this.getRequestDaysWithinRange(request, cycle!.cycleStart, cycle!.cycleEnd);
+      } else if (effectiveType === LeaveType.SL) {
+        usedSL += this.getRequestDaysWithinRange(request, cycle!.monthStart, cycle!.monthEnd);
+      } else if (effectiveType === LeaveType.EL) {
+        usedEL += this.getRequestDaysWithinRange(request, cycle!.monthStart, cycle!.monthEnd);
+      } else if (effectiveType === LeaveType.LOP) {
+        usedLOP += this.getRequestDaysWithinRange(request, cycle!.cycleStart, cycle!.cycleEnd);
       }
     }
 
     // Permission hours used this month
-    const now = new Date();
+    const now = reference;
     const permissions = await this.leaveRepo.findPermissionsByEmployeeAndMonth(
       userId, now.getFullYear(), now.getMonth() + 1,
     );
@@ -204,8 +295,24 @@ export class LeaveService {
       (sum, p) => sum + Number(p.totalHours ?? 0), 0,
     );
 
-    const entitlement = slab
-      ? { cl: slab.casualLeavePerYear, sl: slab.sickLeavePerYear, el: slab.earnedLeavePerYear }
+    const annualEntitlement = slab
+      ? {
+          cl: Number(slab.casualLeavePerYear),
+          sl: Number(slab.sickLeavePerYear),
+          el: Number(slab.earnedLeavePerYear),
+        }
+      : { cl: 0, sl: 0, el: 0 };
+    const monthlyEntitlement = {
+      cl: this.roundLeaveDays(annualEntitlement.cl / 12),
+      sl: this.roundLeaveDays(annualEntitlement.sl / 12),
+      el: this.roundLeaveDays(annualEntitlement.el / 12),
+    };
+    const entitlement = cycle
+      ? {
+          cl: this.roundLeaveDays((annualEntitlement.cl * cycle.accrualMonth) / 12),
+          sl: monthlyEntitlement.sl,
+          el: monthlyEntitlement.el,
+        }
       : { cl: 0, sl: 0, el: 0 };
 
     return {
@@ -218,22 +325,34 @@ export class LeaveService {
       yearsOfService,
       monthsOfService,
       inProbation,
-      probationEndsOn: inProbation
-        ? this.addMonths(profile.dateOfJoining, policy.probationPeriodMonths)
-        : null,
-      probationLeaveAllowed: policy.probationLeaveAllowed,
+      probationEndsOn: eligibilityDate,
+      leaveEligibilityDate: eligibilityDate,
+      leaveCycleStart: cycle?.cycleStart ?? null,
+      leaveCycleEnd: cycle?.cycleEnd ?? null,
+      leaveMonthStart: cycle?.monthStart ?? null,
+      leaveMonthEnd: cycle?.monthEnd ?? null,
+      currentAccrualMonth: cycle?.accrualMonth ?? 0,
+      probationLeaveAllowed: false,
       allowHalfDayLeave: policy.allowHalfDayLeave,
       allowPermissionHours: policy.allowPermissionHours,
       maxPermissionHoursPerMonth: Number(policy.maxPermissionHoursPerMonth),
       maxPermissionRequestsPerMonth: Number(policy.maxPermissionRequestsPerMonth),
       maxRegularizationsPerMonth: Number(policy.maxRegularizationsPerMonth),
+      annualEntitlement,
+      monthlyEntitlement,
       entitlement,
-      used: { cl: usedCL, sl: usedSL, el: usedEL, lop: usedLOP },
-      balance: {
-        cl: Math.max(0, entitlement.cl - usedCL),
-        sl: Math.max(0, entitlement.sl - usedSL),
-        el: Math.max(0, entitlement.el - usedEL),
+      used: {
+        cl: this.roundLeaveDays(usedCL),
+        sl: this.roundLeaveDays(usedSL),
+        el: this.roundLeaveDays(usedEL),
+        lop: this.roundLeaveDays(usedLOP),
       },
+      balance: {
+        cl: this.roundLeaveDays(Math.max(0, entitlement.cl - usedCL)),
+        sl: this.roundLeaveDays(Math.max(0, entitlement.sl - usedSL)),
+        el: this.roundLeaveDays(Math.max(0, entitlement.el - usedEL)),
+      },
+      carryForward: { cl: 'WITHIN_LEAVE_YEAR', sl: 'NONE_MONTHLY_RESET', el: 'NONE_MONTHLY_RESET' },
       permissionHoursUsedThisMonth: usedPermissionHours,
       currentSlab: slab
         ? {
@@ -259,24 +378,27 @@ export class LeaveService {
       monthsOfService: this.getMonthsOfService(dateOfJoining),
       inProbation: true,
       probationEndsOn: null,
+      leaveEligibilityDate: null,
+      leaveCycleStart: null,
+      leaveCycleEnd: null,
+      leaveMonthStart: null,
+      leaveMonthEnd: null,
+      currentAccrualMonth: 0,
       probationLeaveAllowed: false,
       allowHalfDayLeave: false,
       allowPermissionHours: false,
       maxPermissionHoursPerMonth: 0,
       maxPermissionRequestsPerMonth: 0,
       maxRegularizationsPerMonth: 0,
+      annualEntitlement: { cl: 0, sl: 0, el: 0 },
+      monthlyEntitlement: { cl: 0, sl: 0, el: 0 },
       entitlement: { cl: 0, sl: 0, el: 0 },
       used: { cl: 0, sl: 0, el: 0, lop: 0 },
       balance: { cl: 0, sl: 0, el: 0 },
+      carryForward: { cl: 'WITHIN_LEAVE_YEAR', sl: 'NONE_MONTHLY_RESET', el: 'NONE_MONTHLY_RESET' },
       permissionHoursUsedThisMonth: 0,
       currentSlab: null,
     };
-  }
-
-  private addMonths(dateStr: string, months: number): string {
-    const d = new Date(dateStr);
-    d.setMonth(d.getMonth() + months);
-    return d.toISOString().split('T')[0];
   }
 
   // ══════════════════════════════════════════════════════
@@ -298,7 +420,7 @@ export class LeaveService {
     return {
       policy: {
         probationPeriodMonths: policy.probationPeriodMonths,
-        probationLeaveAllowed: policy.probationLeaveAllowed,
+        probationLeaveAllowed: false,
         allowHalfDayLeave: policy.allowHalfDayLeave,
         allowPermissionHours: policy.allowPermissionHours,
         maxPermissionHoursPerMonth: Number(policy.maxPermissionHoursPerMonth),
@@ -340,8 +462,6 @@ export class LeaveService {
       requestMode === RequestMode.PERMISSION
         ? LeaveType.PERMISSION
         : (input.leaveType as LeaveType);
-    const inProbation = this.isInProbation(profile.dateOfJoining, policy.probationPeriodMonths);
-
     if (requestMode === RequestMode.HALF_DAY && !policy.allowHalfDayLeave) {
       throw ApiError.badRequest('Half-day leave is not allowed', 'LEAVE_HALF_DAY_NOT_ALLOWED');
     }
@@ -411,6 +531,35 @@ export class LeaveService {
       );
     }
 
+    const leaveCycle = this.getLeaveCycle(
+      profile.dateOfJoining,
+      policy.probationPeriodMonths,
+      checkEndDate,
+    );
+    if (this.isPaidLeaveType(leaveType)) {
+      if (checkStartDate < leaveCycle.eligibilityDate || !leaveCycle.cycle) {
+        throw ApiError.badRequest(
+          `Paid leave is available only after probation is completed on ${leaveCycle.eligibilityDate}`,
+          'LEAVE_NOT_AVAILABLE_DURING_PROBATION',
+        );
+      }
+      if (leaveType === LeaveType.CL && checkStartDate < leaveCycle.cycle.cycleStart) {
+        throw ApiError.badRequest(
+          'Casual Leave cannot cross leave-year boundaries. Please submit separate requests.',
+          'LEAVE_CROSSES_LEAVE_YEAR',
+        );
+      }
+      if (
+        (leaveType === LeaveType.SL || leaveType === LeaveType.EL) &&
+        checkStartDate < leaveCycle.cycle.monthStart
+      ) {
+        throw ApiError.badRequest(
+          'Sick Leave and Emergency Leave cannot cross monthly reset boundaries. Please submit separate requests.',
+          'LEAVE_CROSSES_MONTHLY_RESET',
+        );
+      }
+    }
+
     const settings = await this.settingsRepo.getSettings();
     const datesToValidate = this.listDatesInRange(checkStartDate, checkEndDate);
     const holidayRows = await Promise.all(
@@ -435,19 +584,12 @@ export class LeaveService {
       );
     }
 
-    const probationForcesLop =
-      inProbation &&
-      !policy.probationLeaveAllowed &&
-      leaveType !== LeaveType.LOP &&
-      leaveType !== LeaveType.PERMISSION;
-
     if (
-      !probationForcesLop &&
       leaveType !== LeaveType.LOP &&
       leaveType !== LeaveType.PERMISSION &&
       totalDays
     ) {
-      const summary = await this.getEmployeeSummary(userId);
+      const summary = await this.getEmployeeSummary(userId, checkEndDate);
       const balanceKey = leaveType.toLowerCase() as 'cl' | 'sl' | 'el';
       const available = summary.balance[balanceKey] ?? 0;
       if (totalDays > available) {
@@ -466,17 +608,27 @@ export class LeaveService {
       );
     }
 
-    const suggestedLeaveType = probationForcesLop ? LeaveType.LOP : leaveType;
-    const treatmentNote = probationForcesLop
-      ? 'Employee is in probation and paid leave is disabled by policy. Suggested treatment is LOP unless admin overrides.'
-      : null;
+    const suggestedLeaveType = leaveType;
+    const treatmentNote = null;
 
-    const yearsOfService = this.getYearsOfService(profile.dateOfJoining);
+    const requestReferenceDate = new Date(`${checkEndDate}T00:00:00`);
+    const inProbation = this.isInProbation(
+      profile.dateOfJoining,
+      policy.probationPeriodMonths,
+      requestReferenceDate,
+    );
+    const yearsOfService = this.getYearsOfService(profile.dateOfJoining, requestReferenceDate);
     const slab = this.getApplicableSlab(policy.slabs ?? [], yearsOfService);
     const policySnapshot = {
       probationPeriodMonths: policy.probationPeriodMonths,
-      probationLeaveAllowed: policy.probationLeaveAllowed,
+      probationLeaveAllowed: false,
       inProbation,
+      leaveEligibilityDate: leaveCycle.eligibilityDate,
+      leaveCycleStart: leaveCycle.cycle?.cycleStart ?? null,
+      leaveCycleEnd: leaveCycle.cycle?.cycleEnd ?? null,
+      leaveMonthStart: leaveCycle.cycle?.monthStart ?? null,
+      leaveMonthEnd: leaveCycle.cycle?.monthEnd ?? null,
+      carryForward: { cl: 'WITHIN_LEAVE_YEAR', sl: 'NONE_MONTHLY_RESET', el: 'NONE_MONTHLY_RESET' },
       yearsOfService,
       suggestedLeaveType,
       treatmentNote,
@@ -648,8 +800,12 @@ export class LeaveService {
       return request.suggestedLeaveType ?? request.leaveType;
     }
 
-    const inProbation = this.isInProbation(profile.dateOfJoining, policy.probationPeriodMonths);
-    if (inProbation && !policy.probationLeaveAllowed && request.leaveType !== LeaveType.LOP) {
+    const requestRange = this.getRequestRange(request);
+    const eligibilityDate = this.addMonthsToDateKey(
+      profile.dateOfJoining,
+      policy.probationPeriodMonths,
+    );
+    if (requestRange.startDate < eligibilityDate && request.leaveType !== LeaveType.LOP) {
       return LeaveType.LOP;
     }
     return request.leaveType;
@@ -660,7 +816,42 @@ export class LeaveService {
     finalLeaveType: LeaveType,
   ): Promise<void> {
     if (!this.isPaidLeaveType(finalLeaveType) || !request.totalDays) return;
-    const summary = await this.getEmployeeSummary(request.employeeId);
+
+    const profile = await this.employeeRepo.findByUserId(request.employeeId);
+    const policy = await this.leaveRepo.getPolicyWithSlabs();
+    if (!profile || !policy) {
+      throw ApiError.badRequest('Leave policy or employee profile is unavailable', 'LEAVE_POLICY_NOT_FOUND');
+    }
+
+    const range = this.getRequestRange(request);
+    const leaveCycle = this.getLeaveCycle(
+      profile.dateOfJoining,
+      policy.probationPeriodMonths,
+      range.endDate,
+    );
+    if (range.startDate < leaveCycle.eligibilityDate || !leaveCycle.cycle) {
+      throw ApiError.badRequest(
+        `Paid leave is available only after probation is completed on ${leaveCycle.eligibilityDate}`,
+        'LEAVE_NOT_AVAILABLE_DURING_PROBATION',
+      );
+    }
+    if (finalLeaveType === LeaveType.CL && range.startDate < leaveCycle.cycle.cycleStart) {
+      throw ApiError.badRequest(
+        'Casual Leave cannot cross leave-year boundaries',
+        'LEAVE_CROSSES_LEAVE_YEAR',
+      );
+    }
+    if (
+      (finalLeaveType === LeaveType.SL || finalLeaveType === LeaveType.EL) &&
+      range.startDate < leaveCycle.cycle.monthStart
+    ) {
+      throw ApiError.badRequest(
+        'Sick Leave and Emergency Leave cannot cross monthly reset boundaries',
+        'LEAVE_CROSSES_MONTHLY_RESET',
+      );
+    }
+
+    const summary = await this.getEmployeeSummary(request.employeeId, range.endDate);
     const balanceKey = finalLeaveType.toLowerCase() as 'cl' | 'sl' | 'el';
     const available = summary.balance[balanceKey] ?? 0;
     if (Number(request.totalDays) > available) {
@@ -842,7 +1033,7 @@ export class LeaveService {
       policy: {
         id: policy.id,
         probationPeriodMonths: policy.probationPeriodMonths,
-        probationLeaveAllowed: policy.probationLeaveAllowed,
+        probationLeaveAllowed: false,
         allowHalfDayLeave: policy.allowHalfDayLeave,
         allowPermissionHours: policy.allowPermissionHours,
         maxPermissionHoursPerMonth: Number(policy.maxPermissionHoursPerMonth),
@@ -879,6 +1070,7 @@ export class LeaveService {
     }>;
   }) {
     const { slabs, ...policyFields } = input;
+    policyFields.probationLeaveAllowed = false;
 
     const policy = await this.leaveRepo.upsertPolicy(policyFields as any);
 

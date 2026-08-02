@@ -48,7 +48,7 @@ router.use(authMiddleware, roleMiddleware('ADMIN'));
  *                     workEndTime: { type: string, example: "18:00" }
  *                     lateGraceMinutes: { type: integer, example: 15 }
  *                     halfDayMinMinutes: { type: integer, example: 240 }
- *                     fullDayMinMinutes: { type: integer, example: 480 }
+ *                     fullDayMinMinutes: { type: integer, example: 540 }
  *                     weekOffDays: { type: string, example: "SUNDAY" }
  *                     alternateSaturdayOffRule: { type: string, enum: [NONE, SECOND_FOURTH, FIRST_THIRD] }
  *                     officeLatitude: { type: number, nullable: true }
@@ -78,7 +78,7 @@ router.get('/', asyncHandler(SettingsController.getSettings));
  *               workEndTime: { type: string, example: "18:00" }
  *               lateGraceMinutes: { type: integer, example: 15 }
  *               halfDayMinMinutes: { type: integer, example: 240 }
- *               fullDayMinMinutes: { type: integer, example: 480 }
+ *               fullDayMinMinutes: { type: integer, example: 540 }
  *               weekOffDays: { type: string, example: "SATURDAY,SUNDAY" }
  *               alternateSaturdayOffRule: { type: string, enum: [NONE, SECOND_FOURTH, FIRST_THIRD] }
  *               officeLatitude: { type: number, nullable: true }

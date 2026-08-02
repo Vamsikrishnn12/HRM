@@ -21,4 +21,13 @@ export class DashboardController {
     const result = await dashboardService.getUpcomingHolidays(limit);
     ApiResponse.success(res, 'Upcoming holidays retrieved', result);
   }
+
+  static async getHolidayCalendar(req: Request, res: Response): Promise<void> {
+    const requestedYear = Number(req.query.year ?? new Date().getFullYear());
+    const year = Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100
+      ? requestedYear
+      : new Date().getFullYear();
+    const result = await dashboardService.getHolidayCalendar(year);
+    ApiResponse.success(res, 'Holiday calendar retrieved', result);
+  }
 }

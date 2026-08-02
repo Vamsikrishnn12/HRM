@@ -23,7 +23,7 @@ export const buildDefaultAttendancePolicy = (
   input?: AttendancePolicyDefaultsInput,
 ) => {
   const classificationConfig: AttendanceClassificationConfig = {
-    presentMinMinutes: input?.fullDayMinMinutes ?? 480,
+    presentMinMinutes: input?.fullDayMinMinutes ?? 540,
     halfDayMinMinutes: input?.halfDayMinMinutes ?? 240,
     absentBelowHalfDay: true,
     lopBelowHalfDay: false,
@@ -65,7 +65,7 @@ export const buildDefaultAttendancePolicy = (
     workEndTime: input?.workEndTime ?? '18:00',
     lateGraceMinutes: input?.lateGraceMinutes ?? 15,
     halfDayMinMinutes: input?.halfDayMinMinutes ?? 240,
-    fullDayMinMinutes: input?.fullDayMinMinutes ?? 480,
+    fullDayMinMinutes: input?.fullDayMinMinutes ?? 540,
     overtimeMinMinutes: 30,
     maxEarlyOutToleranceMinutes: 15,
     allowMultiplePunchSessions: true,

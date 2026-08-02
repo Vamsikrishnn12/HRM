@@ -224,7 +224,7 @@ export default function AdminLeavePage() {
             <option value="ALL">All Types</option>
             <option value="CL">Casual Leave</option>
             <option value="SL">Sick Leave</option>
-            <option value="EL">Earned Leave</option>
+            <option value="EL">Emergency Leave</option>
             <option value="LOP">LOP</option>
             <option value="PERMISSION">Permission</option>
           </Select>
@@ -370,7 +370,7 @@ export default function AdminLeavePage() {
                           <>
                             <option value="CL">Casual Leave</option>
                             <option value="SL">Sick Leave</option>
-                            <option value="EL">Earned Leave</option>
+                            <option value="EL">Emergency Leave</option>
                             <option value="LOP">Loss of Pay</option>
                           </>
                         )}
@@ -393,7 +393,7 @@ export default function AdminLeavePage() {
                         <>
                           <option value="CL">Casual Leave</option>
                           <option value="SL">Sick Leave</option>
-                          <option value="EL">Earned Leave</option>
+                          <option value="EL">Emergency Leave</option>
                           <option value="LOP">Loss of Pay</option>
                         </>
                       )}

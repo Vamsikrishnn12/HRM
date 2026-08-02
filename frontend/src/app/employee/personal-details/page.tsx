@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Alert, AlertIcon, Badge, Box, Checkbox, Divider, Flex, SimpleGrid, Spinner, Text, useToast } from "@chakra-ui/react";
 import { CheckCircle2, ContactRound, GraduationCap, HeartHandshake, Home, Save, ShieldCheck } from "lucide-react";
-import { personalDetailsApi, profileApi } from "@/api";
+import { personalDetailsApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
 import { PrimaryButton } from "@/components/ui/Buttons";
@@ -35,15 +35,11 @@ export default function EmployeePersonalDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [employmentType, setEmploymentType] = useState("");
   const toast = useToast();
 
   useEffect(() => {
-    Promise.all([personalDetailsApi.getMe(), profileApi.getMe()])
-      .then(([record, profile]) => {
-        if (record) { setForm(record); setCompleted(true); }
-        setEmploymentType(profile.employmentType || "");
-      })
+    personalDetailsApi.getMe()
+      .then((record) => { if (record) { setForm(record); setCompleted(true); } })
       .catch((error) => toast({ title: "Could not load your details", description: error?.message, status: "error" }))
       .finally(() => setLoading(false));
   }, [toast]);
@@ -139,9 +135,7 @@ export default function EmployeePersonalDetailsPage() {
         </SimpleGrid>
       </SectionCard>
 
-      <OnboardingDocuments
-        experienced={employmentType.toLowerCase() === "experienced" || Number.parseFloat(form.totalExperienceYears || "0") > 0 || Boolean(form.lastCompany.trim())}
-      />
+      <OnboardingDocuments />
 
       <SectionCard>
         <Flex align={{ base: "stretch", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap={4}>

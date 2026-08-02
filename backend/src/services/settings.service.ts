@@ -62,7 +62,7 @@ export class SettingsService {
       Number(merged.halfDayMinMinutes) > Number(merged.fullDayMinMinutes)
     ) {
       throw ApiError.badRequest(
-        'Half-day reference minutes cannot exceed full-day work minutes',
+        'Half-day reference minutes cannot exceed required full-day presence minutes',
         'INVALID_ATTENDANCE_MINUTES',
       );
     }

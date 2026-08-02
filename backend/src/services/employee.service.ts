@@ -386,7 +386,6 @@ export class EmployeeService {
       profile.user.email,
       profile.user.firstName,
       profile.user.empId || '',
-      profile.employmentType,
     );
     return { email: profile.user.email, sent: true };
   }

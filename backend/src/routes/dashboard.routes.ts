@@ -9,6 +9,7 @@ const router = Router();
 // Shared endpoints — any authenticated user
 router.get('/upcoming-birthdays', authMiddleware, asyncHandler(DashboardController.getUpcomingBirthdays));
 router.get('/upcoming-holidays', authMiddleware, asyncHandler(DashboardController.getUpcomingHolidays));
+router.get('/holidays', authMiddleware, asyncHandler(DashboardController.getHolidayCalendar));
 
 // Admin-only summary
 router.get('/', authMiddleware, roleMiddleware('ADMIN'), asyncHandler(DashboardController.getSummary));

@@ -104,7 +104,7 @@ export default function SettingsPage() {
     workEndTime: "18:00",
     lateGraceMinutes: 15,
     halfDayMinMinutes: 240,
-    fullDayMinMinutes: 480,
+    fullDayMinMinutes: 540,
   });
 
   // ── Weekly off form ──
@@ -394,7 +394,7 @@ export default function SettingsPage() {
             integer: true,
             min: 0,
           }) as number,
-          earnedLeavePerYear: parseNumericField(slab.earnedLeavePerYear, `Slab ${row} EL/Year`, {
+          earnedLeavePerYear: parseNumericField(slab.earnedLeavePerYear, `Slab ${row} Emergency Leave/Year`, {
             integer: true,
             min: 0,
           }) as number,
@@ -581,7 +581,7 @@ export default function SettingsPage() {
             <Alert status="info" borderRadius="lg" alignItems="flex-start">
               <AlertIcon mt={0.5} />
               <AlertDescription fontSize="sm">
-                Full Day requires arrival by Work Start plus Late Grace, checkout at or after Work End, and at least the configured Full Day Work minutes. If an employee punches in but misses any requirement, salary attendance is Half Day. No punch is full LOP.
+                Full Day requires arrival by Work Start plus Late Grace, checkout at or after Work End, and a complete 9-hour punch-in period. The 9 hours include the 1-hour break. If an employee punches in but misses any requirement, salary attendance is Half Day. No punch is full LOP.
               </AlertDescription>
             </Alert>
             <SimpleGrid columns={2} spacing={4}>
@@ -616,7 +616,7 @@ export default function SettingsPage() {
                   onChange={(e) => setTimingsForm((f) => ({ ...f, halfDayMinMinutes: parseInt(e.target.value) || 0 }))}
                 />
               </Field>
-              <Field label="Full Day Work Min (480 = 8 hours)">
+              <Field label="Required Presence (540 = 9 hours, including break)">
                 <StyledInput
                   type="number"
                   value={timingsForm.fullDayMinMinutes}
@@ -804,6 +804,12 @@ export default function SettingsPage() {
             </SecondaryButton>
           }
         >
+          <Alert status="info" borderRadius="lg" mb={4} alignItems="flex-start">
+            <AlertIcon mt={0.5} />
+            <AlertDescription fontSize="sm">
+              The 2026 Tamil Nadu Government holidays are preloaded as the default calendar. Add, edit, or remove holidays to match the organization&apos;s business requirements. The updated calendar is shown to employees.
+            </AlertDescription>
+          </Alert>
           <Flex direction="column" gap={0}>
             {holidays.length === 0 ? (
               <Flex direction="column" align="center" py={8} color="text.muted">
@@ -936,9 +942,14 @@ export default function SettingsPage() {
             </SimpleGrid>
 
             {/* Toggles */}
+            <Alert status="info" borderRadius="lg" alignItems="flex-start">
+              <AlertIcon mt={0.5} />
+              <AlertDescription fontSize="sm">
+                Paid leave starts only after probation. Each employee then receives a 12-month leave year from their probation-completion date. Casual Leave accrues monthly and carries only within that leave year; Sick Leave and Emergency Leave reset every month.
+              </AlertDescription>
+            </Alert>
             <Flex gap={4} flexWrap="wrap">
               {([
-                ["probationLeaveAllowed", "Allow Leave During Probation"],
                 ["allowHalfDayLeave", "Allow Half-Day Leave"],
                 ["allowPermissionHours", "Allow Permission Hours"],
               ] as const).map(([key, label]) => (
@@ -967,7 +978,7 @@ export default function SettingsPage() {
             {/* Slabs */}
             <Box>
               <Flex justify="space-between" align="center" mb={3}>
-                <Text fontSize="sm" fontWeight="700" color="text.heading">Service Year Slabs</Text>
+                <Text fontSize="sm" fontWeight="700" color="text.heading">Annual Leave Allowance After Probation</Text>
                 <SecondaryButton size="xs" leftIcon={<Plus size={14} />} onClick={addSlab}>
                   Add Slab
                 </SecondaryButton>
@@ -1009,7 +1020,7 @@ export default function SettingsPage() {
                       />
                     </Box>
                     <Box>
-                      <Text fontSize="xs" color="text.muted" mb={1}>EL/Year</Text>
+                      <Text fontSize="xs" color="text.muted" mb={1}>Emergency Leave/Year</Text>
                       <StyledInput
                         type="number" size="sm" w="80px"
                         value={slab.earnedLeavePerYear}

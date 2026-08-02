@@ -84,18 +84,21 @@ export default function EmployeeLeavePage() {
   const [prefilledFromQuery, setPrefilledFromQuery] = useState(false);
 
   const fetchData = useCallback(async () => {
-    try {
-      const [s, h] = await Promise.all([
-        leaveApi.getMySummary(),
-        leaveApi.getMyHistory(),
-      ]);
-      setSummary(s);
-      setHistory(h);
-    } catch {
-      toast({ title: "Failed to load leave data", status: "error", duration: 3000, isClosable: true, position: "top-right" });
-    } finally {
-      setLoading(false);
+    const [summaryResult, historyResult] = await Promise.allSettled([
+      leaveApi.getMySummary(),
+      leaveApi.getMyHistory(),
+    ]);
+
+    if (summaryResult.status === "fulfilled") {
+      setSummary(summaryResult.value);
     }
+    if (historyResult.status === "fulfilled") {
+      setHistory(historyResult.value);
+    }
+    if (summaryResult.status === "rejected" || historyResult.status === "rejected") {
+      toast({ title: "Some leave data could not be loaded", status: "warning", duration: 3000, isClosable: true, position: "top-right" });
+    }
+    setLoading(false);
   }, [toast]);
 
   useEffect(() => {
@@ -122,7 +125,7 @@ export default function EmployeeLeavePage() {
   }, [onOpen, prefilledFromQuery, searchParams]);
 
   const resetForm = () => {
-    setFormLeaveType("CL");
+    setFormLeaveType(summary?.inProbation ? "LOP" : "CL");
     setFormMode("FULL_DAY");
     setFormStartDate("");
     setFormEndDate("");
@@ -233,7 +236,7 @@ export default function EmployeeLeavePage() {
           <Box>
             <Text fontSize="sm" fontWeight="600">You are currently in probation period</Text>
             <Text fontSize="xs" color="yellow.800">
-              Paid leave is not available during probation. Any leave during this period will be treated as Loss of Pay unless approved otherwise.
+              Casual, Sick, and Emergency Leave can be applied only after probation is completed. During probation, use Loss of Pay for leave requests.
               {summary.probationEndsOn && ` Probation ends on ${new Date(summary.probationEndsOn + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.`}
             </Text>
           </Box>
@@ -244,7 +247,7 @@ export default function EmployeeLeavePage() {
       <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} spacing={4} mb={6}>
         <BalanceCard label="Casual Leave" used={summary?.used.cl ?? 0} total={summary?.entitlement.cl ?? 0} balance={summary?.balance.cl ?? 0} color="#0B72E7" />
         <BalanceCard label="Sick Leave" used={summary?.used.sl ?? 0} total={summary?.entitlement.sl ?? 0} balance={summary?.balance.sl ?? 0} color="#0D7C47" />
-        <BalanceCard label="Earned Leave" used={summary?.used.el ?? 0} total={summary?.entitlement.el ?? 0} balance={summary?.balance.el ?? 0} color="#B7791F" />
+        <BalanceCard label="Emergency Leave" used={summary?.used.el ?? 0} total={summary?.entitlement.el ?? 0} balance={summary?.balance.el ?? 0} color="#B7791F" />
         <Box bg="white" borderRadius="xl" p={4} border="1px solid" borderColor="surface.border" shadow="card">
           <Flex align="center" gap={2} mb={2} color="#C41E3A">
             <CalendarOff size={16} />
@@ -266,6 +269,20 @@ export default function EmployeeLeavePage() {
           </Text>
         </Box>
       </SimpleGrid>
+
+      {!summary?.inProbation && summary?.leaveCycleStart && summary?.leaveCycleEnd && (
+        <Alert status="info" borderRadius="xl" mb={6} variant="subtle">
+          <AlertIcon />
+          <Box>
+            <Text fontSize="sm" fontWeight="600">
+              Leave year: {new Date(summary.leaveCycleStart + "T00:00:00").toLocaleDateString()} – {new Date(summary.leaveCycleEnd + "T00:00:00").toLocaleDateString()}
+            </Text>
+            <Text fontSize="xs" color="blue.800">
+              Casual Leave carries forward month to month only within this leave year. Sick Leave and Emergency Leave reset every month. All unused balances expire at the end of the leave year.
+            </Text>
+          </Box>
+        </Alert>
+      )}
 
       {/* Status & Policy cards */}
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4} mb={6}>
@@ -308,7 +325,7 @@ export default function EmployeeLeavePage() {
           {summary?.currentSlab ? (
             <Flex direction="column" gap={2}>
               <Text fontSize="xs" color="text.muted" mb={1}>
-                Service year slab: {summary.currentSlab.minYears}–{summary.currentSlab.maxYears ?? "∞"} years
+                Annual allowance: {summary.currentSlab.cl} CL, {summary.currentSlab.sl} SL, {summary.currentSlab.el} Emergency Leave. Current accrual month: {summary.currentAccrualMonth}/12.
               </Text>
               <SimpleGrid columns={3} spacing={3}>
                 <Box bg="#EDE9F5" p={3} borderRadius="lg" textAlign="center">
@@ -449,21 +466,21 @@ export default function EmployeeLeavePage() {
                     <>
                       <option
                         value="CL"
-                        disabled={Boolean(summary && (!summary.inProbation || summary.probationLeaveAllowed) && summary.balance.cl <= 0)}
+                        disabled={Boolean(summary && (summary.inProbation || summary.balance.cl <= 0))}
                       >
                         Casual Leave (CL)
                       </option>
                       <option
                         value="SL"
-                        disabled={Boolean(summary && (!summary.inProbation || summary.probationLeaveAllowed) && summary.balance.sl <= 0)}
+                        disabled={Boolean(summary && (summary.inProbation || summary.balance.sl <= 0))}
                       >
                         Sick Leave (SL)
                       </option>
                       <option
                         value="EL"
-                        disabled={Boolean(summary && (!summary.inProbation || summary.probationLeaveAllowed) && summary.balance.el <= 0)}
+                        disabled={Boolean(summary && (summary.inProbation || summary.balance.el <= 0))}
                       >
-                        Earned Leave (EL)
+                        Emergency Leave (EL)
                       </option>
                       <option value="LOP">Loss of Pay (LOP)</option>
                     </>
@@ -483,8 +500,8 @@ export default function EmployeeLeavePage() {
                 <HStack spacing={2}>
                   {(["FULL_DAY", "HALF_DAY", "PERMISSION"] as RequestMode[]).map((mode) => {
                     const disabled =
-                      (mode === "HALF_DAY" && !summary?.allowHalfDayLeave) ||
-                      (mode === "PERMISSION" && !summary?.allowPermissionHours);
+                      (mode === "HALF_DAY" && summary?.allowHalfDayLeave === false) ||
+                      (mode === "PERMISSION" && summary?.allowPermissionHours === false);
                     return (
                       <Button
                         key={mode}
@@ -507,11 +524,11 @@ export default function EmployeeLeavePage() {
                 </HStack>
               </Box>
 
-              {summary?.inProbation && !summary?.probationLeaveAllowed && formMode !== "PERMISSION" && formLeaveType !== "LOP" && (
+              {summary?.inProbation && formMode !== "PERMISSION" && formLeaveType !== "LOP" && (
                 <Alert status="warning" borderRadius="lg" variant="subtle">
                   <AlertIcon />
                   <Text fontSize="xs" color="yellow.800">
-                    During probation, this leave request will be suggested as LOP by default unless admin overrides it.
+                    Paid leave cannot be applied until probation is completed. Please select Loss of Pay.
                   </Text>
                 </Alert>
               )}
