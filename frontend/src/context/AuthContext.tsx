@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
         setAuthStatus("redirecting");
 
-        const label = role === "admin" ? "Admin" : "Employee";
+        const label = role === "admin" ? "Admin" : role === "hr" ? "HR" : "Employee";
         toast({
           title: `Welcome, ${label}`,
           description: "You have logged in successfully.",

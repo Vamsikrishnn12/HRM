@@ -11,7 +11,10 @@ export const roleMiddleware = (...allowedRoles: string[]) => {
       throw ApiError.unauthorized('Authentication required', 'AUTH_REQUIRED');
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const allowed = allowedRoles.includes(req.user.role)
+      || (req.user.role === 'ADMIN' && allowedRoles.includes('MAIN_ADMIN'))
+      || (req.user.role === 'HR' && allowedRoles.includes('ADMIN'));
+    if (!allowed) {
       throw ApiError.forbidden(
         'You do not have permission to access this resource',
         'AUTH_INSUFFICIENT_ROLE',

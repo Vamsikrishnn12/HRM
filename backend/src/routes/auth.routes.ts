@@ -89,6 +89,7 @@ const loginLimiter = rateLimit({
  *         description: Too many login attempts
  */
 router.post('/login', loginLimiter, asyncHandler(AuthController.login));
+router.post('/portal-options', loginLimiter, asyncHandler(AuthController.portalOptions));
 
 /**
  * @swagger

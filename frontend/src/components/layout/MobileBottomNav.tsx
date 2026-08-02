@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { CalendarCheck, CalendarOff, LayoutDashboard, UserCircle, Users, Wallet } from "lucide-react";
+import { CalendarCheck, CalendarDays, CalendarOff, LayoutDashboard, UserCircle, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +17,7 @@ const adminItems = [
 const employeeItems = [
   { label: "Home", href: "/employee/dashboard", icon: LayoutDashboard },
   { label: "Attendance", href: "/employee/attendance", icon: CalendarCheck },
+  { label: "Holidays", href: "/employee/holidays", icon: CalendarDays },
   { label: "Leave", href: "/employee/leave", icon: CalendarOff },
   { label: "Payslips", href: "/employee/payroll", icon: Wallet },
   { label: "Profile", href: "/employee/profile", icon: UserCircle },

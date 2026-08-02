@@ -5,11 +5,14 @@ export interface AccessTokenPayload {
   userId: string;
   email: string;
   role: string;
+  accessGrantId?: string;
 }
 
 export interface RefreshTokenPayload {
   userId: string;
   tokenId: string;
+  role?: string;
+  accessGrantId?: string;
 }
 
 export const generateAccessToken = (payload: AccessTokenPayload): string => {

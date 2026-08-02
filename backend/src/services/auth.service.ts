@@ -5,12 +5,15 @@ import { comparePassword, hashPassword } from '../utils/password';
 import { ApiError } from '../utils/apiError';
 import { env } from '../config/env';
 import { User, UserRole } from '../entities/User.entity';
+import { AppDataSource } from '../config/database';
+import { HrPortalAccess } from '../entities/HrPortalAccess.entity';
 
 interface LoginInput {
   email: string;
   password: string;
   latitude?: number;
   longitude?: number;
+  portal?: 'EMPLOYEE' | 'HR';
 }
 
 export class AuthService {
@@ -23,7 +26,40 @@ export class AuthService {
   }
 
   async login(input: LoginInput) {
-    const { email, password, latitude, longitude } = input;
+    const { email, password, latitude, longitude, portal = 'EMPLOYEE' } = input;
+
+    if (portal === 'HR') {
+      const grant = await AppDataSource.getRepository(HrPortalAccess).findOne({
+        where: { loginEmail: email.trim().toLowerCase(), isActive: true },
+        relations: ['employee'],
+      });
+      if (!grant || !grant.employee || !grant.employee.isActive || grant.employee.deletedAt) {
+        throw ApiError.unauthorized('Invalid HR portal credentials', 'AUTH_INVALID_CREDENTIALS');
+      }
+      if (!(await comparePassword(password, grant.passwordHash))) {
+        throw ApiError.unauthorized('Invalid HR portal credentials', 'AUTH_INVALID_CREDENTIALS');
+      }
+      const tokens = await this.tokenService.generateTokenPair({
+        id: grant.employee.id,
+        email: grant.loginEmail,
+        role: 'HR',
+        accessGrantId: grant.id,
+      });
+      grant.lastLoginAt = new Date();
+      await AppDataSource.getRepository(HrPortalAccess).save(grant);
+      return {
+        ...tokens,
+        user: {
+          id: grant.employee.id,
+          email: grant.loginEmail,
+          role: 'HR',
+          firstName: grant.employee.firstName,
+          lastName: grant.employee.lastName,
+          empId: grant.employee.empId,
+          officeLocationRequired: false,
+        },
+      };
+    }
 
     // 1. Find user
     let user = await this.userRepo.findByEmail(email);
@@ -140,5 +176,20 @@ export class AuthService {
 
   async logout(refreshToken: string) {
     await this.tokenService.revokeRefreshToken(refreshToken);
+  }
+
+  async portalOptions(email: string) {
+    const normalized = email.trim().toLowerCase();
+    const [user, hrGrant] = await Promise.all([
+      this.userRepo.findByEmail(normalized),
+      AppDataSource.getRepository(HrPortalAccess).findOne({
+        where: { loginEmail: normalized, isActive: true },
+        relations: ['employee'],
+      }),
+    ]);
+    return {
+      employeeLogin: Boolean(user?.isActive && !user.deletedAt),
+      hrLogin: Boolean(hrGrant?.employee?.isActive && !hrGrant.employee.deletedAt),
+    };
   }
 }

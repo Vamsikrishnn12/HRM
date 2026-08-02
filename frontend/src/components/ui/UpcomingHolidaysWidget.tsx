@@ -147,12 +147,12 @@ export default function UpcomingHolidaysWidget(props: Record<string, any>) {
       <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent borderRadius="2xl">
-          <ModalHeader>{calendarYear} Organization Holiday Calendar</ModalHeader>
+          <ModalHeader>{calendarYear} National &amp; State Holiday Calendar</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
             <Box bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl" p={3} mb={4}>
               <Text fontSize="sm" color="blue.800">
-                Based on the Tamil Nadu Government holiday list for {calendarYear}. The organization may add, remove, or change holidays according to business requirements. Please follow this displayed calendar for your official holidays.
+                Based on the Government of India/Central Government and Tamil Nadu Government holiday lists for {calendarYear}. The organization may add, remove, or change holidays according to business requirements. Please follow this displayed calendar for your official holidays.
               </Text>
             </Box>
             {calendar.length === 0 ? (

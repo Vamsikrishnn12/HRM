@@ -30,6 +30,7 @@ import { EmployeeSalaryComponent } from '../entities/EmployeeSalaryComponent.ent
 import { EmployeeStatutoryBreakdown } from '../entities/EmployeeStatutoryBreakdown.entity';
 import { Notification } from '../entities/Notification.entity';
 import { PushSubscription } from '../entities/PushSubscription.entity';
+import { HrPortalAccess } from '../entities/HrPortalAccess.entity';
 
 const isProduction = env.NODE_ENV === 'production';
 
@@ -70,6 +71,7 @@ export const AppDataSource = new DataSource({
     EmployeeStatutoryBreakdown,
     Notification,
     PushSubscription,
+    HrPortalAccess,
   ],
   migrations: isProduction ? ['dist/migrations/*.js'] : ['src/migrations/*.ts'],
   subscribers: [],

@@ -26,7 +26,7 @@ export class NotificationController {
     const result = await pushService.sendToUser(req.user!.userId, {
       title: 'Connect HR test notification',
       message: 'Mobile push notifications are working correctly on this device.',
-      actionUrl: req.user!.role === 'ADMIN' ? '/admin/dashboard' : '/employee/dashboard',
+      actionUrl: req.user!.role === 'EMPLOYEE' ? '/employee/dashboard' : '/admin/dashboard',
       type: 'PUSH_TEST',
     });
     if (!result.configured) {

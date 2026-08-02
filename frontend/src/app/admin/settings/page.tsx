@@ -807,7 +807,7 @@ export default function SettingsPage() {
           <Alert status="info" borderRadius="lg" mb={4} alignItems="flex-start">
             <AlertIcon mt={0.5} />
             <AlertDescription fontSize="sm">
-              The 2026 Tamil Nadu Government holidays are preloaded as the default calendar. Add, edit, or remove holidays to match the organization&apos;s business requirements. The updated calendar is shown to employees.
+              The combined 2026 Government of India/Central Government and Tamil Nadu Government holidays are preloaded as the default calendar. Add, edit, or remove holidays to match the organization&apos;s business requirements. The updated calendar is shown to employees.
             </AlertDescription>
           </Alert>
           <Flex direction="column" gap={0}>

@@ -14,6 +14,10 @@ import { getUploadPath } from '../utils/uploadPath';
 const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 
 export class EmailService {
+  isConfigured(): boolean {
+    return Boolean(transporter && this.getSender());
+  }
+
   private getSender(): string | undefined {
     return env.SMTP_FROM || env.SMTP_USER;
   }

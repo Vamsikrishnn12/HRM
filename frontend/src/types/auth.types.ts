@@ -1,6 +1,6 @@
 // ── Auth types ──
 
-export type UserRole = "admin" | "employee";
+export type UserRole = "admin" | "hr" | "employee";
 
 export interface User {
   id: string;
@@ -17,6 +17,7 @@ export interface LoginPayload {
   password: string;
   latitude?: number;
   longitude?: number;
+  portal?: "EMPLOYEE" | "HR";
 }
 
 export interface LoginResponseData {

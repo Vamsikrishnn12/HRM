@@ -290,7 +290,9 @@ export default function Sidebar() {
   const isMobile = useBreakpointValue({ base: true, lg: false });
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const routes = user?.role === "employee" ? employeeRoutes : adminRoutes;
+  const routes = user?.role === "employee"
+    ? employeeRoutes
+    : adminRoutes.filter((route) => !route.mainAdminOnly || user?.role === "admin");
 
   // Mobile drawer
   if (isMobile) {

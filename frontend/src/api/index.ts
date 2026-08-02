@@ -1,4 +1,6 @@
 export { authApi } from "./auth.api";
+export { hrAccessApi } from "./hrAccess.api";
+export type { HrAccessRecord } from "./hrAccess.api";
 export { employeeApi, personalDetailsApi, salaryDetailsApi, salaryStructureApi, documentsApi } from "./employee.api";
 export { settingsApi } from "./settings.api";
 export { attendanceApi } from "./attendance.api";

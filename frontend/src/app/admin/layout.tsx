@@ -26,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace("/login");
       return;
     }
-    if (user?.role !== "admin") {
+    if (user?.role !== "admin" && user?.role !== "hr") {
       toast({
         title: "Unauthorized",
         description: "You don't have admin access.",
@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <AuthLoader status={authStatus} />;
   }
 
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAuthenticated || (user?.role !== "admin" && user?.role !== "hr")) {
     return null;
   }
 

@@ -9,6 +9,7 @@ export const loginSchema = z.object({
   password: z
     .string({ message: 'Password is required' })
     .min(1, 'Password is required'),
+  portal: z.enum(['EMPLOYEE', 'HR']).default('EMPLOYEE'),
   latitude: z
     .number()
     .min(-90, 'Latitude must be between -90 and 90')

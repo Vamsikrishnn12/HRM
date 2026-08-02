@@ -7,6 +7,8 @@ import {
   AccessTokenPayload,
 } from '../utils/jwt';
 import { ApiError } from '../utils/apiError';
+import { AppDataSource } from '../config/database';
+import { HrPortalAccess } from '../entities/HrPortalAccess.entity';
 
 export class TokenService {
   private tokenRepo: TokenRepository;
@@ -18,16 +20,22 @@ export class TokenService {
   /**
    * Generate access + refresh tokens, persist refresh token in DB.
    */
-  async generateTokenPair(user: { id: string; email: string; role: string }) {
+  async generateTokenPair(user: { id: string; email: string; role: string; accessGrantId?: string }) {
     const accessPayload: AccessTokenPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
+      accessGrantId: user.accessGrantId,
     };
 
     const tokenId = randomUUID();
     const accessToken = generateAccessToken(accessPayload);
-    const refreshToken = generateRefreshToken({ userId: user.id, tokenId });
+    const refreshToken = generateRefreshToken({
+      userId: user.id,
+      tokenId,
+      role: user.role,
+      accessGrantId: user.accessGrantId,
+    });
 
     // Persist refresh token – expires in 7 days
     const expiresAt = new Date();
@@ -71,6 +79,23 @@ export class TokenService {
 
     // Generate new pair
     const user = storedToken.user;
+    if (payload.role === 'HR') {
+      const grant = payload.accessGrantId
+        ? await AppDataSource.getRepository(HrPortalAccess).findOne({
+            where: { id: payload.accessGrantId, employeeId: user.id, isActive: true },
+          })
+        : null;
+      if (!grant) {
+        await this.tokenRepo.revokeAllUserTokens(user.id);
+        throw ApiError.unauthorized('HR portal access has been revoked', 'AUTH_HR_ACCESS_REVOKED');
+      }
+      return this.generateTokenPair({
+        id: user.id,
+        email: grant.loginEmail,
+        role: 'HR',
+        accessGrantId: grant.id,
+      });
+    }
     return this.generateTokenPair({ id: user.id, email: user.email, role: user.role });
   }
 

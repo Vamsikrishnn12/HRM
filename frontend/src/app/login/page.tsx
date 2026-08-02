@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { authApi } from "@/api";
 import AuthLoader from "@/components/ui/AuthLoader";
 import BrandMark from "@/components/ui/BrandMark";
 
@@ -32,14 +33,16 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [portal, setPortal] = useState<"EMPLOYEE" | "HR">("EMPLOYEE");
+  const [portalOptions, setPortalOptions] = useState({ employeeLogin: true, hrLogin: false });
   const { login, isAuthenticated, user, authStatus } = useAuth();
   const router = useRouter();
 
-  const destinationFor = (role: "admin" | "employee") => {
-    const fallback = role === "admin" ? "/admin/dashboard" : "/employee/dashboard";
+  const destinationFor = (role: "admin" | "hr" | "employee") => {
+    const fallback = role === "admin" || role === "hr" ? "/admin/dashboard" : "/employee/dashboard";
     if (typeof window === "undefined") return fallback;
     const requested = new URLSearchParams(window.location.search).get("next");
-    const allowedPrefix = role === "admin" ? "/admin/" : "/employee/";
+    const allowedPrefix = role === "admin" || role === "hr" ? "/admin/" : "/employee/";
     return requested?.startsWith(allowedPrefix) ? requested : fallback;
   };
 
@@ -86,6 +89,7 @@ export default function LoginPage() {
       password: data.password,
       latitude: coords?.latitude,
       longitude: coords?.longitude,
+      portal,
     });
 
     if (loggedInUser) {
@@ -238,6 +242,17 @@ export default function LoginPage() {
                 </FormLabel>
                 <Input
                   {...register("email")}
+                  onBlur={async (event) => {
+                    register("email").onBlur(event);
+                    const email = event.currentTarget.value.trim();
+                    if (!/^\S+@\S+\.\S+$/.test(email)) return;
+                    try {
+                      const options = await authApi.portalOptions(email);
+                      setPortalOptions(options);
+                      if (options.hrLogin && !options.employeeLogin) setPortal("HR");
+                      if (!options.hrLogin) setPortal("EMPLOYEE");
+                    } catch { /* keep the standard employee login available */ }
+                  }}
                   type="email"
                   placeholder="name@company.com"
                   size="lg"
@@ -251,6 +266,23 @@ export default function LoginPage() {
                 />
                 <FormErrorMessage fontSize="xs">{errors.email?.message}</FormErrorMessage>
               </FormControl>
+
+              {portalOptions.hrLogin && (
+                <FormControl>
+                  <FormLabel fontSize="sm" color="text.heading" fontWeight="600">Choose Portal</FormLabel>
+                  <Flex gap={2}>
+                    {portalOptions.employeeLogin && (
+                      <Button flex={1} variant={portal === "EMPLOYEE" ? "solid" : "outline"} colorScheme="blue" onClick={() => setPortal("EMPLOYEE")}>
+                        Employee Login
+                      </Button>
+                    )}
+                    <Button flex={1} variant={portal === "HR" ? "solid" : "outline"} colorScheme="teal" onClick={() => setPortal("HR")}>
+                      HR Login
+                    </Button>
+                  </Flex>
+                  <Text mt={2} fontSize="xs" color="text.muted">HR Login opens the administration portal using the separate credentials sent by email.</Text>
+                </FormControl>
+              )}
 
               <FormControl isInvalid={!!errors.password}>
                 <FormLabel fontSize="sm" color="text.heading" fontWeight="600">
@@ -318,7 +350,7 @@ export default function LoginPage() {
                 loadingText="Signing in..."
                 mt={2}
               >
-                Sign In
+                {portal === "HR" ? "Sign In to HR Portal" : "Sign In"}
               </Button>
             </VStack>
           </form>

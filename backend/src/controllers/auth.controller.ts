@@ -10,6 +10,13 @@ const authService = new AuthService();
 const cookieSameSite = env.COOKIE_SAME_SITE ?? (env.NODE_ENV === 'production' ? 'none' : 'lax');
 
 export class AuthController {
+  static async portalOptions(req: Request, res: Response): Promise<void> {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      throw ApiError.badRequest('Enter a valid email address', 'VALIDATION_ERROR');
+    }
+    ApiResponse.success(res, 'Portal options retrieved', await authService.portalOptions(email));
+  }
   /**
    * POST /api/auth/login
    */
@@ -103,7 +110,7 @@ export class AuthController {
     ApiResponse.success(res, 'User info retrieved', {
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: req.user.role,
       firstName: user.firstName,
       lastName: user.lastName,
       empId: user.empId,

@@ -13,6 +13,7 @@ import {
   Settings,
   UserCircle,
   ClipboardPenLine,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export interface RouteItem {
   href: string;
   icon: LucideIcon;
   children?: RouteItem[];
+  mainAdminOnly?: boolean;
 }
 
 export const adminRoutes: RouteItem[] = [
@@ -43,12 +45,14 @@ export const adminRoutes: RouteItem[] = [
   { label: "Payroll", href: "/admin/payroll", icon: Wallet },
   { label: "Reports", href: "/admin/reports", icon: FileSpreadsheet },
   { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "Administration", href: "/admin/administration", icon: ShieldCheck, mainAdminOnly: true },
 ];
 
 export const employeeRoutes: RouteItem[] = [
   { label: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard },
   { label: "Personal Details", href: "/employee/personal-details", icon: ClipboardPenLine },
   { label: "Attendance", href: "/employee/attendance", icon: CalendarCheck },
+  { label: "Holiday Calendar", href: "/employee/holidays", icon: CalendarDays },
   { label: "Leave", href: "/employee/leave", icon: CalendarOff },
   { label: "Payroll", href: "/employee/payroll", icon: Wallet },
   { label: "Profile", href: "/employee/profile", icon: UserCircle },

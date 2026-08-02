@@ -3,6 +3,7 @@ import { verifyAccessToken, AccessTokenPayload } from '../utils/jwt';
 import { ApiError } from '../utils/apiError';
 import { AppDataSource } from '../config/database';
 import { User } from '../entities/User.entity';
+import { HrPortalAccess } from '../entities/HrPortalAccess.entity';
 
 // Extend Express Request to carry user info
 declare global {
@@ -38,6 +39,18 @@ export const authMiddleware = async (req: Request, _res: Response, next: NextFun
   });
   if (!user || !user.isActive || user.deletedAt) {
     throw ApiError.unauthorized('This account is no longer active', 'AUTH_ACCOUNT_INACTIVE');
+  }
+
+  if (decoded.role === 'HR') {
+    const grant = decoded.accessGrantId
+      ? await AppDataSource.getRepository(HrPortalAccess).findOne({
+          where: { id: decoded.accessGrantId, employeeId: decoded.userId, isActive: true },
+          select: ['id'],
+        })
+      : null;
+    if (!grant) {
+      throw ApiError.unauthorized('HR portal access has been revoked', 'AUTH_HR_ACCESS_REVOKED');
+    }
   }
 
   req.user = decoded;

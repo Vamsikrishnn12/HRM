@@ -2,6 +2,7 @@ import { AppDataSource } from './database';
 import { seedAdmin } from '../seed/seedAdmin';
 import webPush from 'web-push';
 import { env } from './env';
+import { ensureCombinedGovernmentHolidays2026 } from './holidayCalendar2026';
 
 let bootstrapPromise: Promise<void> | null = null;
 
@@ -64,6 +65,27 @@ export const ensureBackendReady = async (): Promise<void> => {
       await AppDataSource.query(
         `CREATE INDEX IF NOT EXISTS "IDX_push_subscriptions_user" ON "push_subscriptions" ("userId")`,
       );
+      await AppDataSource.query(`CREATE TABLE IF NOT EXISTS "hr_portal_access" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "employeeId" uuid NOT NULL,
+        "loginEmail" character varying(255) NOT NULL,
+        "passwordHash" character varying(255) NOT NULL,
+        "isActive" boolean NOT NULL DEFAULT true,
+        "grantedBy" uuid NOT NULL,
+        "grantedAt" timestamp NOT NULL DEFAULT now(),
+        "revokedBy" uuid,
+        "revokedAt" timestamp,
+        "lastLoginAt" timestamp,
+        "createdAt" timestamp NOT NULL DEFAULT now(),
+        "updatedAt" timestamp NOT NULL DEFAULT now(),
+        CONSTRAINT "PK_hr_portal_access" PRIMARY KEY ("id"),
+        CONSTRAINT "UQ_hr_portal_access_employee" UNIQUE ("employeeId"),
+        CONSTRAINT "UQ_hr_portal_access_email" UNIQUE ("loginEmail"),
+        CONSTRAINT "FK_hr_portal_access_employee" FOREIGN KEY ("employeeId") REFERENCES "users"("id") ON DELETE CASCADE
+      )`);
+      await AppDataSource.query(
+        `CREATE INDEX IF NOT EXISTS "IDX_hr_portal_access_active" ON "hr_portal_access" ("isActive")`,
+      );
       await AppDataSource.query(`CREATE TABLE IF NOT EXISTS "app_runtime_config" (
         "key" character varying(100) NOT NULL,
         "value" text NOT NULL,
@@ -71,6 +93,9 @@ export const ensureBackendReady = async (): Promise<void> => {
         "updatedAt" timestamp NOT NULL DEFAULT now(),
         CONSTRAINT "PK_app_runtime_config" PRIMARY KEY ("key")
       )`);
+      await ensureCombinedGovernmentHolidays2026((sql, parameters) =>
+        AppDataSource.query(sql, parameters),
+      );
       if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
         const generated = webPush.generateVAPIDKeys();
         await AppDataSource.query(
