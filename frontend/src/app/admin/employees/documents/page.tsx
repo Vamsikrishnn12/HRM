@@ -9,10 +9,8 @@ import {
   useToast,
   IconButton,
   HStack,
-  Input,
-  InputGroup,
-  InputLeftElement,
   Badge,
+  Spinner,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -28,7 +26,7 @@ import {
   AlertDialogFooter,
   Button,
 } from "@chakra-ui/react";
-import { Eye, Search, Plus, Trash2, Download, FileText, Mail } from "lucide-react";
+import { Eye, Plus, Trash2, Download, FileText, Mail, ClipboardList, CheckCircle2 } from "lucide-react";
 import { documentsApi, employeeApi } from "@/api";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
@@ -37,6 +35,7 @@ import { PrimaryButton, SecondaryButton } from "@/components/ui/Buttons";
 import { Field, StyledSelect } from "@/components/ui/FormHelpers";
 import UploadDropzone, { formatBytes } from "@/components/ui/UploadDropzone";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
+import { ONBOARDING_DOCUMENTS } from "@/components/employees/OnboardingDocuments";
 import type { DocumentRow } from "@/types";
 
 /** Server origin (no /api suffix) — used for static file URLs */
@@ -169,11 +168,13 @@ function ViewModal({
 function UploadForm({
   onDone,
   onCancel,
+  initialUserId = "",
 }: {
   onDone: () => void;
   onCancel: () => void;
+  initialUserId?: string;
 }) {
-  const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId);
   const [documentType, setDocumentType] = useState("Other");
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -243,8 +244,8 @@ function UploadForm({
 /* ── Main Page ──────────────────────────────────────────────────── */
 export default function DocumentsPage() {
   const [records, setRecords] = useState<DocumentRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [view, setView] = useState<"list" | "upload">("list");
   const [viewRecord, setViewRecord] = useState<DocumentRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentRow | null>(null);
@@ -257,10 +258,15 @@ export default function DocumentsPage() {
   const cancelRef = React.useRef<HTMLButtonElement>(null);
   const toast = useToast();
 
-  const fetchRecords = useCallback(async () => {
+  const fetchRecords = useCallback(async (userId: string) => {
+    if (!userId) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
-      const res = await documentsApi.list();
+      const res = await documentsApi.getByUserId(userId);
       setRecords(res.data);
     } catch {
       toast({ title: "Failed to load documents", status: "error", duration: 3000, isClosable: true });
@@ -270,19 +276,14 @@ export default function DocumentsPage() {
   }, [toast]);
 
   useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
+    void fetchRecords(selectedUserId);
+  }, [fetchRecords, selectedUserId]);
 
-  const filtered = records.filter((r) => {
-    const q = search.toLowerCase();
-    return (
-      r.employeeName.toLowerCase().includes(q) ||
-      r.empId.toLowerCase().includes(q) ||
-      r.originalName.toLowerCase().includes(q) ||
-      r.documentType.toLowerCase().includes(q) ||
-      r.email.toLowerCase().includes(q)
-    );
-  });
+  const requiredDocuments = ONBOARDING_DOCUMENTS.filter((item) => !item.ifApplicable);
+  const pendingDocuments = requiredDocuments.filter(
+    (item) => !records.some((record) => record.documentType === item.type),
+  );
+  const completedDocuments = requiredDocuments.length - pendingDocuments.length;
 
   const handleView = (row: DocumentRow) => {
     setViewRecord(row);
@@ -302,7 +303,7 @@ export default function DocumentsPage() {
       toast({ title: "Document deleted", status: "success", duration: 3000, isClosable: true });
       deleteDisclosure.onClose();
       setDeleteTarget(null);
-      fetchRecords();
+      fetchRecords(selectedUserId);
     } catch (err: any) {
       toast({ title: "Delete failed", description: err?.message || "Error", status: "error", duration: 4000, isClosable: true });
     } finally {
@@ -312,7 +313,7 @@ export default function DocumentsPage() {
 
   const handleUploadDone = () => {
     setView("list");
-    fetchRecords();
+    fetchRecords(selectedUserId);
   };
 
   const handleDownload = async (row: DocumentRow) => {
@@ -431,7 +432,7 @@ export default function DocumentsPage() {
     return (
       <Box>
         <PageHeader title="Documents" subtitle="Upload employee documents." />
-        <UploadForm onDone={handleUploadDone} onCancel={() => setView("list")} />
+        <UploadForm initialUserId={selectedUserId} onDone={handleUploadDone} onCancel={() => setView("list")} />
       </Box>
     );
   }
@@ -453,32 +454,62 @@ export default function DocumentsPage() {
           align={{ base: "stretch", md: "center" }}
           direction={{ base: "column", md: "row" }}
           gap={3}
-          mb={4}
+          mb={selectedUserId ? 5 : 0}
         >
-          <InputGroup maxW={{ base: "100%", md: "320px" }}>
-            <InputLeftElement pointerEvents="none">
-              <Search size={16} color="gray" />
-            </InputLeftElement>
-            <Input
-              placeholder="Search by name, ID, file, type..."
-              size="md"
-              borderRadius="lg"
-              fontSize="sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
-          <Text fontSize="sm" color="text.muted">
-            {filtered.length} document{filtered.length !== 1 ? "s" : ""}
-          </Text>
+          <Box flex="1">
+            <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} compact />
+          </Box>
+          {selectedUserId && !loading && (
+            <Badge colorScheme="blue" px={3} py={1.5} borderRadius="full">
+              {records.length} uploaded
+            </Badge>
+          )}
         </Flex>
 
-        <DataTable
-          columns={columns}
-          data={filtered}
-          keyField="id"
-          emptyMessage={loading ? "Loading..." : "No documents found. Click 'Upload New' to add one."}
-        />
+        {!selectedUserId ? (
+          <Flex minH="220px" align="center" justify="center" direction="column" textAlign="center" color="text.muted">
+            <ClipboardList size={34} />
+            <Text mt={3} fontWeight="700" color="text.heading">Select an employee to view documents</Text>
+            <Text mt={1} fontSize="sm">Uploaded and pending onboarding documents will appear here.</Text>
+          </Flex>
+        ) : loading ? (
+          <Flex minH="220px" align="center" justify="center"><Spinner color="brand.500" /></Flex>
+        ) : (
+          <>
+            <Box bg={pendingDocuments.length ? "orange.50" : "green.50"} border="1px solid" borderColor={pendingDocuments.length ? "orange.200" : "green.200"} borderRadius="xl" p={{ base: 4, md: 5 }} mb={5}>
+              <Flex justify="space-between" align={{ base: "flex-start", md: "center" }} gap={3} direction={{ base: "column", md: "row" }}>
+                <Box>
+                  <HStack spacing={2} color={pendingDocuments.length ? "orange.700" : "green.700"}>
+                    {pendingDocuments.length ? <ClipboardList size={18} /> : <CheckCircle2 size={18} />}
+                    <Text fontWeight="800">{pendingDocuments.length ? `${pendingDocuments.length} required document${pendingDocuments.length === 1 ? "" : "s"} pending` : "All required documents uploaded"}</Text>
+                  </HStack>
+                  <Text fontSize="sm" color="text.muted" mt={1}>{completedDocuments} of {requiredDocuments.length} required documents completed</Text>
+                </Box>
+                <Badge colorScheme={pendingDocuments.length ? "orange" : "green"} px={3} py={1.5} borderRadius="full">{completedDocuments}/{requiredDocuments.length} complete</Badge>
+              </Flex>
+              {pendingDocuments.length > 0 && (
+                <Flex mt={4} gap={2} flexWrap="wrap">
+                  {pendingDocuments.map((document) => (
+                    <Badge key={document.type} bg="white" color="orange.800" border="1px solid" borderColor="orange.200" borderRadius="full" px={3} py={1.5} textTransform="none" fontSize="xs">
+                      {document.title}
+                    </Badge>
+                  ))}
+                </Flex>
+              )}
+            </Box>
+
+            <Flex justify="space-between" align="center" mb={3}>
+              <Text fontWeight="800" color="text.heading">Uploaded documents</Text>
+              <Text fontSize="sm" color="text.muted">{records.length} document{records.length !== 1 ? "s" : ""}</Text>
+            </Flex>
+            <DataTable
+              columns={columns}
+              data={records}
+              keyField="id"
+              emptyMessage="No documents uploaded for this employee. Click 'Upload New' to add one."
+            />
+          </>
+        )}
       </SectionCard>
 
       <ViewModal isOpen={viewModal.isOpen} onClose={viewModal.onClose} record={viewRecord} />

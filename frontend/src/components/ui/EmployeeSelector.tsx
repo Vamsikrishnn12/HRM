@@ -9,9 +9,11 @@ import type { DropdownEmployee } from "@/types";
 export default function EmployeeSelector({
   value,
   onChange,
+  compact = false,
 }: {
   value: string;
   onChange: (userId: string) => void;
+  compact?: boolean;
 }) {
   const [employees, setEmployees] = useState<DropdownEmployee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ export default function EmployeeSelector({
   }, []);
 
   return (
-    <Box mb={6}>
+    <Box mb={compact ? 0 : 6}>
       <Text fontSize="sm" fontWeight="600" color="text.heading" mb={1}>
         Select Employee
       </Text>
