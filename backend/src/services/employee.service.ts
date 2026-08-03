@@ -210,6 +210,7 @@ export class EmployeeService {
         empId: p.user.empId,
         firstName: p.user.firstName,
         lastName: p.user.lastName,
+        employmentType: p.employmentType,
       }));
   }
 

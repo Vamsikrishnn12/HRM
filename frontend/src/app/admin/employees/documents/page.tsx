@@ -36,7 +36,7 @@ import { Field, StyledSelect } from "@/components/ui/FormHelpers";
 import UploadDropzone, { formatBytes } from "@/components/ui/UploadDropzone";
 import EmployeeSelector from "@/components/ui/EmployeeSelector";
 import { ONBOARDING_DOCUMENTS } from "@/components/employees/OnboardingDocuments";
-import type { DocumentRow } from "@/types";
+import type { DocumentRow, DropdownEmployee } from "@/types";
 
 /** Server origin (no /api suffix) — used for static file URLs */
 const DOCUMENT_TYPES = [
@@ -246,6 +246,7 @@ export default function DocumentsPage() {
   const [records, setRecords] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<DropdownEmployee | null>(null);
   const [view, setView] = useState<"list" | "upload">("list");
   const [viewRecord, setViewRecord] = useState<DocumentRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentRow | null>(null);
@@ -279,7 +280,8 @@ export default function DocumentsPage() {
     void fetchRecords(selectedUserId);
   }, [fetchRecords, selectedUserId]);
 
-  const requiredDocuments = ONBOARDING_DOCUMENTS.filter((item) => !item.ifApplicable);
+  const isExperienced = selectedEmployee?.employmentType?.trim().toLowerCase() === "experienced";
+  const requiredDocuments = ONBOARDING_DOCUMENTS.filter((item) => !item.ifApplicable || isExperienced);
   const pendingDocuments = requiredDocuments.filter(
     (item) => !records.some((record) => record.documentType === item.type),
   );
@@ -457,7 +459,12 @@ export default function DocumentsPage() {
           mb={selectedUserId ? 5 : 0}
         >
           <Box flex="1">
-            <EmployeeSelector value={selectedUserId} onChange={setSelectedUserId} compact />
+            <EmployeeSelector
+              value={selectedUserId}
+              onChange={setSelectedUserId}
+              onEmployeeChange={setSelectedEmployee}
+              compact
+            />
           </Box>
           {selectedUserId && !loading && (
             <Badge colorScheme="blue" px={3} py={1.5} borderRadius="full">

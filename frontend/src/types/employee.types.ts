@@ -46,6 +46,7 @@ export interface DropdownEmployee {
   empId: string;
   firstName: string;
   lastName: string;
+  employmentType: string;
 }
 
 export interface CreateEmployeePayload {

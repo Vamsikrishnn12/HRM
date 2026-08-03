@@ -9,10 +9,12 @@ import type { DropdownEmployee } from "@/types";
 export default function EmployeeSelector({
   value,
   onChange,
+  onEmployeeChange,
   compact = false,
 }: {
   value: string;
   onChange: (userId: string) => void;
+  onEmployeeChange?: (employee: DropdownEmployee | null) => void;
   compact?: boolean;
 }) {
   const [employees, setEmployees] = useState<DropdownEmployee[]>([]);
@@ -34,7 +36,11 @@ export default function EmployeeSelector({
       <StyledSelect
         placeholder={loading ? "Loading employees..." : "Select an employee"}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const userId = e.target.value;
+          onChange(userId);
+          onEmployeeChange?.(employees.find((employee) => employee.userId === userId) || null);
+        }}
         maxW="400px"
       >
         {employees.map((emp) => (
